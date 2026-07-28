@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beteseb Bingo</title>
+    <title>Habesha Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -44,23 +44,30 @@
         }
 
         h2 {
-            margin: 15px 0 20px 0;
+            margin: 10px 0 15px 0;
             text-align: center;
             color: var(--orange-color);
-            font-size: 22px;
+            font-size: 20px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 15px;
         }
 
         .btn {
             background-color: var(--btn-blue);
             color: white;
             border: none;
-            padding: 14px;
-            font-size: 16px;
+            padding: 12px 8px;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             width: 100%;
-            margin: 8px 0;
             text-align: center;
             box-sizing: border-box;
         }
@@ -72,7 +79,7 @@
         .main-card {
             background-color: var(--card-bg);
             border-radius: 16px;
-            padding: 20px 15px;
+            padding: 15px;
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 15px;
@@ -177,6 +184,39 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
 
+        #customModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid var(--accent-color);
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .modal-content a {
+            color: var(--btn-blue);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
         .nav-bar {
             position: fixed;
             bottom: 0;
@@ -207,45 +247,62 @@
 </head>
 <body>
 
+    <div id="customModal">
+        <div class="modal-content" id="modalBodyText"></div>
+    </div>
+
     <!-- 1. HOME SCREEN -->
     <div id="homeScreen" class="screen active">
-        <h2>Welcome to Beteseb Bingo</h2>
+        <h2>Habesha Bingo</h2>
 
-        <div class="main-card">
-            <div style="color: var(--btn-blue); font-weight: bold; margin-bottom: 12px; font-size: 15px;">⚡ Choose Your Stake</div>
-            <button class="btn btn-green" onclick="openSelection(10)">Play 10 🎮</button>
-            <button class="btn" onclick="openSelection(20)">Play 20 🎮</button>
+        <div class="menu-grid">
+            <button class="btn btn-green" onclick="openSelection()">Play 🎮</button>
+            <button class="btn" onclick="handleRegister()">Register 📝</button>
+            
+            <button class="btn btn-orange" onclick="switchNav('walletScreen', 'navWallet')">Check Balance ⚙️</button>
+            <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
+            
+            <button class="btn btn-danger" onclick="alert('Contacting Support @habeshabingosupport...')">Contact Support ☎️</button>
+            <button class="btn" onclick="alert('Instructions: Choose up to 2 cards (10 ETB each), match numbers, and win to withdraw!')">Instruction 📖</button>
+            
+            <button class="btn btn-orange" onclick="alert('Transfer feature coming soon!')">Transfer 🎁</button>
+            <button class="btn btn-danger" onclick="handleWithdraw()">Withdraw 🤑</button>
+            
+            <button class="btn" onclick="handleInvite()">Invite 🔗</button>
+            <button class="btn btn-green" onclick="alert('Bonus converted to main balance!')">Convert Bonus 💸</button>
         </div>
 
-        <div class="main-card">
-            <div style="color: var(--orange-color); font-size: 20px; font-weight: bold;">45,000+</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Active Players</div>
-
-            <div style="color: var(--orange-color); font-size: 20px; font-weight: bold;">60,000+</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Games Played</div>
-
-            <div style="color: var(--orange-color); font-size: 20px; font-weight: bold;">500+</div>
-            <div style="font-size: 12px; color: #94a3b8;">Winners Daily</div>
+        <div class="main-card" style="padding: 12px; margin-bottom: 5px;">
+            <div style="display: flex; justify-content: space-around;">
+                <div>
+                    <div style="color: var(--orange-color); font-size: 16px; font-weight: bold;">45,000+</div>
+                    <div style="font-size: 11px; color: #94a3b8;">Active Players</div>
+                </div>
+                <div>
+                    <div style="color: var(--orange-color); font-size: 16px; font-weight: bold;">60,000+</div>
+                    <div style="font-size: 11px; color: #94a3b8;">Games Played</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- 2. NUMBER SELECTION SCREEN -->
     <div id="selectScreen" class="screen">
         <div class="top-bar">
-            <span>Stake: <b id="lblStake" style="color: var(--orange-color);">10</b></span>
-            <span>ቆጠራ: <b id="selectionTimer" style="color: var(--orange-color);">60s</b></span>
+            <span>Cards: <b id="lblCardCount" style="color: var(--orange-color);">0</b></span>
+            <span>Timer: <b id="selectionTimer" style="color: var(--orange-color);">60s</b></span>
             <button class="btn" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="switchNav('homeScreen', 'navGame')">Back</button>
         </div>
 
         <div style="display: flex; justify-content: space-between; width: 100%; font-size: 13px; margin-bottom: 5px; padding: 0 5px; box-sizing: border-box;">
-            <span style="color: var(--orange-color);">⚠️ እስከ 2 ካርቴላ ብቻ</span>
-            <span>የተመረጡ: <b id="selectedCount" style="color: var(--success-color);">0</b>/2</span>
+            <span style="color: var(--orange-color);">⚠️ 1 Card = 10 ETB (Max 2)</span>
+            <span id="influenceBalanceDisplay">Balance: <b style="color: var(--success-color);" id="lblInfBalance">0.00 ETB</b></span>
         </div>
         
         <div class="number-grid" id="numberGrid"></div>
 
         <div style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 5px;">
-            ሰዓቱ እስኪያልቅ ይጠብቃል...
+            Select card(s) to start the game...
         </div>
     </div>
 
@@ -253,16 +310,16 @@
     <div id="gameScreen" class="screen">
         <div class="top-bar">
             <span>Game: <b style="color: var(--orange-color);">HB4KEKG1</b></span>
-            <span>Called: <b id="calledCount">0</b></span>
+            <span>Prize: <b id="gamePrizeDisplay" style="color: var(--success-color);">0 ETB</b></span>
         </div>
 
         <div class="main-card" style="padding: 12px; margin-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8;">
-                <span>የሚቀጥለው ቁጥር በ:</span>
+                <span>Next number in:</span>
                 <span id="timerText" style="color: var(--orange-color); font-weight: bold;">3s</span>
             </div>
             <div class="called-circle" id="currentCalledNum">--</div>
-            <div id="gameStatusText" style="font-size: 13px; color: var(--orange-color); font-weight: bold;">ጨዋታው በሂደት ላይ ነው...</div>
+            <div id="gameStatusText" style="font-size: 13px; color: var(--orange-color); font-weight: bold;">Game in progress...</div>
         </div>
 
         <div id="userCardsContainer" style="width: 100%; max-height: 220px; overflow-y: auto;"></div>
@@ -274,10 +331,15 @@
     <div id="walletScreen" class="screen">
         <h2>👛 Wallet & Balance</h2>
         <div class="main-card">
-            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Current Balance</div>
-            <div style="color: var(--success-color); font-size: 28px; font-weight: bold; margin-bottom: 15px;">150.00 ETB</div>
-            <button class="btn btn-green" onclick="alert('Deposit feature: Send money via Telebirr/CBE')">Deposit 🪙</button>
-            <button class="btn btn-danger" onclick="alert('Withdraw request submitted successfully!')">Withdraw 🤑</button>
+            <div style="font-size: 14px; color: #94a3b8; margin-bottom: 5px;">Main Wallet (Withdrawable Winnings)</div>
+            <div id="winningsBalanceDisplay" style="color: var(--success-color); font-size: 26px; font-weight: bold; margin-bottom: 10px;">0.00 ETB</div>
+            
+            <div style="font-size: 12px; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 8px; margin-bottom: 12px;">
+                Deposit/Bonus Balance (For playing only): <span id="depositBalanceDisplay" style="color: var(--orange-color); font-weight: bold;">0.00 ETB</span>
+            </div>
+
+            <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
+            <button class="btn btn-danger" onclick="handleWithdraw()">Withdraw 🤑</button>
             <button class="btn btn-orange" onclick="alert('Bonus converted to main balance!')">Convert Bonus 💸</button>
         </div>
     </div>
@@ -286,42 +348,132 @@
     <div id="profileScreen" class="screen">
         <h2>👤 User Profile</h2>
         <div class="main-card" style="text-align: left;">
-            <div style="margin-bottom: 10px;"><b>Name:</b> Habesha Player</div>
-            <div style="margin-bottom: 10px;"><b>ID:</b> #849201</div>
-            <div style="margin-bottom: 10px;"><b>Status:</b> <span style="color: var(--success-color);">Registered 📝</span></div>
-            <div style="margin-bottom: 15px;"><b>Referral Link:</b> <span style="color: var(--btn-blue);">t.me/BetesebBingo_bot?start=ref123</span></div>
-            <button class="btn" onclick="alert('Referral link copied!')">Invite Friends 🔗</button>
-            <button class="btn btn-green" onclick="alert('Instructions: Choose stake, pick up to 2 cards, and match numbers to win!')">Instruction 📖</button>
-            <button class="btn btn-danger" onclick="alert('Contacting Support @HabeshaSupport...')">Contact Support ☎️</button>
+            <div style="margin-bottom: 10px;"><b>Name:</b> <span id="profileNameDisplay">Habesha Player</span></div>
+            <div style="margin-bottom: 10px;"><b>ID:</b> <span id="profileIdDisplay">#849201</span></div>
+            <div style="margin-bottom: 10px;"><b>Status:</b> <span id="userStatusDisplay" style="color: var(--danger-color);">Not Registered ❌</span></div>
+            <div style="margin-bottom: 15px;"><b>Referral Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/HabeshaBingo_bot?start=ref849201</span></div>
+            <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
+            <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 ETB each), match numbers, and win to withdraw!')">Instruction 📖</button>
+            <button class="btn btn-danger" onclick="alert('Contacting Support @habeshabingosupport...')">Contact Support ☎️</button>
+        </div>
+    </div>
+
+    <!-- 6. HISTORY SCREEN -->
+    <div id="historyScreen" class="screen">
+        <h2>🕒 Game History</h2>
+        <div class="main-card" style="text-align: left; padding: 12px;">
+            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 8px; border-bottom: 1px solid #1e293b; padding-bottom: 5px;">Recent Activities & Games</div>
+            <div id="historyListContainer" style="max-height: 250px; overflow-y: auto; font-size: 12px;">
+                <div style="color: #64748b; text-align: center; padding: 20px;">No game history yet. Play games to see records here!</div>
+            </div>
         </div>
     </div>
 
     <!-- BOTTOM NAVIGATION -->
     <div class="nav-bar">
         <button class="nav-item active" id="navGame" onclick="switchNav('homeScreen', 'navGame')">🎮 Game</button>
-        <button class="nav-item" id="navHistory" onclick="alert('History feature coming soon!')">🕒 History</button>
+        <button class="nav-item" id="navHistory" onclick="switchNav('historyScreen', 'navHistory')">🕒 History</button>
         <button class="nav-item" id="navWallet" onclick="switchNav('walletScreen', 'navWallet')">👛 Wallet</button>
         <button class="nav-item" id="navProfile" onclick="switchNav('profileScreen', 'navProfile')">👤 Profile</button>
     </div>
 
     <script>
         let tg = null;
+        let telegramUserId = "guest_user";
+        let userName = "Habesha Player";
+
         try {
             if (window.Telegram && window.Telegram.WebApp) {
                 tg = window.Telegram.WebApp;
                 tg.expand();
                 tg.ready();
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    telegramUserId = tg.initDataUnsafe.user.id.toString();
+                    userName = (tg.initDataUnsafe.user.first_name || "") + " " + (tg.initDataUnsafe.user.last_name || "");
+                    userName = userName.trim() || "Habesha Player";
+                }
             }
         } catch (e) {
             console.log("Telegram WebApp not initialized");
         }
 
-        let currentStake = 10;
+        let userShortId = telegramUserId !== "guest_user" ? telegramUserId.slice(-6) : "849201";
+        document.getElementById('profileNameDisplay').innerText = userName;
+        document.getElementById('profileIdDisplay').innerText = "#" + userShortId;
+        
+        let refLinkText = `t.me/HabeshaBingo_bot?start=ref${userShortId}`;
+        let profileRefEl = document.getElementById('profileRefLink');
+        if (profileRefEl) profileRefEl.innerText = refLinkText;
+
         let selectedCards = [];
         let selectionInterval = null;
         let gameInterval = null;
         let calledNumbersList = [];
         let userBingoMatrices = [];
+        
+        let depositBalance = 0.00; 
+        let winningsBalance = 0.00; 
+        let gameHistoryList = [];
+        
+        let isRegistered = false;
+        let currentGamePrize = 0;
+
+        const storageKey = "habesha_bingo_reg_" + telegramUserId;
+        if (localStorage.getItem(storageKey) === "true") {
+            isRegistered = true;
+            let statusEl = document.getElementById('userStatusDisplay');
+            if (statusEl) {
+                statusEl.innerText = "Registered 📝";
+                statusEl.style.color = "var(--success-color)";
+            }
+        }
+
+        function updateWalletDisplay() {
+            let winEl = document.getElementById('winningsBalanceDisplay');
+            let depEl = document.getElementById('depositBalanceDisplay');
+            if (winEl) winEl.innerText = winningsBalance.toFixed(2) + " ETB";
+            if (depEl) depEl.innerText = depositBalance.toFixed(2) + " ETB";
+
+            let infBalEl = document.getElementById('lblInfBalance');
+            if (infBalEl) {
+                let totalAvailableBalance = depositBalance + winningsBalance;
+                infBalEl.innerText = totalAvailableBalance.toFixed(2) + " ETB";
+            }
+        }
+
+        function addHistoryRecord(type, desc, amount) {
+            let timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            gameHistoryList.unshift({ type, desc, amount, timeStr });
+            
+            let container = document.getElementById('historyListContainer');
+            if (container) {
+                let html = '';
+                gameHistoryList.forEach(item => {
+                    let colorClass = item.amount >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    let sign = item.amount >= 0 ? '+' : '';
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e293b;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--text-color);">${item.desc}</div>
+                                <div style="font-size: 10px; color: #64748b;">${item.timeStr}</div>
+                            </div>
+                            <div style="font-weight: bold; color: ${colorClass};">${sign}${item.amount.toFixed(2)} ETB</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        function handleInvite() {
+            let shareUrl = `https://t.me/share/url?url=https://t.me/HabeshaBingo_bot?start=ref${userShortId}&text=Join%20Habesha%20Bingo%20and%20win%20real%20cash%20prizes!`;
+            if (tg && tg.openTelegramLink) {
+                tg.openTelegramLink(shareUrl);
+            } else {
+                navigator.clipboard.writeText(`https://t.me/HabeshaBingo_bot?start=ref${userShortId}`);
+                alert("🔗 Referral link copied to clipboard! Share it with your friends.");
+            }
+        }
 
         const gridContainer = document.getElementById('numberGrid');
         if (gridContainer) {
@@ -332,18 +484,29 @@
                 cell.onclick = (function(cellNum, cellElement) {
                     return function() {
                         let index = selectedCards.indexOf(cellNum);
-                        if (index > -1) {
-                            selectedCards.splice(index, 1);
-                            cellElement.classList.remove('selected');
-                        } else {
+                        
+                        if (index === -1) {
+                            let totalAvailableBalance = depositBalance + winningsBalance;
+                            let nextCost = (selectedCards.length + 1) * 10;
+                            
+                            if (totalAvailableBalance < nextCost) {
+                                alert(`❌ Insufficient balance! You need at least ${nextCost} ETB to select card(s). Please top up.`);
+                                switchNav('walletScreen', 'navWallet');
+                                return;
+                            }
+
                             if (selectedCards.length >= 2) {
-                                alert('ከሁለት ካርድ በላይ መያዝ አይቻልም!');
+                                alert('You cannot select more than 2 cards!');
                                 return;
                             }
                             selectedCards.push(cellNum);
                             cellElement.classList.add('selected');
+                        } else {
+                            selectedCards.splice(index, 1);
+                            cellElement.classList.remove('selected');
                         }
-                        let countEl = document.getElementById('selectedCount');
+                        
+                        let countEl = document.getElementById('lblCardCount');
                         if (countEl) countEl.innerText = selectedCards.length;
                     };
                 })(i, cell);
@@ -370,19 +533,39 @@
             if (activeNav) activeNav.classList.add('active');
         }
 
-        function openSelection(stake) {
+        function handleRegister() {
+            if (isRegistered || localStorage.getItem(storageKey) === "true") {
+                alert("⚠️ You are already registered! You cannot claim the bonus again.");
+                return;
+            }
+
+            isRegistered = true;
+            localStorage.setItem(storageKey, "true");
+            
+            depositBalance += 10.00;
+            updateWalletDisplay();
+            addHistoryRecord('bonus', 'Registration Bonus', 10.00);
+
+            let statusEl = document.getElementById('userStatusDisplay');
+            if (statusEl) {
+                statusEl.innerText = "Registered 📝";
+                statusEl.style.color = "var(--success-color)";
+            }
+
+            alert("🎉 Congratulations! Registration successful; 10 ETB play bonus has been added.");
+        }
+
+        function openSelection() {
             clearInterval(gameInterval);
-            currentStake = stake;
             selectedCards = [];
             
-            let lblStake = document.getElementById('lblStake');
-            if (lblStake) lblStake.innerText = stake;
-            let countEl = document.getElementById('selectedCount');
+            let countEl = document.getElementById('lblCardCount');
             if (countEl) countEl.innerText = '0';
             
             let cells = document.querySelectorAll('.num-cell');
             cells.forEach(cell => cell.classList.remove('selected'));
             
+            updateWalletDisplay();
             switchScreen('selectScreen');
             startSelectionCountdown();
         }
@@ -402,16 +585,41 @@
                     if (selectedCards.length === 0) {
                         selectedCards.push(Math.floor(Math.random() * 600) + 1);
                     }
-                    joinGame();
+                    processGameEntry();
                 }
             }, 1000);
         }
 
-        function joinGame() {
-            clearInterval(selectionInterval);
+        function processGameEntry() {
             if (selectedCards.length === 0) {
                 selectedCards.push(Math.floor(Math.random() * 600) + 1);
             }
+
+            let totalDeduction = selectedCards.length * 10;
+
+            let totalAvailableBalance = depositBalance + winningsBalance;
+            if (totalAvailableBalance < totalDeduction) {
+                alert(`❌ Insufficient balance! You need ${totalDeduction} ETB for the selected ${selectedCards.length} card(s). Please top up.`);
+                switchNav('walletScreen', 'navWallet');
+                return;
+            }
+
+            if (depositBalance >= totalDeduction) {
+                depositBalance -= totalDeduction;
+            } else {
+                let remaining = totalDeduction - depositBalance;
+                depositBalance = 0;
+                winningsBalance -= remaining;
+            }
+            updateWalletDisplay();
+            addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
+
+            let commission = totalDeduction * 0.20;
+            currentGamePrize = totalDeduction - commission;
+
+            let gamePrizeDisplay = document.getElementById('gamePrizeDisplay');
+            if (gamePrizeDisplay) gamePrizeDisplay.innerText = currentGamePrize.toFixed(2) + " ETB";
+
             switchScreen('gameScreen');
             initializeUserCards();
             startBingoGame();
@@ -419,7 +627,117 @@
 
         function goBackToSelection() {
             clearInterval(gameInterval);
-            openSelection(currentStake);
+            openSelection();
+        }
+
+        function handleDeposit() {
+            let amountStr = prompt("💰 Enter the amount to deposit (Minimum 10 ETB):");
+            if (amountStr === null) return;
+            
+            let amount = parseFloat(amountStr);
+            if (isNaN(amount) || amount < 10) {
+                alert("❌ Please enter a valid amount (Minimum 10 ETB)!");
+                return;
+            }
+
+            let modalBox = document.getElementById('customModal');
+            let modalBody = document.getElementById('modalBodyText');
+
+            modalBody.innerHTML = `
+                <div style="color: var(--orange-color); font-weight: bold; margin-bottom: 8px;">❇️ You can only deposit using the official Telebirr account provided below.</div>
+                <div style="color: var(--danger-color); font-weight: bold; margin-bottom: 8px;">🚫 Payments sent elsewhere will not be accepted 🚫</div>
+                <div style="margin-bottom: 8px;">👇 <a href="https://www.telebirr.et" target="_blank">Click here for Telebirr</a> 👇</div>
+                <div style="font-size: 12px; margin-bottom: 8px;">For any payment issues, contact support: @habeshabingosupport</div>
+                <div style="margin-bottom: 8px;"><b>1. Transfer ${amount} ETB to the Telebirr account below:</b><br><b>Account Name:</b> Habesha Bingo Admin<br><b>Phone:</b> <span style="color: var(--success-color);">0900619106</span></div>
+                <div style="margin-bottom: 12px;"><b>2. Copy and paste the SMS / Transaction ID from your payment below.</b></div>
+                <button class="btn btn-green" id="proceedSmsBtn" style="width: 100%;">Proceed ➡️</button>
+            `;
+
+            modalBox.style.display = 'flex';
+
+            document.getElementById('proceedSmsBtn').onclick = function() {
+                modalBox.style.display = 'none';
+                
+                let smsText = prompt("Paste your Telebirr SMS or Transaction ID here:");
+                
+                if (!smsText || smsText.trim() === "") {
+                    alert("❌ No details provided. Deposit cancelled.");
+                    return;
+                }
+
+                let trimmedSms = smsText.trim();
+                if (trimmedSms.length < 8) {
+                    alert("❌ Provided information is too short. Please enter valid details.");
+                    return;
+                }
+
+                depositBalance += amount;
+                updateWalletDisplay();
+                addHistoryRecord('deposit', 'Telebirr Deposit', amount);
+                alert(`✅ Payment ID verified successfully! ${amount} ETB has been added to your play balance.`);
+            };
+        }
+
+        function handleWithdraw() {
+            if (winningsBalance <= 0) {
+                alert("❌ You don't have any withdrawable winnings in your Main Wallet!\n\n(Note: Deposit and bonus funds cannot be withdrawn; only winnings recorded in the Main Wallet can be withdrawn.)");
+                return;
+            }
+
+            let amountStr = prompt(`💸 Enter the amount you want to withdraw (Main Wallet Balance: ${winningsBalance.toFixed(2)} ETB):`);
+            if (amountStr === null) return;
+
+            let amount = parseFloat(amountStr);
+            if (isNaN(amount) || amount <= 0) {
+                alert("❌ Please enter a valid amount!");
+                return;
+            }
+
+            if (amount < 50) {
+                alert("❌ Minimum withdrawal amount is 50 ETB!");
+                return;
+            }
+
+            if (amount > winningsBalance) {
+                alert("❌ You cannot withdraw more than your Main Wallet balance!");
+                return;
+            }
+
+            let phoneNum = prompt("📱 Please enter your Telebirr phone number (e.g., 09xxxxxxxx):");
+            if (!phoneNum || phoneNum.trim() === "") {
+                alert("❌ Phone number is required. Withdrawal cancelled!");
+                return;
+            }
+
+            let trimmedPhone = phoneNum.trim();
+            if (trimmedPhone.length < 10) {
+                alert("❌ Please enter a valid 10-digit phone number.");
+                return;
+            }
+
+            let accountName = prompt("👤 Please enter the full name registered on your Telebirr account:");
+            if (!accountName || accountName.trim() === "") {
+                alert("❌ Name is required. Withdrawal cancelled!");
+                return;
+            }
+
+            let trimmedName = accountName.trim();
+
+            winningsBalance -= amount;
+            updateWalletDisplay();
+            addHistoryRecord('withdraw', 'Telebirr Withdrawal', -amount);
+
+            alert(`✅ Withdrawal request submitted successfully!\n\n💸 Amount: ${amount.toFixed(2)} ETB\n📱 Number: ${trimmedPhone}\n👤 Name: ${trimmedName}\n\nFunds will be sent to your Telebirr account shortly.`);
+        }
+
+        function speakNumber(num) {
+            if ('speechSynthesis' in window) {
+                let textToSpeech = "Number " + num;
+                let utterance = new SpeechSynthesisUtterance(textToSpeech);
+                utterance.lang = 'en-US';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
         function generateBingoMatrix() {
@@ -462,7 +780,7 @@
 
                 let cardDiv = document.createElement('div');
                 cardDiv.className = 'bingo-card-container';
-                cardDiv.innerHTML = `<div style="font-size:12px; margin-bottom:4px; color:var(--orange-color);">ካርድ #${cardNum}</div>`;
+                cardDiv.innerHTML = `<div style="font-size:12px; margin-bottom:4px; color:var(--orange-color);">Card #${cardNum}</div>`;
 
                 let table = document.createElement('table');
                 table.className = 'bingo-table';
@@ -487,15 +805,13 @@
 
         function startBingoGame() {
             let calledBox = document.getElementById('currentCalledNum');
-            let calledCountEl = document.getElementById('calledCount');
             let timerEl = document.getElementById('timerText');
             let statusText = document.getElementById('gameStatusText');
             
-            let calledCounter = 0;
             let seconds = 3;
             
             if (statusText) {
-                statusText.innerText = "ጨዋታው በሂደት ላይ ነው...";
+                statusText.innerText = "Game in progress...";
                 statusText.style.color = "var(--orange-color)";
             }
 
@@ -505,7 +821,6 @@
 
                 if (seconds <= 0) {
                     seconds = 3;
-                    calledCounter++;
                     
                     let randomNum = Math.floor(Math.random() * 75) + 1;
                     while(calledNumbersList.includes(randomNum) && calledNumbersList.length < 75) {
@@ -514,23 +829,35 @@
                     calledNumbersList.push(randomNum);
 
                     if (calledBox) calledBox.innerText = randomNum;
-                    if (calledCountEl) calledCountEl.innerText = calledCounter;
 
+                    speakNumber(randomNum);
                     autoMarkNumbers(randomNum);
 
-                    let winnerCard = checkWinCondition();
-                    if(winnerCard) {
+                    let winningCards = checkAllWinConditions();
+                    
+                    if(winningCards.length > 0) {
                         clearInterval(gameInterval);
+                        
+                        let prizePerWinner = currentGamePrize / winningCards.length;
+                        winningsBalance += prizePerWinner;
+                        updateWalletDisplay();
+                        addHistoryRecord('win', 'Bingo Game Winnings', prizePerWinner);
+
+                        let winningCardNumbers = winningCards.map(c => `#` + c).join(', ');
+
                         if (statusText) {
-                            statusText.innerText = `🎉 እንኳን ደስ አለዎት! ካርድ #${winnerCard} አሸንፏል! BINGO!`;
+                            statusText.innerText = `🎉 ድል! ተጫዋች: ${userName} | ካርዶች: ${winningCardNumbers} | ሽልማት: ${prizePerWinner.toFixed(2)} ETB`;
                             statusText.style.color = "var(--success-color)";
                         }
+
+                        alert(`🎉 እንኳን ደስ አለዎት!\n\n👤 ተጫዋች: ${userName}\n🃏 አሸናፊ ካርዶች: ${winningCardNumbers}\n💰 የተከፋፈለ ሽልማት: ${prizePerWinner.toFixed(2)} ETB ለእያንዳንዱ ካርድ\n\nወደ ዋናው ቦርሳዎ ተጨምሯል!`);
+
                         if (tg && tg.HapticFeedback) {
                             tg.HapticFeedback.notificationOccurred('success');
                         }
 
                         setTimeout(function() {
-                            openSelection(currentStake);
+                            openSelection();
                         }, 4000);
 
                         return;
@@ -557,11 +884,13 @@
             });
         }
 
-        function checkWinCondition() {
+        function checkAllWinConditions() {
+            let winningCardIds = [];
+
             for(let idx = 0; idx < userBingoMatrices.length; idx++) {
                 let cardObj = userBingoMatrices[idx];
+                let isCardWinner = false;
 
-                // Check Rows
                 for(let r = 0; r < 5; r++) {
                     let rowWin = true;
                     for(let c = 0; c < 5; c++) {
@@ -571,23 +900,53 @@
                             break;
                         }
                     }
-                    if(rowWin) return cardObj.id;
+                    if(rowWin) { isCardWinner = true; break; }
                 }
 
-                // Check Columns
-                for(let c = 0; c < 5; c++) {
-                    let colWin = true;
-                    for(let r = 0; r < 5; r++) {
-                        let cell = document.getElementById(`c_${idx}_${r}_${c}`);
-                        if(!cell || !cell.classList.contains('marked')) {
-                            colWin = false;
-                            break;
+                if(!isCardWinner) {
+                    for(let c = 0; c < 5; c++) {
+                        let colWin = true;
+                        for(let r = 0; r < 5; r++) {
+                            let cell = document.getElementById(`c_${idx}_${r}_${c}`);
+                            if(!cell || !cell.classList.contains('marked')) {
+                                colWin = false;
+                                break;
+                            }
                         }
+                        if(colWin) { isCardWinner = true; break; }
                     }
-                    if(colWin) return cardObj.id;
+                }
+
+                if(!isCardWinner) {
+                    let diag1Win = true;
+                    let diag2Win = true;
+                    for(let i = 0; i < 5; i++) {
+                        let cell1 = document.getElementById(`c_${idx}_${i}_${i}`);
+                        let cell2 = document.getElementById(`c_${idx}_${i}_${4 - i}`);
+                        if(!cell1 || !cell1.classList.contains('marked')) diag1Win = false;
+                        if(!cell2 || !cell2.classList.contains('marked')) diag2Win = false;
+                    }
+                    if(diag1Win || diag2Win) isCardWinner = true;
+                }
+
+                if(!isCardWinner) {
+                    let corners = [
+                        document.getElementById(`c_${idx}_0_0`),
+                        document.getElementById(`c_${idx}_0_4`),
+                        document.getElementById(`c_${idx}_4_0`),
+                        document.getElementById(`c_${idx}_4_4`)
+                    ];
+                    if(corners.every(cell => cell && cell.classList.contains('marked'))) {
+                        isCardWinner = true;
+                    }
+                }
+
+                if(isCardWinner) {
+                    winningCardIds.push(cardObj.id);
                 }
             }
-            return null;
+
+            return winningCardIds;
         }
     </script>
 </body>
