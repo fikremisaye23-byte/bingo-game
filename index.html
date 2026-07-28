@@ -169,15 +169,15 @@
         }
 
         .called-circle {
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             border: 3px solid var(--orange-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 20px;
             font-weight: bold;
             color: white;
             margin: 8px auto;
@@ -731,12 +731,11 @@
             alert(`✅ Withdrawal request submitted successfully!\n\n💸 Amount: ${amount.toFixed(2)} ETB\n📱 Number: ${trimmedPhone}\n👤 Name: ${trimmedName}\n\nFunds will be sent to your Telebirr account shortly.`);
         }
 
-        // 3. ድምፅ በትክክል እንዲጠራ የተስተካከለ ፋንክሽን
-        function speakNumber(num) {
+        // ቁጥሩን ከፊደል ጋር (ለምሳሌ B-15 ወይም O-64) አብሮ እንዲጠራ የተስተካከለ ድምፅ ፋንክሽን
+        function speakNumber(callText) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                let textToSpeech = "Number " + num;
-                let utterance = new SpeechSynthesisUtterance(textToSpeech);
+                let utterance = new SpeechSynthesisUtterance(callText);
                 utterance.lang = 'en-US';
                 utterance.rate = 1.0;
                 window.speechSynthesis.speak(utterance);
@@ -831,9 +830,21 @@
                     }
                     calledNumbersList.push(randomNum);
 
-                    if (calledBox) calledBox.innerText = randomNum;
+                    // ቁጥሩ የየትኛው BINGO ፊደል ስር እንዳለ በመለየት ፎርማቱን ማስተካከል
+                    let letter = 'B';
+                    if (randomNum >= 1 && randomNum <= 15) letter = 'B';
+                    else if (randomNum >= 16 && randomNum <= 30) letter = 'I';
+                    else if (randomNum >= 31 && randomNum <= 45) letter = 'N';
+                    else if (randomNum >= 46 && randomNum <= 60) letter = 'G';
+                    else if (randomNum >= 61 && randomNum <= 75) letter = 'O';
 
-                    speakNumber(randomNum);
+                    let displayCall = `${letter}-${randomNum}`;
+
+                    if (calledBox) {
+                        calledBox.innerText = displayCall;
+                    }
+
+                    speakNumber(displayCall);
                     autoMarkNumbers(randomNum);
 
                     let winningCards = checkAllWinConditions();
@@ -859,7 +870,7 @@
                             tg.HapticFeedback.notificationOccurred('success');
                         }
 
-                        // 1. አሸናፊውን ካርድ ለ 5 ሰኮንድ አሳይቶ አውቶማቲክ ወደ ካርድ ምርጫ መመለስ
+                        // አሸናፊውን ካርድ ለ 5 ሰኮንድ አሳይቶ አውቶማቲክ ወደ ካርድ ምርጫ መመለስ
                         setTimeout(function() {
                             openSelection();
                         }, 5000);
