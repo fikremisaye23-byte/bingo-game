@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% ዕድል (Edil Bingo) - መልካም ዕድል</title>
+    <title>100% ዕድል (Edil Bingo) - ለጨዋታ ብቻ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -242,13 +242,33 @@
             gap: 2px;
         }
 
+        .bingo-card-container.compact {
+            padding: 3px;
+            margin-bottom: 3px;
+        }
+
+        .bingo-grid.compact {
+            gap: 1px;
+        }
+
+        .bingo-header-cell.compact {
+            font-size: 10px;
+            padding: 2px 0;
+            border-radius: 10px;
+        }
+
+        .bingo-cell.compact {
+            font-size: 11px;
+            border-radius: 5px;
+        }
+
         .bingo-header-cell {
             background: linear-gradient(160deg, #5b9bff, var(--accent-color));
             color: white;
             font-size: 12px;
             font-weight: 700;
-            padding: 3px 0;
-            border-radius: 3px;
+            padding: 5px 0;
+            border-radius: 16px;
             text-align: center;
         }
 
@@ -260,11 +280,11 @@
 
         .bingo-cell {
             aspect-ratio: 1.15 / 1;
-            background: linear-gradient(160deg, #223052, var(--cell-bg));
-            color: #fff;
-            border-radius: 3px;
+            background: #e9ecf2;
+            color: #1e293b;
+            border-radius: 8px;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -581,24 +601,24 @@
         <!-- Top Info Header -->
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: var(--card-bg); padding: 5px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #1e293b; text-align: center; box-sizing: border-box;">
             <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 9px; color: #94a3b8;">Game ID</div>
-                <div id="gameIdDisplay" style="font-size: 11px; font-weight: bold; color: var(--orange-color);">BBX54</div>
+                <div style="font-size: 12px; color: #94a3b8;">Game ID</div>
+                <div id="gameIdDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">BBX54</div>
             </div>
             <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 9px; color: #94a3b8;">Players</div>
-                <div style="font-size: 11px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
+                <div style="font-size: 12px; color: #94a3b8;">Players</div>
+                <div style="font-size: 14px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
             </div>
             <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 9px; color: #94a3b8;">Bet</div>
-                <div style="font-size: 11px; font-weight: bold; color: white;">10</div>
+                <div style="font-size: 12px; color: #94a3b8;">Bet</div>
+                <div style="font-size: 14px; font-weight: bold; color: white;">10</div>
             </div>
             <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 9px; color: #94a3b8;">Derash 🪙</div>
-                <div id="gamePrizeDisplay" style="font-size: 11px; font-weight: bold; color: var(--success-color);">16</div>
+                <div style="font-size: 12px; color: #94a3b8;">Derash 🪙</div>
+                <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: var(--success-color);">16</div>
             </div>
             <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 9px; color: #94a3b8;">Called</div>
-                <div id="calledCountDisplay" style="font-size: 11px; font-weight: bold; color: var(--orange-color);">0</div>
+                <div style="font-size: 12px; color: #94a3b8;">Called</div>
+                <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">0</div>
             </div>
         </div>
 
@@ -630,7 +650,7 @@
                 </div>
 
                 <!-- User Cards Container with exact max-height and overflow scroll -->
-                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px;"></div>
+                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; max-height: 46vh; overflow-y: auto;"></div>
             </div>
         </div>
 
@@ -639,7 +659,7 @@
         <div style="display: flex; gap: 6px; width: 100%; margin-top: 2px;">
             <button class="btn btn-danger" style="padding: 7px; font-size: 11px; flex: 1;" onclick="goBackToSelection()">Leave</button>
             <button class="btn btn-orange" style="padding: 7px; font-size: 11px; flex: 1;" onclick="openSelection()">🔄 Refresh</button>
-            <button class="btn btn-green" style="padding: 7px; font-size: 11px; flex: 1;" onclick="alert('Automatic mode is active!')">Automatic</button>
+            <button id="gameAutomaticBtn" class="btn btn-green" style="padding: 7px; font-size: 11px; flex: 1;" onclick="alert('Automatic mode is active!')">Automatic</button>
         </div>
     </div>
 
@@ -776,8 +796,9 @@
                 if (w && typeof w.main === 'number' && typeof w.play === 'number') {
                     mainWalletBalance = w.main;
                     playWalletBalance = w.play;
+                    depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
                 } else {
-                    db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance });
+                    db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
                 }
                 updateWalletDisplay();
             }).catch(function(err) {
@@ -985,7 +1006,10 @@
                         if (myWins.length > 0) {
                             let prizePerWinner = currentGamePrize / winnersArr.length;
                             let myPrize = prizePerWinner * myWins.length;
-                            mainWalletBalance += myPrize;
+                            let realPortion = myPrize * currentRoundDepositedFraction;
+                            let bonusPortion = myPrize - realPortion;
+                            mainWalletBalance += realPortion; // withdrawable — funded by real deposits
+                            playWalletBalance += bonusPortion; // replayable only — funded by free bonus coins
                             updateWalletDisplay();
                             addHistoryRecord('win', 'Bingo Game Winnings', myPrize);
                         }
@@ -1231,7 +1255,9 @@
         let userBingoMatrices = [];
         
         let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
-        let playWalletBalance = 500; // everyone starts with free fun coins; staking deducts from here; deposits add here
+        let playWalletBalance = 10; // everyone starts with a small free amount; staking deducts from here; deposits add here
+        let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
+        let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
         let gameHistoryList = [];
         
         let isRegistered = false;
@@ -1266,7 +1292,8 @@
             if (db) {
                 db.ref('users/' + telegramUserId + '/wallet').set({
                     main: mainWalletBalance,
-                    play: playWalletBalance
+                    play: playWalletBalance,
+                    deposited: depositedBalance
                 }).catch(function(err) {
                     console.log('Wallet save failed', err);
                 });
@@ -1611,6 +1638,11 @@
                 switchNav('walletScreen', 'navWallet');
                 return;
             }
+
+            // Track what fraction of THIS stake is real (deposited) money vs free bonus coins —
+            // only the real fraction of any winnings will be withdrawable.
+            currentRoundDepositedFraction = playWalletBalance > 0 ? Math.min(1, depositedBalance / playWalletBalance) : 0;
+            depositedBalance = Math.max(0, depositedBalance - totalDeduction * currentRoundDepositedFraction);
 
             playWalletBalance -= totalDeduction;
             updateWalletDisplay();
@@ -1967,6 +1999,7 @@
 
         function renderDepositApprovedStep(txnKey, record) {
             playWalletBalance += record.amount;
+            depositedBalance += record.amount; // this portion is real money — winnings funded by it become withdrawable
             updateWalletDisplay();
             addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
 
@@ -2138,14 +2171,15 @@
         }
 
         function handleResetCoins() {
-            let confirmReset = confirm("Reset your Main Wallet to 0 and Play Wallet to 500? This is just for fun scorekeeping.");
+            let confirmReset = confirm("Reset your Main Wallet to 0 and Play Wallet to 10? This is just for fun scorekeeping.");
             if (!confirmReset) return;
 
             mainWalletBalance = 0;
-            playWalletBalance = 500;
+            playWalletBalance = 10;
+            depositedBalance = 0;
             updateWalletDisplay();
             addHistoryRecord('reset', 'Wallets Reset', 0);
-            showToast("🔄 Your wallets have been reset (Main: 0, Play: 500).");
+            showToast("🔄 Your wallets have been reset (Main: 0, Play: 10).");
         }
 
         // ---- Audio system: unlock on first tap, beep + speech, so it works even in in-app WebViews ----
@@ -2236,6 +2270,7 @@
             let boardGrid = document.getElementById('gameBoardGrid');
             if (!boardGrid) return;
             boardGrid.innerHTML = '';
+            lastCalledBoardCellNum = null;
 
             let ranges = [[1,15], [16,30], [31,45], [46,60], [61,75]];
             let matrixCols = [];
@@ -2253,7 +2288,7 @@
                     let num = matrixCols[c][r];
                     let cell = document.createElement('div');
                     cell.id = `board_cell_${num}`;
-                    cell.style.cssText = "background: var(--cell-bg); border-radius: 3px; height: 27px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #94a3b8;";
+                    cell.style.cssText = "background: #4a4270; border-radius: 6px; height: 27px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff;";
                     cell.innerText = num;
                     boardGrid.appendChild(cell);
                 }
@@ -2294,25 +2329,49 @@
             userBingoMatrices = [];
             calledNumbersList = [];
 
+            if (selectedCards.length === 0) {
+                container.innerHTML = `
+                    <div style="background: var(--card-bg); border-radius: 8px; padding: 16px 10px; text-align: center; border: 1px solid #1e293b;">
+                        <div style="font-size: 17px; font-weight: bold; color: white; margin-bottom: 10px;">Watching Only</div>
+                        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.6;">የዚህ ዙር ጨዋታ ተጀምሯል። አዲስ ዙር<br>እስኪጀምር እዚሁ ይጠብቁ።</div>
+                    </div>`;
+                let autoBtn = document.getElementById('gameAutomaticBtn');
+                if (autoBtn) {
+                    autoBtn.disabled = true;
+                    autoBtn.style.opacity = '0.5';
+                    autoBtn.style.pointerEvents = 'none';
+                }
+                return;
+            } else {
+                let autoBtn = document.getElementById('gameAutomaticBtn');
+                if (autoBtn) {
+                    autoBtn.disabled = false;
+                    autoBtn.style.opacity = '1';
+                    autoBtn.style.pointerEvents = 'auto';
+                }
+            }
+
             selectedCards.forEach((cardNum, idx) => {
                 let sharedEntry = takenCardsData[cardNum];
                 let matrix = (sharedEntry && sharedEntry.matrix) ? sharedEntry.matrix : generateBingoMatrix();
                 userBingoMatrices.push({ id: cardNum, matrix: matrix });
 
+                let isCompact = selectedCards.length > 1;
                 let cardDiv = document.createElement('div');
-                cardDiv.className = 'bingo-card-container';
-                cardDiv.innerHTML = `<div style="font-size:10px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>`;
+                cardDiv.className = isCompact ? 'bingo-card-container compact' : 'bingo-card-container';
+                cardDiv.innerHTML = `<div style="font-size:${isCompact ? 9 : 10}px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>`;
 
                 let grid = document.createElement('div');
-                grid.className = 'bingo-grid';
-                let bodyHTML = `<div class="bingo-header-cell">B</div><div class="bingo-header-cell">I</div><div class="bingo-header-cell">N</div><div class="bingo-header-cell">G</div><div class="bingo-header-cell">O</div>`;
+                grid.className = isCompact ? 'bingo-grid compact' : 'bingo-grid';
+                let headerClass = isCompact ? 'bingo-header-cell compact' : 'bingo-header-cell';
+                let bodyHTML = `<div class="${headerClass}">B</div><div class="${headerClass}">I</div><div class="${headerClass}">N</div><div class="${headerClass}">G</div><div class="${headerClass}">O</div>`;
 
                 for(let r = 0; r < 5; r++) {
                     for(let c = 0; c < 5; c++) {
                         let val = matrix[r][c];
                         let cellId = `c_${idx}_${r}_${c}`;
                         let isFree = (val === 'FREE');
-                        let className = isFree ? 'bingo-cell free' : 'bingo-cell';
+                        let className = (isFree ? 'bingo-cell free' : 'bingo-cell') + (isCompact ? ' compact' : '');
                         if(isFree) val = '✨';
                         bodyHTML += `<div id="${cellId}" class="${className}">${val}</div>`;
                     }
@@ -2372,7 +2431,10 @@
                 if (localWinners.length > 0) {
                     clearInterval(gameInterval);
                     let prizePerWinner = currentGamePrize / localWinners.length;
-                    mainWalletBalance += prizePerWinner;
+                    let realPortion = prizePerWinner * currentRoundDepositedFraction;
+                    let bonusPortion = prizePerWinner - realPortion;
+                    mainWalletBalance += realPortion;
+                    playWalletBalance += bonusPortion;
                     updateWalletDisplay();
                     addHistoryRecord('win', 'Bingo Game Winnings', prizePerWinner);
                     recordGameCompletion(localWinners.length);
@@ -2475,12 +2537,22 @@
             }, 1000);
         }
 
+        let lastCalledBoardCellNum = null;
+
         function markBoardAndCards(num) {
+            if (lastCalledBoardCellNum !== null) {
+                let prevCell = document.getElementById(`board_cell_${lastCalledBoardCellNum}`);
+                if (prevCell) {
+                    prevCell.style.background = "var(--orange-color)";
+                    prevCell.style.color = "white";
+                }
+            }
             let boardCell = document.getElementById(`board_cell_${num}`);
             if (boardCell) {
-                boardCell.style.background = "var(--danger-color)";
+                boardCell.style.background = "var(--success-color)";
                 boardCell.style.color = "white";
             }
+            lastCalledBoardCellNum = num;
 
             userBingoMatrices.forEach((cardObj, idx) => {
                 let matrix = cardObj.matrix;
