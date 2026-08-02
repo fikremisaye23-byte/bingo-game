@@ -694,7 +694,7 @@
             <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/FMEdilbingobot?start=ref849201</span></div>
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
-            <div style="text-align:center; margin-top:14px;">
+            <div id="adminLinkContainer" style="text-align:center; margin-top:14px; display:none;">
                 <span onclick="openAdminPanel()" style="font-size:11px; color:#475569; cursor:pointer;">🛠 Admin <span id="adminPendingBadge" style="display:none; background:var(--danger-color); color:white; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:bold; margin-left:2px;"></span></span>
             </div>
         </div>
@@ -1358,8 +1358,12 @@
         }
 
         function watchPendingRequestsForAdmin() {
-            if (!db || pendingBadgeListenersAttached) return;
             if (!HARDCODED_ADMIN_IDS.includes(String(telegramUserId))) return;
+
+            let linkContainer = document.getElementById('adminLinkContainer');
+            if (linkContainer) linkContainer.style.display = 'block';
+
+            if (!db || pendingBadgeListenersAttached) return;
             pendingBadgeListenersAttached = true;
 
             db.ref('transactions/deposits').on('value', function(snapshot) {
