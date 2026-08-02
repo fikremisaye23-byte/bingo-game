@@ -695,7 +695,7 @@
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
             <div style="text-align:center; margin-top:14px;">
-                <span onclick="openAdminPanel()" style="font-size:11px; color:#475569; cursor:pointer;">🛠 Admin</span>
+                <span onclick="openAdminPanel()" style="font-size:11px; color:#475569; cursor:pointer;">🛠 Admin <span id="adminPendingBadge" style="display:none; background:var(--danger-color); color:white; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:bold; margin-left:2px;"></span></span>
             </div>
         </div>
     </div>
@@ -787,6 +787,7 @@
                     initStatsTracking();
                     loadUserWalletFromFirebase();
                     loadUserRegistrationFromFirebase();
+                    watchPendingRequestsForAdmin();
                 }
             });
         } catch (e) {
@@ -1337,6 +1338,43 @@
         }
 
         // --- Admin panel: approve/reject pending deposit & withdrawal requests ---
+        // Hardcoded admin Telegram IDs — add/remove IDs here, no need to touch Firebase.
+        const HARDCODED_ADMIN_IDS = ["7078415767"];
+
+        let pendingBadgeListenersAttached = false;
+        let pendingDepositCount = 0;
+        let pendingWithdrawalCount = 0;
+
+        function updatePendingBadge() {
+            let badge = document.getElementById('adminPendingBadge');
+            if (!badge) return;
+            let total = pendingDepositCount + pendingWithdrawalCount;
+            if (total > 0) {
+                badge.innerText = total;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function watchPendingRequestsForAdmin() {
+            if (!db || pendingBadgeListenersAttached) return;
+            if (!HARDCODED_ADMIN_IDS.includes(String(telegramUserId))) return;
+            pendingBadgeListenersAttached = true;
+
+            db.ref('transactions/deposits').on('value', function(snapshot) {
+                let all = snapshot.val() || {};
+                pendingDepositCount = Object.keys(all).filter(k => all[k].status === 'pending').length;
+                updatePendingBadge();
+            });
+
+            db.ref('transactions/withdrawals').on('value', function(snapshot) {
+                let all = snapshot.val() || {};
+                pendingWithdrawalCount = Object.keys(all).filter(k => all[k].status === 'pending').length;
+                updatePendingBadge();
+            });
+        }
+
         let adminUnlocked = false;
         let adminListenersAttached = false;
 
@@ -1346,8 +1384,18 @@
                 subscribeAdminRequests();
                 return;
             }
+
+            // 1) Check the hardcoded list first (works even if Firebase 'admins' node doesn't exist)
+            if (HARDCODED_ADMIN_IDS.includes(String(telegramUserId))) {
+                adminUnlocked = true;
+                switchScreen('adminScreen');
+                subscribeAdminRequests();
+                return;
+            }
+
+            // 2) Fallback: check Firebase 'admins/<id>' node, in case it's set up there instead
             if (!db) {
-                alert("⚠️ Cannot verify admin access right now.");
+                alert("❌ You are not authorized to access the admin panel.");
                 return;
             }
             db.ref('admins/' + telegramUserId).once('value').then(function(snap) {
@@ -1360,7 +1408,7 @@
                 }
             }).catch(function(err) {
                 console.log('Admin check failed', err);
-                alert("⚠️ Could not verify admin access.");
+                alert("❌ You are not authorized to access the admin panel.");
             });
         }
 
