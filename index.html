@@ -6,6 +6,7 @@
     <title>100% ዕድል (Edil Bingo) - ለጨዋታ ብቻ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -778,9 +779,16 @@
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
-            initStatsTracking();
-            loadUserWalletFromFirebase();
-            loadUserRegistrationFromFirebase();
+            firebase.auth().signInAnonymously().catch(function(e) {
+                console.log("Anonymous sign-in failed", e);
+            });
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    initStatsTracking();
+                    loadUserWalletFromFirebase();
+                    loadUserRegistrationFromFirebase();
+                }
+            });
         } catch (e) {
             console.log("Firebase init failed", e);
         }
