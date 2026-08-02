@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habesha Bingo - መልካም ዕድል</title>
+    <title>100% ዕድል (Edil Bingo) - ለጨዋታ ብቻ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -513,7 +513,7 @@
 
     <!-- 1. HOME SCREEN -->
     <div id="homeScreen" class="screen active">
-        <h2>Habesha Bingo 🎉</h2>
+        <h2>100% ዕድል (Edil Bingo) 🎉</h2>
 
         <div class="menu-grid">
             <button class="btn btn-green" onclick="switchNav('stakeScreen', 'navGame')">Play 🎮</button>
@@ -565,7 +565,7 @@
     <div id="selectScreen" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
             <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="switchNav('stakeScreen', 'navGame')">✕ Back</button>
-            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">Habesha Bingo</h2>
+            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">100% ዕድል<br>(Edil Bingo)</h2>
             <button class="btn" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="openSelection()">🔄 Refresh</button>
         </div>
 
@@ -691,7 +691,7 @@
             <div style="margin-bottom: 12px; font-size: 14px;"><b>Name:</b> <span id="profileNameDisplay">Player</span></div>
             <div style="margin-bottom: 12px; font-size: 14px;"><b>ID:</b> <span id="profileIdDisplay">#849201</span></div>
             <div style="margin-bottom: 12px; font-size: 14px;"><b>Status:</b> <span id="userStatusDisplay" style="color: var(--danger-color);">Not Registered ❌</span></div>
-            <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/Habesha1Bingobot?start=ref849201</span></div>
+            <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/FMEdilbingobot?start=ref849201</span></div>
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
             <div style="text-align:center; margin-top:14px;">
@@ -757,7 +757,7 @@
         document.getElementById('profileNameDisplay').innerText = userName;
         document.getElementById('profileIdDisplay').innerText = "#" + userShortId;
         
-        let refLinkText = `t.me/Habesha1Bingobot?start=ref${userShortId}`;
+        let refLinkText = `t.me/FMEdilbingobot?start=ref${userShortId}`;
         let profileRefEl = document.getElementById('profileRefLink');
         if (profileRefEl) profileRefEl.innerText = refLinkText;
 
@@ -1311,17 +1311,17 @@
         }
 
         function handleInvite() {
-            let shareUrl = `https://t.me/share/url?url=https://t.me/Habesha1Bingobot?start=ref${userShortId}&text=Join%20Habesha%20Bingo%20for%20a%20fun%20game%20with%20friends%20-%20no%20real%20money!`;
+            let shareUrl = `https://t.me/share/url?url=https://t.me/FMEdilbingobot?start=ref${userShortId}&text=Join%20Edil%20Bingo%20for%20a%20fun%20game%20with%20friends%20-%20no%20real%20money!`;
             if (tg && tg.openTelegramLink) {
                 tg.openTelegramLink(shareUrl);
             } else {
-                navigator.clipboard.writeText(`https://t.me/Habesha1Bingobot?start=ref${userShortId}`);
+                navigator.clipboard.writeText(`https://t.me/FMEdilbingobot?start=ref${userShortId}`);
                 alert("🔗 Invite link copied to clipboard! Share it with your friends.");
             }
         }
 
         function handleSupport() {
-            let supportUrl = 'https://t.me/Habesha1Bingobot';
+            let supportUrl = 'https://t.me/FMEdilbingobot';
             if (tg && tg.openTelegramLink) {
                 tg.openTelegramLink(supportUrl);
             } else {
@@ -2368,110 +2368,212 @@
                 let isCompact = selectedCards.length > 1;
                 let cardDiv = document.createElement('div');
                 cardDiv.className = isCompact ? 'bingo-card-container compact' : 'bingo-card-container';
-                cardDiv.innerHTML = `<div style="font-size:${isCompact ? 9 : 10}px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>
-                    <div class="bingo-grid ${isCompact ? 'compact' : ''}">
-                        <div class="bingo-header-cell ${isCompact ? 'compact' : ''}">B</div>
-                        <div class="bingo-header-cell ${isCompact ? 'compact' : ''}">I</div>
-                        <div class="bingo-header-cell ${isCompact ? 'compact' : ''}">N</div>
-                        <div class="bingo-header-cell ${isCompact ? 'compact' : ''}">G</div>
-                        <div class="bingo-header-cell ${isCompact ? 'compact' : ''}">O</div>`;
+                cardDiv.innerHTML = `<div style="font-size:${isCompact ? 9 : 10}px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>`;
 
-                for(let r=0; r<5; r++) {
-                    for(let c=0; c<5; c++) {
+                let grid = document.createElement('div');
+                grid.className = isCompact ? 'bingo-grid compact' : 'bingo-grid';
+                let headerClass = isCompact ? 'bingo-header-cell compact' : 'bingo-header-cell';
+                let bodyHTML = `<div class="${headerClass}">B</div><div class="${headerClass}">I</div><div class="${headerClass}">N</div><div class="${headerClass}">G</div><div class="${headerClass}">O</div>`;
+
+                for(let r = 0; r < 5; r++) {
+                    for(let c = 0; c < 5; c++) {
                         let val = matrix[r][c];
+                        let cellId = `c_${idx}_${r}_${c}`;
                         let isFree = (val === 'FREE');
-                        let cellId = `user_card_${cardNum}_cell_${r}_${c}`;
-                        let cellClass = isFree ? (isCompact ? 'bingo-cell compact free' : 'bingo-cell free') : (isCompact ? 'bingo-cell compact' : 'bingo-cell');
-                        let displayText = isFree ? '✨' : val;
-                        cardDiv.innerHTML += `<div id="${cellId}" class="${cellClass}">${displayText}</div>`;
+                        let className = (isFree ? 'bingo-cell free' : 'bingo-cell') + (isCompact ? ' compact' : '');
+                        if(isFree) val = '✨';
+                        bodyHTML += `<div id="${cellId}" class="${className}">${val}</div>`;
                     }
                 }
-                cardDiv.innerHTML += `</div>`;
+                grid.innerHTML = bodyHTML;
+                cardDiv.appendChild(grid);
                 container.appendChild(cardDiv);
             });
         }
 
-        function markBoardAndCards(num) {
-            let boardCell = document.getElementById(`board_cell_${num}`);
-            if (boardCell) {
-                boardCell.style.background = 'var(--danger-color)';
-                boardCell.style.color = '#ffffff';
+        function startBingoGame() {
+            let statusText = document.getElementById('gameStatusText');
+
+            if (statusText) {
+                statusText.innerText = "Game in progress...";
+                statusText.style.color = "var(--orange-color)";
             }
 
-            let calledSet = {};
-            calledNumbersList.forEach(n => { calledSet[n] = true; });
+            if (db) {
+                subscribeCalledNumbers();
+                subscribeRoundEnd();
+            }
 
-            userBingoMatrices.forEach(cardObj => {
-                let cardNum = cardObj.id;
-                let matrix = cardObj.matrix;
-
-                for(let r=0; r<5; r++) {
-                    for(let c=0; c<5; c++) {
-                        let val = matrix[r][c];
-                        let cellEl = document.getElementById(`user_card_${cardNum}_cell_${r}_${c}`);
-                        if (!cellEl) continue;
-
-                        if (val === 'FREE') {
-                            cellEl.className = cellEl.className.includes('compact') ? 'bingo-cell compact free' : 'bingo-cell free';
-                        } else if (calledSet[val]) {
-                            cellEl.className = cellEl.className.includes('compact') ? 'bingo-cell compact marked' : 'bingo-cell marked';
-                        }
-                    }
-                }
-            });
-        }
-
-        function startBingoGame() {
-            clearInterval(gameInterval);
-            subscribeCalledNumbers();
-            subscribeRoundEnd();
-
-            let statusText = document.getElementById('gameStatusText');
-            if (statusText) statusText.innerText = "Game in progress...";
+            lastCallTime = Date.now();
 
             gameInterval = setInterval(function() {
-                if (roomRoundEndedCached) {
+                if (calledNumbersList.length >= 75) {
                     clearInterval(gameInterval);
                     return;
                 }
-                // Only the first player/host orchestrates calling if needed, or let Firebase handle timing. 
-                // To keep it fully in sync, any client can trigger calls if list is short and time elapsed.
-                if ((Date.now() - lastCallTime) > 3500 && calledNumbersList.length < 75) {
+
+                let stalledTooLong = db && (Date.now() - lastCallTime > 2000);
+
+                if (db && !stalledTooLong) {
                     attemptCallNextNumber();
+                    return;
+                }
+
+                // Local fallback: used when offline, or when Firebase-synced calling has stalled
+                let randomNum = Math.floor(Math.random() * 75) + 1;
+                while (calledNumbersList.includes(randomNum)) {
+                    randomNum = Math.floor(Math.random() * 75) + 1;
+                }
+                calledNumbersList.push(randomNum);
+                handleNumberCalled(randomNum);
+
+                if (db) {
+                    // best-effort: also try to sync this locally-generated call to Firebase
+                    db.ref('room/calledNumbers').transaction(function(current) {
+                        let list = current || [];
+                        if (list.includes(randomNum)) return list;
+                        return list.concat([randomNum]);
+                    }).catch(function(err) { console.log("Fallback sync failed:", err); });
+                }
+
+                let localWinners = checkGlobalWinConditions().filter(function(w) { return w.by === telegramUserId; });
+                if (localWinners.length > 0) {
+                    clearInterval(gameInterval);
+                    let prizePerWinner = currentGamePrize / localWinners.length;
+                    let realPortion = prizePerWinner * currentRoundDepositedFraction;
+                    let bonusPortion = prizePerWinner - realPortion;
+                    mainWalletBalance += realPortion;
+                    playWalletBalance += bonusPortion;
+                    updateWalletDisplay();
+                    addHistoryRecord('win', 'Bingo Game Winnings', prizePerWinner);
+                    recordGameCompletion(localWinners.length);
+                    showWinnerPopup(localWinners);
+                }
+            }, 1500);
+        }
+
+        function showWinnerPopup(winners) {
+            let modalBox = document.getElementById('customModal');
+            let modalBody = document.getElementById('modalBodyText');
+
+            // winners: [{ cardNum, by, name }] — all real, from Firebase (or local fallback)
+            let mainWinner = winners[0] || { cardNum: null, by: telegramUserId, name: userName };
+            let mainMatrix = null;
+            if (mainWinner.cardNum && takenCardsData[mainWinner.cardNum] && takenCardsData[mainWinner.cardNum].matrix) {
+                mainMatrix = takenCardsData[mainWinner.cardNum].matrix;
+            } else {
+                let ownCard = userBingoMatrices.find(c => c.id === mainWinner.cardNum);
+                mainMatrix = ownCard ? ownCard.matrix : generateBingoMatrix();
+            }
+
+            let playersListHTML = `
+                <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                    ${winners.map(function(w) {
+                        let displayName = w.name || "Player";
+                        let shortId = (w.by && w.by !== "guest_user") ? w.by.slice(-6) : "guest";
+                        let initial = displayName.charAt(0).toUpperCase();
+                        return `
+                        <div style="background: #1c2640; border: 1px solid #2e3b55; border-radius: 20px; padding: 4px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                            <span style="background: #3b82f6; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${initial}</span>
+                            <span>${displayName} #${shortId} · Cartela ${w.cardNum}</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+
+            let winnersCountText = winners.length === 1 ? "🎉 1 player won!" : `🎉 ${winners.length} players won!`;
+
+            let tableHTML = `
+                <div class="bingo-card-container" style="margin-bottom: 12px; border: 1px solid rgba(59, 130, 246, 0.4); background: #131b2e; padding: 8px; border-radius: 12px;">
+                    <div style="font-size:13px; margin-bottom:6px; color:var(--orange-color); font-weight: bold; text-align: center;">🏆 Winning Cartela : ${mainWinner.cardNum}</div>
+                    <div class="bingo-grid">
+                        <div class="bingo-header-cell" style="background-color:#3b82f6;">B</div>
+                        <div class="bingo-header-cell" style="background-color:#8b5cf6;">I</div>
+                        <div class="bingo-header-cell" style="background-color:#a855f7;">N</div>
+                        <div class="bingo-header-cell" style="background-color:#10b981;">G</div>
+                        <div class="bingo-header-cell" style="background-color:#f97316;">O</div>`;
+
+            let calledSetForPopup = {};
+            calledNumbersList.forEach(function(n) { calledSetForPopup[n] = true; });
+            let winPattern = getWinningPattern(mainMatrix, calledSetForPopup);
+            let winPatternSet = {};
+            winPattern.forEach(function(pos) { winPatternSet[pos[0] + '_' + pos[1]] = true; });
+
+            for(let r = 0; r < 5; r++) {
+                for(let c = 0; c < 5; c++) {
+                    let val = mainMatrix[r][c];
+                    let isFree = (val === 'FREE');
+                    let isInPattern = winPatternSet[r + '_' + c];
+                    let cellClass = 'bingo-cell';
+                    if (isFree) {
+                        cellClass += ' free';
+                    } else if (isInPattern) {
+                        cellClass += ' win-pattern';
+                    } else if (calledSetForPopup[val]) {
+                        cellClass += ' called-not-pattern';
+                    }
+                    if(isFree) val = '✨';
+                    tableHTML += `<div class="${cellClass}">${val}</div>`;
+                }
+            }
+            tableHTML += `</div></div>`;
+
+            modalBody.innerHTML = `
+                <div style="font-size: 34px; margin-bottom: 2px;">👑</div>
+                <div style="font-size: 22px; font-weight: bold; color: var(--orange-color); margin-bottom: 4px;">BINGO!</div>
+                <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 10px;">${winnersCountText}</div>
+                ${playersListHTML}
+                ${tableHTML}
+                <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                    🟠 Auto-starting next game in 4s
+                </div>
+            `;
+
+            modalBox.style.display = 'flex';
+
+            let count = 4;
+            let timerInterval = setInterval(function() {
+                count--;
+                let timerEl = document.getElementById('popupTimer');
+                if (timerEl) {
+                    timerEl.innerText = `🟠 Auto-starting next game in ${count}s`;
+                }
+                if (count <= 0) {
+                    clearInterval(timerInterval);
+                    modalBox.style.display = 'none';
+                    openSelection();
                 }
             }, 1000);
         }
 
-        function showWinnerPopup(winnersArr) {
-            let modalBox = document.getElementById('customModal');
-            let modalBody = document.getElementById('modalBodyText');
-            if (!modalBox || !modalBody) return;
+        let lastCalledBoardCellNum = null;
 
-            let myWins = winnersArr.filter(w => w.by === telegramUserId);
-            let isWinner = myWins.length > 0;
-
-            let winnerNames = winnersArr.map(w => `${w.name} (Cartela #${w.cardNum})`).join(', ');
-
-            if (isWinner) {
-                let prizePerWinner = currentGamePrize / winnersArr.length;
-                let myTotalPrize = prizePerWinner * myWins.length;
-                modalBody.innerHTML = `
-                    <div style="font-size: 48px; margin-bottom: 4px;">🏆</div>
-                    <div style="font-size: 20px; font-weight: bold; color: var(--success-color); margin-bottom: 6px;">BINGO! You Won! 🎉</div>
-                    <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">You matched the winning pattern and won <b style="color: var(--success-color);">${Math.floor(myTotalPrize)} coins</b>!</div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Winners: ${winnerNames}</div>
-                    <button class="btn btn-green" onclick="closeCustomModal(); openSelection();">Play Another Round 🎮</button>
-                `;
-            } else {
-                modalBody.innerHTML = `
-                    <div style="font-size: 42px; margin-bottom: 4px;">🔔</div>
-                    <div style="font-size: 18px; font-weight: bold; color: var(--orange-color); margin-bottom: 6px;">Round Ended</div>
-                    <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">Winner(s): <b style="color: white;">${winnerNames}</b></div>
-                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 16px;">Better luck next round!</div>
-                    <button class="btn btn-green" onclick="closeCustomModal(); openSelection();">Play Next Round 🎮</button>
-                `;
+        function markBoardAndCards(num) {
+            if (lastCalledBoardCellNum !== null) {
+                let prevCell = document.getElementById(`board_cell_${lastCalledBoardCellNum}`);
+                if (prevCell) {
+                    prevCell.style.background = "var(--orange-color)";
+                    prevCell.style.color = "white";
+                }
             }
-            modalBox.style.display = 'flex';
+            let boardCell = document.getElementById(`board_cell_${num}`);
+            if (boardCell) {
+                boardCell.style.background = "var(--success-color)";
+                boardCell.style.color = "white";
+            }
+            lastCalledBoardCellNum = num;
+
+            userBingoMatrices.forEach((cardObj, idx) => {
+                let matrix = cardObj.matrix;
+                for(let r = 0; r < 5; r++) {
+                    for(let c = 0; c < 5; c++) {
+                        if(matrix[r][c] === num) {
+                            let cell = document.getElementById(`c_${idx}_${r}_${c}`);
+                            if(cell) cell.classList.add('marked');
+                        }
+                    }
+                }
+            });
         }
     </script>
 </body>
