@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% ዕድል (Edil Bingo) - ለጨዋታ ብቻ</title>
+    <title>100% ዕድል (Temerachi Bingo) - ለጨዋታ ብቻ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -514,7 +514,7 @@
 
     <!-- 1. HOME SCREEN -->
     <div id="homeScreen" class="screen active">
-        <h2>100% ዕድል (Edil Bingo) 🎉</h2>
+        <h2>100% ዕድል (Temerachi Bingo) 🎉</h2>
 
         <div class="menu-grid">
             <button class="btn" onclick="handleRegister()">Register 📝</button>
@@ -565,7 +565,7 @@
     <div id="selectScreen" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
             <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="switchNav('stakeScreen', 'navGame')">✕ Back</button>
-            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">100% ዕድል<br>(Edil Bingo)</h2>
+            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">100% ዕድል<br>(Temerachi Bingo)</h2>
             <button class="btn" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="openSelection()">🔄 Refresh</button>
         </div>
 
@@ -691,7 +691,7 @@
             <div style="margin-bottom: 12px; font-size: 14px;"><b>Name:</b> <span id="profileNameDisplay">Player</span></div>
             <div style="margin-bottom: 12px; font-size: 14px;"><b>ID:</b> <span id="profileIdDisplay">#849201</span></div>
             <div style="margin-bottom: 12px; font-size: 14px;"><b>Status:</b> <span id="userStatusDisplay" style="color: var(--danger-color);">Not Registered ❌</span></div>
-            <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/FMEdilbingobot?start=ref849201</span></div>
+            <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/Temerachibingo_bot?start=ref849201</span></div>
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
             <div id="adminLinkContainer" style="text-align:center; margin-top:14px; display:none;">
@@ -757,7 +757,7 @@
         document.getElementById('profileNameDisplay').innerText = userName;
         document.getElementById('profileIdDisplay').innerText = "#" + userShortId;
         
-        let refLinkText = `t.me/FMEdilbingobot?start=ref${userShortId}`;
+        let refLinkText = `t.me/Temerachibingo_bot?start=ref${userShortId}`;
         let profileRefEl = document.getElementById('profileRefLink');
         if (profileRefEl) profileRefEl.innerText = refLinkText;
 
@@ -1319,17 +1319,17 @@
         }
 
         function handleInvite() {
-            let shareUrl = `https://t.me/share/url?url=https://t.me/FMEdilbingobot?start=ref${userShortId}&text=Join%20Edil%20Bingo%20for%20a%20fun%20game%20with%20friends%20-%20no%20real%20money!`;
+            let shareUrl = `https://t.me/share/url?url=https://t.me/Temerachibingo_bot?start=ref${userShortId}&text=Join%20Edil%20Bingo%20for%20a%20fun%20game%20with%20friends%20-%20no%20real%20money!`;
             if (tg && tg.openTelegramLink) {
                 tg.openTelegramLink(shareUrl);
             } else {
-                navigator.clipboard.writeText(`https://t.me/FMEdilbingobot?start=ref${userShortId}`);
+                navigator.clipboard.writeText(`https://t.me/Temerachibingo_bot?start=ref${userShortId}`);
                 alert("🔗 Invite link copied to clipboard! Share it with your friends.");
             }
         }
 
         function handleSupport() {
-            let supportUrl = 'https://t.me/FMEdilbingobot';
+            let supportUrl = 'https://t.me/Temerachibingo_bot';
             if (tg && tg.openTelegramLink) {
                 tg.openTelegramLink(supportUrl);
             } else {
@@ -1471,7 +1471,23 @@
 
         function adminApproveDeposit(key) {
             if (!db) return;
-            db.ref('transactions/deposits/' + key + '/status').set('approved');
+            db.ref('transactions/deposits/' + key).once('value').then(function(snap) {
+                let record = snap.val();
+                if (!record || record.status === 'approved') return; // avoid double-crediting
+                let userId = record.by;
+                let amount = Number(record.amount) || 0;
+
+                db.ref('transactions/deposits/' + key + '/status').set('approved');
+
+                // Credit the user's wallet directly on the server so it works
+                // even if the depositor already closed the app.
+                db.ref('users/' + userId + '/wallet/play').transaction(function(current) {
+                    return (current || 0) + amount;
+                });
+                db.ref('users/' + userId + '/wallet/deposited').transaction(function(current) {
+                    return (current || 0) + amount;
+                });
+            });
         }
 
         function adminRejectDeposit(key) {
