@@ -311,17 +311,17 @@
         }
 
         .called-circle {
-            width: 45px;
-            height: 45px;
+            width: 30px;
+            height: 30px;
             background: #ffffff;
-            border: 4px solid #f5b301;
+            border: 3px solid #f5b301;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 800;
-            margin: 4px auto;
+            margin: 3px auto;
             box-shadow: 0 0 12px rgba(245, 179, 1, 0.45);
             position: relative;
         }
@@ -516,18 +516,17 @@
         <h2>100% ዕድል (Edil Bingo) 🎉</h2>
 
         <div class="menu-grid">
-            <button class="btn btn-green" onclick="switchNav('stakeScreen', 'navGame')">Play 🎮</button>
             <button class="btn" onclick="handleRegister()">Register 📝</button>
+            <button class="btn btn-green" onclick="switchNav('stakeScreen', 'navGame')">Play 🎮</button>
 
-            <button class="btn btn-orange" onclick="switchNav('walletScreen', 'navWallet')">Check Wallets ⚙️</button>
             <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
-
-            <button class="btn" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
-
-            <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
-            <button class="btn btn-orange" onclick="handleSupport()">Contact Support 🆘</button>
+            <button class="btn btn-orange" onclick="switchNav('walletScreen', 'navWallet')">Check Balance ⚙️</button>
 
             <button class="btn btn-orange" onclick="handleWithdraw()">Withdraw 💸</button>
+            <button class="btn" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
+
+            <button class="btn btn-orange" onclick="handleSupport()">Contact Support 🆘</button>
+            <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
         </div>
 
     </div>
@@ -649,7 +648,7 @@
                 </div>
 
                 <!-- User Cards Container with exact max-height and overflow scroll -->
-                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; max-height: 46vh; overflow-y: auto;"></div>
+                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px;"></div>
             </div>
         </div>
 
@@ -1259,7 +1258,7 @@
         let userBingoMatrices = [];
         
         let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
-        let playWalletBalance = 10; // everyone starts with a small free amount; staking deducts from here; deposits add here
+        let playWalletBalance = 0; // starts at 0; gets 10 when player registers
         let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
         let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
         let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
@@ -1429,7 +1428,24 @@
             if (!db) return;
             db.ref('transactions/withdrawals/' + key + '/status').set('rejected');
         }
-        // --- end admin panel ---
+
+        function showInsuffientBalanceModal(message) {
+            let modalBox = document.getElementById('customModal');
+            let modalBody = document.getElementById('modalBodyText');
+            
+            modalBody.innerHTML = `
+                <div style="text-align: center; color: var(--danger-color); font-size: 28px; margin-bottom: 12px;">⚠️</div>
+                <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: var(--text-color);">${message}</div>
+                <div style="display: flex; gap: 10px; flex-direction: column;">
+                    <button class="btn btn-green" onclick="handleDeposit(); document.getElementById('customModal').style.display = 'none';">💰 Deposit Now</button>
+                    <button class="btn btn-danger" onclick="document.getElementById('customModal').style.display = 'none';">Close</button>
+                </div>
+            `;
+            
+            modalBox.style.display = 'flex';
+        }
+
+        
 
         const gridContainer = document.getElementById('numberGrid');
         if (gridContainer) {
@@ -1459,8 +1475,7 @@
                             let nextCost = (selectedCards.length + 1) * selectedStake;
 
                             if (playWalletBalance < nextCost) {
-                                alert(`❌ Not enough coins in Play Wallet! You need at least ${nextCost} coins to select card(s). Deposit some first.`);
-                                switchNav('walletScreen', 'navWallet');
+                                showToast(`Insufficient wallet balance.`, 3000);
                                 return;
                             }
 
@@ -1564,9 +1579,9 @@
                 });
             }
             
-            playWalletBalance += 100;
+            playWalletBalance += 10;
             updateWalletDisplay();
-            addHistoryRecord('bonus', 'Registration Bonus', 100);
+            addHistoryRecord('bonus', 'Registration Bonus', 10);
 
             let statusEl = document.getElementById('userStatusDisplay');
             if (statusEl) {
@@ -1574,7 +1589,7 @@
                 statusEl.style.color = "var(--success-color)";
             }
 
-            alert("🎉 Welcome! 100 free fun coins have been added to your balance.");
+            alert("🎉 Welcome! 10 free fun coins have been added to your balance.");
         }
 
         function chooseStake(stake) {
@@ -1646,8 +1661,7 @@
             let totalDeduction = selectedCards.length * selectedStake;
 
             if (playWalletBalance < totalDeduction) {
-                alert(`❌ Not enough coins in Play Wallet! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s). Deposit some first.`);
-                switchNav('walletScreen', 'navWallet');
+                showInsuffientBalanceModal(`❌ Not enough coins in Play Wallet! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 return;
             }
 
