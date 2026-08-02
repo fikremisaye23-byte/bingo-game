@@ -2004,7 +2004,7 @@
                 }
             }).catch(function(err) {
                 console.log('Deposit txn check failed', err);
-                errorEl.innerText = '⚠️ ስህተት ተከስቷል፣ እንደገና ሞክር።';
+                errorEl.innerText = '⚠️ ስህተት ተከስቷል፣ እንደገና ሞክር። (' + (err && err.message ? err.message : err) + ')';
                 errorEl.style.display = 'block';
             });
         }
