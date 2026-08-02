@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% ዕድል (Edil Bingo) - ለጨዋታ ብቻ</title>
+    <title>100% ዕድል (Edil Bingo) - መልካም ዕድል</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
@@ -523,7 +523,6 @@
             <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
 
             <button class="btn" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
-            <button class="btn btn-danger" onclick="handleResetCoins()">Reset Wallets 🔄</button>
 
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-orange" onclick="handleSupport()">Contact Support 🆘</button>
@@ -680,9 +679,8 @@
 
         <div class="main-card">
             <div style="font-size: 12px; color: #64748b;">
-                Coins are just for keeping score with friends. This is fun mode — no real money is involved. When you win a game, winnings automatically move to your Main Wallet. Deposits go into your Play Wallet.
+                Play Wallet coins are used to join games. When you win a game, winnings automatically move to your Main Wallet. Deposits go into your Play Wallet. Only real deposited winnings can be withdrawn from your Main Wallet.
             </div>
-            <button class="btn btn-danger" onclick="handleResetCoins()">Reset Wallets 🔄</button>
         </div>
     </div>
 
@@ -821,6 +819,12 @@
                 }
             }).catch(function(err) {
                 console.log('Registration load failed', err);
+            });
+
+            db.ref('users/' + telegramUserId + '/hasUsedFreeGame').once('value').then(function(snap) {
+                hasUsedFreeGame = (snap.val() === true);
+            }).catch(function(err) {
+                console.log('Free game flag load failed', err);
             });
         }
 
@@ -1258,6 +1262,7 @@
         let playWalletBalance = 10; // everyone starts with a small free amount; staking deducts from here; deposits add here
         let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
         let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
+        let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
         let gameHistoryList = [];
         
         let isRegistered = false;
@@ -1625,6 +1630,13 @@
         }
 
         function processGameEntry() {
+            // Only ONE free (non-deposit) game is allowed per user. After that, playing again requires real money in the wallet.
+            if (depositedBalance <= 0 && hasUsedFreeGame) {
+                alert('🔒 You have already played your one free game. Please deposit to keep playing.');
+                switchNav('walletScreen', 'navWallet');
+                return;
+            }
+
             if (selectedCards.length === 0) {
                 let randomCard = pickRandomAvailableCard();
                 selectedCards.push(randomCard);
@@ -1637,6 +1649,15 @@
                 alert(`❌ Not enough coins in Play Wallet! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s). Deposit some first.`);
                 switchNav('walletScreen', 'navWallet');
                 return;
+            }
+
+            if (depositedBalance <= 0 && !hasUsedFreeGame) {
+                hasUsedFreeGame = true;
+                if (db) {
+                    db.ref('users/' + telegramUserId + '/hasUsedFreeGame').set(true).catch(function(err) {
+                        console.log('Free game flag save failed', err);
+                    });
+                }
             }
 
             // Track what fraction of THIS stake is real (deposited) money vs free bonus coins —
@@ -2168,18 +2189,6 @@
                     `;
                 }
             });
-        }
-
-        function handleResetCoins() {
-            let confirmReset = confirm("Reset your Main Wallet to 0 and Play Wallet to 10? This is just for fun scorekeeping.");
-            if (!confirmReset) return;
-
-            mainWalletBalance = 0;
-            playWalletBalance = 10;
-            depositedBalance = 0;
-            updateWalletDisplay();
-            addHistoryRecord('reset', 'Wallets Reset', 0);
-            showToast("🔄 Your wallets have been reset (Main: 0, Play: 10).");
         }
 
         // ---- Audio system: unlock on first tap, beep + speech, so it works even in in-app WebViews ----
