@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% ዕድል (Temerachi Bingo) - ለጨዋታ ብቻ</title>
+    <title>Temerachi Bingo) </title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -524,7 +524,7 @@
             <button class="btn btn-orange" onclick="switchNav('walletScreen', 'navWallet')">Check Balance ⚙️</button>
 
             <button class="btn btn-orange" onclick="handleWithdraw()">Withdraw 💸</button>
-            <button class="btn" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
+            <button class="btn" onclick="showInstructions()">Instruction 📖</button>
 
             <button class="btn btn-orange" onclick="handleSupport()">Contact Support 🆘</button>
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
@@ -693,7 +693,7 @@
             <div style="margin-bottom: 12px; font-size: 14px;"><b>Status:</b> <span id="userStatusDisplay" style="color: var(--danger-color);">Not Registered ❌</span></div>
             <div style="margin-bottom: 15px; font-size: 13px;"><b>Invite Link:</b> <span id="profileRefLink" style="color: var(--btn-blue);">t.me/Temerachibingo_bot?start=ref849201</span></div>
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
-            <button class="btn btn-green" onclick="alert('Instructions: Choose up to 2 cards (10 coins each), match the called numbers on your card, and be first to complete a full row or column to win the round!')">Instruction 📖</button>
+            <button class="btn btn-green" onclick="showInstructions()">Instruction 📖</button>
             <div id="adminLinkContainer" style="text-align:center; margin-top:14px; display:none;">
                 <span onclick="openAdminPanel()" style="font-size:11px; color:#475569; cursor:pointer;">🛠 Admin <span id="adminPendingBadge" style="display:none; background:var(--danger-color); color:white; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:bold; margin-left:2px;"></span></span>
             </div>
@@ -1329,12 +1329,32 @@
         }
 
         function handleSupport() {
-            let supportUrl = 'https://t.me/Temerachibingo_bot';
+            let supportUrl = 'https://t.me/Temerachibingosupport';
             if (tg && tg.openTelegramLink) {
                 tg.openTelegramLink(supportUrl);
             } else {
                 window.open(supportUrl, '_blank');
             }
+        }
+
+        function showInstructions() {
+            alert(
+                '🃏 መጫወቻ ካርድ\n\n' +
+                '1. ጨዋታውን ለመጀመር ከሚመጣልን ከ1-600 የካርድ መምረጫ ቦርድ ውስጥ እስከ 2 የመጫወቻ ካርድ (ካርቴላ) መምረጥ ይቻላል።\n\n' +
+                '2. የካርድ መምረጫ ቦርድ ላይ በቀይ ቀለም የተመረጡ ቁጥሮች የሚያሳዩት መጫወቻ ካርዱ (ካርቴላው) በሌላ ተጫዋች መመረጡን ነው።\n\n' +
+                '3. የመጫወቻ ካርዱን (ካርቴላውን) ሲመርጡት ከታች የሚይዛቸውን ቁጥሮች ያሳያል።\n\n' +
+                '4. ወደ ጨዋታው ለመግባት የሚፈልጉትን የመጫወቻ ካርድ (ካርቴላ) ሲመርጡና ለምዝገባ የተሰጠው ሰኮንድ ዜሮ ሲሆን ቀጥታ ወደ ጨዋታ ያስገባል።\n\n' +
+                '🎮 ጨዋታ እንዴት ይካሄዳል\n\n' +
+                '1. ወደ ጨዋታው ከገቡ በኋላ በመረጡት የመጫወቻ ካርድ (ካርቴላ) ከታች በቀኝ በኩል ያገኙታል።\n\n' +
+                '2. ጨዋታው ሲጀምር ሲስተሙ ከ1 እስከ 75 ያሉ ቁጥሮችን Randomly መጥራት ይጀምራል።\n\n' +
+                '3. ሲስተሙ ከሚጠራቸው ቁጥሮች ውስጥ በራስዎ የመጫወቻ ካርድ (ካርቴላ) ላይ ካሉ በመምረጥ ያጥቁሩ። በራሱ እንዲያጠቁር ከፈለጉ Automatic የሚለውን ያብሩት።\n\n' +
+                '🏆 አሸናፊ የሚሆኑባቸው መንገዶች\n\n' +
+                '1. መጫወቻ ካርድ (ካርቴላ) ላይ የተጠቆሩት ቁጥሮች፦\n' +
+                '   • ወደጎን ወይም ወደታች መስመር ከሰሩ\n' +
+                '   • ወደሁለቱም አግዳሚ መስመር ከሰሩ\n' +
+                '   • አራቱ ማእዘናት (ኮርነር) ከተጠሩ አሸናፊ ይሆናሉ።\n\n' +
+                '2. ሁለት ወይም ከዚያ በላይ ተጫዋቾች እኩል ቢያሸንፉ አጠቃላይ ደራሹ ብር ለአሸናፊዎች እኩል ይካፈላል።'
+            );
         }
 
         // --- Admin panel: approve/reject pending deposit & withdrawal requests ---
