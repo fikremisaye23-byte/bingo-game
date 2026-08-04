@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Temerachi Bingo) </title>
+    <title>100% ዕድል (Temerachi Bingo) - ለጨዋታ ብቻ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -1201,17 +1201,20 @@
         }
 
         function finalizeRoundWinners(winners) {
-            db.ref('room/roundEnded').transaction(function(current) {
-                if (current === true) return; // abort - another client already ended it
-                return true;
-            }).then(function(result) {
-                if (result.committed) {
-                    let updates = {};
-                    winners.forEach(function(w) {
-                        updates[w.cardNum] = { by: w.by, name: w.name };
-                    });
-                    db.ref('room/winnerCards').update(updates);
-                }
+            // IMPORTANT: winnerCards must be fully written BEFORE roundEnded flips to
+            // true. Clients are listening for roundEnded=true and immediately read
+            // winnerCards the instant they see it -- if we set roundEnded first (old
+            // order), that read can race ahead of this write and see an empty/partial
+            // winnerCards, showing "0 players won" and skipping the wallet credit.
+            let updates = {};
+            winners.forEach(function(w) {
+                updates[w.cardNum] = { by: w.by, name: w.name };
+            });
+            db.ref('room/winnerCards').update(updates).then(function() {
+                return db.ref('room/roundEnded').transaction(function(current) {
+                    if (current === true) return; // abort - another client already ended it
+                    return true;
+                });
             }).catch(function(err) {
                 console.log("finalizeRoundWinners failed", err);
             });
