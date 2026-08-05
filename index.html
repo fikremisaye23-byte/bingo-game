@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> (Temerachi Bingo) </title>
+    <title>Temerachi Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -512,30 +512,9 @@
     <!-- TOAST (replaces native alert popups) -->
     <div id="customToast"></div>
 
-    <!-- 1. HOME SCREEN -->
-    <div id="homeScreen" class="screen active">
-        <h2>100% ዕድል (Temerachi Bingo) 🎉</h2>
-
-        <div class="menu-grid">
-            <button class="btn" onclick="handleRegister()">Register 📝</button>
-            <button class="btn btn-green" onclick="switchNav('stakeScreen', 'navGame')">Play 🎮</button>
-
-            <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
-            <button class="btn btn-orange" onclick="switchNav('walletScreen', 'navWallet')">Check Balance ⚙️</button>
-
-            <button class="btn btn-orange" onclick="handleWithdraw()">Withdraw 💸</button>
-            <button class="btn" onclick="showInstructions()">Instruction 📖</button>
-
-            <button class="btn btn-orange" onclick="handleSupport()">Contact Support 🆘</button>
-            <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
-        </div>
-
-    </div>
-
     <!-- 1.5 STAKE SELECTION SCREEN -->
-    <div id="stakeScreen" class="screen">
+    <div id="stakeScreen" class="screen active">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
-            <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="switchNav('homeScreen', 'navGame')">✕ Back</button>
             <h2 style="margin: 0; font-size: 16px; text-align: center; flex: 1;">▷ Choose Your Stake</h2>
             <div style="width: 54px;"></div>
         </div>
@@ -565,7 +544,7 @@
     <div id="selectScreen" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
             <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="switchNav('stakeScreen', 'navGame')">✕ Back</button>
-            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">100% ዕድል<br>(Temerachi Bingo)</h2>
+            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">Temerachi Bingo</h2>
             <button class="btn" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="openSelection()">🔄 Refresh</button>
         </div>
 
@@ -715,7 +694,7 @@
         </div>
     </div>
     <div class="nav-bar">
-        <button class="nav-item active" id="navGame" onclick="switchNav('homeScreen', 'navGame')">🎮 Game</button>
+        <button class="nav-item active" id="navGame" onclick="switchNav('stakeScreen', 'navGame')">🎮 Game</button>
         <button class="nav-item" id="navProfile" onclick="switchNav('profileScreen', 'navProfile')">👤 Profile</button>
     </div>
 
@@ -1590,7 +1569,7 @@
 
                             let nextCost = (selectedCards.length + 1) * selectedStake;
 
-                            if (playWalletBalance < nextCost) {
+                            if ((playWalletBalance + mainWalletBalance) < nextCost) {
                                 showToast(`Insufficient wallet balance.`, 3000);
                                 return;
                             }
@@ -1776,8 +1755,8 @@
 
             let totalDeduction = selectedCards.length * selectedStake;
 
-            if (playWalletBalance < totalDeduction) {
-                showInsuffientBalanceModal(`❌ Not enough coins in Play Wallet! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
+            if ((playWalletBalance + mainWalletBalance) < totalDeduction) {
+                showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 return;
             }
 
@@ -1790,12 +1769,22 @@
                 }
             }
 
+            // Play Wallet is used first; any shortfall is covered by Main Wallet.
+            // Main Wallet money is already real/withdrawable, so that portion
+            // counts as 100% "real" toward this round's withdrawable fraction.
+            let playPortion = Math.min(playWalletBalance, totalDeduction);
+            let mainPortion = totalDeduction - playPortion;
+
             // Track what fraction of THIS stake is real (deposited) money vs free bonus coins —
             // only the real fraction of any winnings will be withdrawable.
-            currentRoundDepositedFraction = playWalletBalance > 0 ? Math.min(1, depositedBalance / playWalletBalance) : 0;
-            depositedBalance = Math.max(0, depositedBalance - totalDeduction * currentRoundDepositedFraction);
+            let playDepositedFraction = playWalletBalance > 0 ? Math.min(1, depositedBalance / playWalletBalance) : 0;
+            let realFromPlay = playPortion * playDepositedFraction;
+            let totalReal = realFromPlay + mainPortion;
+            currentRoundDepositedFraction = totalDeduction > 0 ? totalReal / totalDeduction : 0;
+            depositedBalance = Math.max(0, depositedBalance - realFromPlay);
 
-            playWalletBalance -= totalDeduction;
+            playWalletBalance -= playPortion;
+            mainWalletBalance -= mainPortion;
             updateWalletDisplay();
             addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
 
@@ -2383,7 +2372,18 @@
                     utterance.lang = 'en-US';
                     utterance.rate = 0.9;
                     if (cachedVoices.length > 0) {
-                        let enVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
+                        let enVoice = cachedVoices.find(v =>
+                            v.lang && v.lang.startsWith('en') && /male/i.test(v.name) && !/female/i.test(v.name)
+                        );
+                        if (!enVoice) {
+                            // Common male-voice names across platforms (Windows/Android/iOS/macOS)
+                            enVoice = cachedVoices.find(v =>
+                                v.lang && v.lang.startsWith('en') && /(david|daniel|alex|fred|mark|guy|male)/i.test(v.name)
+                            );
+                        }
+                        if (!enVoice) {
+                            enVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
+                        }
                         if (enVoice) utterance.voice = enVoice;
                     }
                     // Small delay so it doesn't collide with the cancel() on some browsers
