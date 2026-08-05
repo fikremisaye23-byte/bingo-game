@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>100% ዕድል (Temerachi Bingo) - ለጨዋታ ብቻ</title>
+    <title>Temerachi Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -514,7 +514,7 @@
 
     <!-- 1. HOME SCREEN -->
     <div id="homeScreen" class="screen active">
-        <h2>100% ዕድል (Temerachi Bingo) 🎉</h2>
+        <h2>Temerachi Bingo 🎉</h2>
 
         <div class="menu-grid">
             <button class="btn" onclick="handleRegister()">Register 📝</button>
@@ -565,7 +565,7 @@
     <div id="selectScreen" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
             <button class="btn btn-danger" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="switchNav('stakeScreen', 'navGame')">✕ Back</button>
-            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">100% ዕድል<br>(Temerachi Bingo)</h2>
+            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">Temerachi Bingo</h2>
             <button class="btn" style="width: auto; padding: 6px 12px; font-size: 13px;" onclick="openSelection()">🔄 Refresh</button>
         </div>
 
@@ -1341,23 +1341,40 @@
         }
 
         function showInstructions() {
-            alert(
-                '🃏 መጫወቻ ካርድ\n\n' +
-                '1. ጨዋታውን ለመጀመር ከሚመጣልን ከ1-600 የካርድ መምረጫ ቦርድ ውስጥ እስከ 2 የመጫወቻ ካርድ (ካርቴላ) መምረጥ ይቻላል።\n\n' +
-                '2. የካርድ መምረጫ ቦርድ ላይ በቀይ ቀለም የተመረጡ ቁጥሮች የሚያሳዩት መጫወቻ ካርዱ (ካርቴላው) በሌላ ተጫዋች መመረጡን ነው።\n\n' +
-                '3. የመጫወቻ ካርዱን (ካርቴላውን) ሲመርጡት ከታች የሚይዛቸውን ቁጥሮች ያሳያል።\n\n' +
-                '4. ወደ ጨዋታው ለመግባት የሚፈልጉትን የመጫወቻ ካርድ (ካርቴላ) ሲመርጡና ለምዝገባ የተሰጠው ሰኮንድ ዜሮ ሲሆን ቀጥታ ወደ ጨዋታ ያስገባል።\n\n' +
-                '🎮 ጨዋታ እንዴት ይካሄዳል\n\n' +
-                '1. ወደ ጨዋታው ከገቡ በኋላ በመረጡት የመጫወቻ ካርድ (ካርቴላ) ከታች በቀኝ በኩል ያገኙታል።\n\n' +
-                '2. ጨዋታው ሲጀምር ሲስተሙ ከ1 እስከ 75 ያሉ ቁጥሮችን Randomly መጥራት ይጀምራል።\n\n' +
-                '3. ሲስተሙ ከሚጠራቸው ቁጥሮች ውስጥ በራስዎ የመጫወቻ ካርድ (ካርቴላ) ላይ ካሉ በመምረጥ ያጥቁሩ። በራሱ እንዲያጠቁር ከፈለጉ Automatic የሚለውን ያብሩት።\n\n' +
-                '🏆 አሸናፊ የሚሆኑባቸው መንገዶች\n\n' +
-                '1. መጫወቻ ካርድ (ካርቴላ) ላይ የተጠቆሩት ቁጥሮች፦\n' +
-                '   • ወደጎን ወይም ወደታች መስመር ከሰሩ\n' +
-                '   • ወደሁለቱም አግዳሚ መስመር ከሰሩ\n' +
-                '   • አራቱ ማእዘናት (ኮርነር) ከተጠሩ አሸናፊ ይሆናሉ።\n\n' +
-                '2. ሁለት ወይም ከዚያ በላይ ተጫዋቾች እኩል ቢያሸንፉ አጠቃላይ ደራሹ ብር ለአሸናፊዎች እኩል ይካፈላል።'
-            );
+            let modalBox = document.getElementById('customModal');
+            let modalBody = document.getElementById('modalBodyText');
+            modalBody.innerHTML = `
+                <div style="font-size: 30px; margin-bottom: 4px;">📖</div>
+                <div style="font-size: 19px; font-weight: bold; color: var(--orange-color); margin-bottom: 12px;">Instructions</div>
+                <div style="text-align: left; font-size: 14px; line-height: 1.7; color: #e2e8f0; white-space: pre-line;">🃏 መጫወቻ ካርድ
+
+1. ጨዋታውን ለመጀመር ከሚመጣልን ከ1-600 የካርድ መምረጫ ቦርድ ውስጥ እስከ 2 የመጫወቻ ካርድ (ካርቴላ) መምረጥ ይቻላል።
+
+2. የካርድ መምረጫ ቦርድ ላይ በቀይ ቀለም የተመረጡ ቁጥሮች የሚያሳዩት መጫወቻ ካርዱ (ካርቴላው) በሌላ ተጫዋች መመረጡን ነው።
+
+3. የመጫወቻ ካርዱን (ካርቴላውን) ሲመርጡት ከታች የሚይዛቸውን ቁጥሮች ያሳያል።
+
+4. ወደ ጨዋታው ለመግባት የሚፈልጉትን የመጫወቻ ካርድ (ካርቴላ) ሲመርጡና ለምዝገባ የተሰጠው ሰኮንድ ዜሮ ሲሆን ቀጥታ ወደ ጨዋታ ያስገባል።
+
+🎮 ጨዋታ እንዴት ይካሄዳል
+
+1. ወደ ጨዋታው ከገቡ በኋላ በመረጡት የመጫወቻ ካርድ (ካርቴላ) ከታች በቀኝ በኩል ያገኙታል።
+
+2. ጨዋታው ሲጀምር ሲስተሙ ከ1 እስከ 75 ያሉ ቁጥሮችን Randomly መጥራት ይጀምራል።
+
+3. ሲስተሙ ከሚጠራቸው ቁጥሮች ውስጥ በራስዎ የመጫወቻ ካርድ (ካርቴላ) ላይ ካሉ በመምረጥ ያጥቁሩ። በራሱ እንዲያጠቁር ከፈለጉ Automatic የሚለውን ያብሩት።
+
+🏆 አሸናፊ የሚሆኑባቸው መንገዶች
+
+1. መጫወቻ ካርድ (ካርቴላ) ላይ የተጠቆሩት ቁጥሮች፦
+   • ወደጎን ወይም ወደታች መስመር ከሰሩ
+   • ወደሁለቱም አግዳሚ መስመር ከሰሩ
+   • አራቱ ማእዘናት (ኮርነር) ከተጠሩ አሸናፊ ይሆናሉ።
+
+2. ሁለት ወይም ከዚያ በላይ ተጫዋቾች እኩል ቢያሸንፉ አጠቃላይ ደራሹ ብር ለአሸናፊዎች እኩል ይካፈላል።</div>
+                <button class="btn btn-orange" style="margin-top: 16px;" onclick="document.getElementById('customModal').style.display = 'none';">Close</button>
+            `;
+            modalBox.style.display = 'flex';
         }
 
         // --- Admin panel: approve/reject pending deposit & withdrawal requests ---
