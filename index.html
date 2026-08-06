@@ -774,19 +774,27 @@
         }
 
         // --- Wallet balances now live in Firebase (users/<id>/wallet) so they survive refresh ---
+        // Uses a live listener (not once()) so a change made elsewhere -- e.g. an admin
+        // approving a deposit from the Telegram bot -- shows up immediately here too,
+        // instead of only appearing the next time the Mini App is reopened.
         function loadUserWalletFromFirebase() {
             if (!db) return;
-            db.ref('users/' + telegramUserId + '/wallet').once('value').then(function(snap) {
+            db.ref('users/' + telegramUserId + '/wallet').on('value', function(snap) {
                 let w = snap.val();
+                isApplyingRemoteWalletUpdate = true;
                 if (w && typeof w.main === 'number' && typeof w.play === 'number') {
                     mainWalletBalance = w.main;
                     playWalletBalance = w.play;
                     depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
+                    updateWalletDisplay();
                 } else {
+                    isApplyingRemoteWalletUpdate = false;
                     db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
+                    updateWalletDisplay();
+                    return;
                 }
-                updateWalletDisplay();
-            }).catch(function(err) {
+                isApplyingRemoteWalletUpdate = false;
+            }, function(err) {
                 console.log('Wallet load failed', err);
             });
         }
@@ -1268,6 +1276,8 @@
             }
         }
 
+        let isApplyingRemoteWalletUpdate = false; // true while syncing FROM Firebase, so updateWalletDisplay() doesn't echo stale local values back and clobber a change made elsewhere (e.g. an admin deposit approval from the bot)
+
         function updateWalletDisplay() {
             let mainEl = document.getElementById('mainWalletBalanceDisplay');
             if (mainEl) mainEl.innerText = Math.floor(mainWalletBalance) + " coins";
@@ -1284,7 +1294,12 @@
             let selStakeEl = document.getElementById('selStakeDisplay');
             if (selStakeEl) selStakeEl.innerText = selectedStake;
 
-            if (db) {
+            // Only push to Firebase when the change originated locally (a game
+            // result, a deposit/withdraw in this session, etc). If we're here
+            // because the live listener just synced in a change from elsewhere
+            // (e.g. the bot approving a deposit), writing back would overwrite
+            // that change with the stale values this tab already had in memory.
+            if (db && !isApplyingRemoteWalletUpdate) {
                 db.ref('users/' + telegramUserId + '/wallet').set({
                     main: mainWalletBalance,
                     play: playWalletBalance,
