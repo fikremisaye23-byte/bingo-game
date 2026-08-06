@@ -2342,6 +2342,28 @@
                     primer.volume = 0;
                     window.speechSynthesis.speak(primer);
                     cachedVoices = window.speechSynthesis.getVoices();
+                    // Some in-app WebViews (Telegram on Android especially) load the
+                    // voice list asynchronously and never fire onvoiceschanged, so a
+                    // single getVoices() right here can come back empty. Re-check a
+                    // few times over the next couple seconds to catch it once it's ready.
+                    if (cachedVoices.length === 0) {
+                        [300, 800, 1500, 3000].forEach(function(delay) {
+                            setTimeout(function() {
+                                let v = window.speechSynthesis.getVoices();
+                                if (v.length > 0) cachedVoices = v;
+                            }, delay);
+                        });
+                    }
+                    // Chrome/WebView TTS engines silently stop speaking after being idle
+                    // or after ~15s of continuous speech (a long-standing Chromium bug).
+                    // Nudging pause()+resume() periodically keeps the engine alive so
+                    // later calls don't just go silent.
+                    setInterval(function() {
+                        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                            window.speechSynthesis.pause();
+                            window.speechSynthesis.resume();
+                        }
+                    }, 5000);
                 }
             } catch(e) {
                 console.log("Audio unlock error", e);
@@ -2382,6 +2404,11 @@
             if ('speechSynthesis' in window) {
                 try {
                     window.speechSynthesis.cancel();
+                    // Re-check the voice list right before speaking too -- on some
+                    // WebViews it's still empty at unlock time but ready a bit later.
+                    if (cachedVoices.length === 0) {
+                        cachedVoices = window.speechSynthesis.getVoices();
+                    }
                     let spokenText = callText.replace('-', ' ');
                     let utterance = new SpeechSynthesisUtterance(spokenText);
                     utterance.lang = 'en-US';
