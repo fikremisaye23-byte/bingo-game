@@ -1536,7 +1536,20 @@
 
         function adminRejectWithdrawal(key) {
             if (!db) return;
-            db.ref('transactions/withdrawals/' + key + '/status').set('rejected');
+            db.ref('transactions/withdrawals/' + key).once('value').then(function(snap) {
+                let record = snap.val();
+                if (!record || record.status !== 'pending') return; // already handled
+                let userId = record.by;
+                let amount = Number(record.amount) || 0;
+
+                db.ref('transactions/withdrawals/' + key + '/status').set('rejected');
+
+                // Refund the amount back to the user's main wallet, since it
+                // was deducted immediately when they submitted the request.
+                db.ref('users/' + userId + '/wallet/main').transaction(function(current) {
+                    return (current || 0) + amount;
+                });
+            });
         }
 
         function showInsuffientBalanceModal(message) {
