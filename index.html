@@ -782,12 +782,19 @@
             db.ref('users/' + telegramUserId + '/wallet').on('value', function(snap) {
                 let w = snap.val();
                 isApplyingRemoteWalletUpdate = true;
-                if (w && typeof w.main === 'number' && typeof w.play === 'number') {
-                    mainWalletBalance = w.main;
-                    playWalletBalance = w.play;
+                if (w) {
+                    // A field can legitimately be missing (e.g. the admin panel's
+                    // approve button only ever writes the "play" and "deposited"
+                    // children, never "main"). Default any missing field to 0
+                    // instead of treating a partial object as "no data" and
+                    // wiping the whole wallet back to zero.
+                    mainWalletBalance = typeof w.main === 'number' ? w.main : 0;
+                    playWalletBalance = typeof w.play === 'number' ? w.play : 0;
                     depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
                     updateWalletDisplay();
                 } else {
+                    // Wallet node genuinely doesn't exist yet (brand new user) --
+                    // safe to initialize it.
                     isApplyingRemoteWalletUpdate = false;
                     db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
                     updateWalletDisplay();
