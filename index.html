@@ -1712,7 +1712,7 @@
                 statusEl.style.color = "var(--success-color)";
             }
 
-            alert("🎉 Welcome! 10 free fun coins have been added to your balance.");
+            alert("🎉 Welcome! 10birr have been added to your balance.");
         }
 
         function chooseStake(stake) {
@@ -1737,7 +1737,7 @@
 
         function startSelectionCountdown() {
             clearInterval(selectionInterval);
-            let timeLeft = 50;
+            let timeLeft = 45;
             let timerEl = document.getElementById('selectionTimer');
             if (timerEl) timerEl.innerText = timeLeft + 's';
 
@@ -1760,7 +1760,7 @@
         function pickRandomAvailableCard() {
             let candidate = Math.floor(Math.random() * 600) + 1;
             let attempts = 0;
-            while (takenCardsData[candidate] && takenCardsData[candidate].by !== telegramUserId && attempts < 50) {
+            while (takenCardsData[candidate] && takenCardsData[candidate].by !== telegramUserId && attempts < 45) {
                 candidate = Math.floor(Math.random() * 600) + 1;
                 attempts++;
             }
@@ -1784,7 +1784,7 @@
             let totalDeduction = selectedCards.length * selectedStake;
 
             if ((playWalletBalance + mainWalletBalance) < totalDeduction) {
-                showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
+                showInsuffientBalanceModal(`❌ Not enough  birr you need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 return;
             }
 
@@ -1908,7 +1908,7 @@
                     <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">🪙 Deposit to Play Wallet</div>
                     <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
                 </div>
-                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 12px; text-align: left;">Choose an amount (fun coins — no real money):</div>
+                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 12px; text-align: left;">Choose an amount</div>
                 <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px;">
                     <div class="deposit-amount-btn active" id="depAmt10" onclick="selectDepositAmount(10)">10</div>
                     <div class="deposit-amount-btn" id="depAmt50" onclick="selectDepositAmount(50)">50</div>
@@ -1918,7 +1918,7 @@
                 </div>
                 <div style="text-align:left; margin-bottom:6px; font-size:12px; color:#94a3b8;">ወይም የፈለከውን መጠን አስገባ (ዝቅተኛ 10)</div>
                 <input type="number" id="depositCustomAmount" min="10" max="10000" step="1" placeholder="ለምሳሌ 30" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:14px; margin-bottom:6px;" oninput="selectCustomDepositAmount(this.value)">
-                <div id="depositAmountErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;">ዝቅተኛ የማስገቢያ መጠን 10 ኮይን ነው።</div>
+                <div id="depositAmountErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;">ዝቅተኛ የማስገቢያ መጠን 10  birr ነው።</div>
                 <button class="btn btn-green" onclick="confirmDepositAmountAndContinue()">Continue ➜</button>
             `;
             depositSelectedAmount = 10;
@@ -1946,14 +1946,14 @@
             let errorEl = document.getElementById('depositAmountErrorMsg');
             if (!depositSelectedAmount || depositSelectedAmount < 10) {
                 if (errorEl) {
-                    errorEl.innerText = 'ዝቅተኛ የማስገቢያ መጠን 10 ኮይን ነው።';
+                    errorEl.innerText = 'ዝቅተኛ የማስገቢያ መጠን 10   birr ነው።';
                     errorEl.style.display = 'block';
                 }
                 return;
             }
             if (depositSelectedAmount > 10000) {
                 if (errorEl) {
-                    errorEl.innerText = 'ከፍተኛ የማስገቢያ መጠን 10,000 ኮይን ነው። ከዚህ በላይ ከፈለጉ Support ያግኙ።';
+                    errorEl.innerText = 'ከፍተኛ የማስገቢያ መጠን 10,000 ብር ነው። ከዚህ በላይ ከፈለጉ Support ያግኙ።';
                     errorEl.style.display = 'block';
                 }
                 return;
@@ -2167,7 +2167,7 @@
 
         function renderDepositApprovedStep(txnKey, record) {
             playWalletBalance += record.amount;
-            depositedBalance += record.amount; // this portion is real money — winnings funded by it become withdrawable
+            depositedBalance += record.amount;
             updateWalletDisplay();
             addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
 
@@ -2196,7 +2196,7 @@
                 return;
             }
             if (mainWalletBalance < 50) {
-                showToast("💸 ዝቅተኛ የማውጫ መጠን 50 ኮይን ነው። (Minimum withdrawal is 50 coins)");
+                showToast("💸 ዝቅተኛ የማውጫ መጠን 50 ብር ነው። (Minimum withdrawal is 50 birr)");
                 return;
             }
             if (!db) {
@@ -2264,7 +2264,7 @@
                 return;
             }
             if (amount > mainWalletBalance) {
-                errorEl.innerText = `⚠️ በቂ ገንዘብ የለህም። ያለህ ${Math.floor(mainWalletBalance)} ኮይን ብቻ ነው።`;
+                errorEl.innerText = `⚠️ በቂ ገንዘብ የለህም። ያለህ ${Math.floor(mainWalletBalance)} ብር  ብቻ ነው።`;
                 errorEl.style.display = 'block';
                 return;
             }
