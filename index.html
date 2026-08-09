@@ -1535,10 +1535,7 @@
                         <div><b>${r.name}</b> — ${r.amount} coins</div>
                         <div style="font-size:11px; color:#64748b;">Txn: ${key} · Phone: ${r.phone || '-'}</div>
                         ${smsHtml}
-                        <div style="display:flex; gap:6px; margin-top:6px;">
-                            <button class="btn btn-green" style="padding:6px;" onclick="adminApproveDeposit('${key}')">Approve</button>
-                            <button class="btn btn-danger" style="padding:6px;" onclick="adminRejectDeposit('${key}')">Reject</button>
-                        </div>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">Approve or reject this from the Telegram bot chat.</div>
                     </div>`;
                 }).join('');
             });
@@ -1567,31 +1564,10 @@
             });
         }
 
-        function adminApproveDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key).once('value').then(function(snap) {
-                let record = snap.val();
-                if (!record || record.status === 'approved') return; // avoid double-crediting
-                let userId = record.by;
-                let amount = Number(record.amount) || 0;
-
-                db.ref('transactions/deposits/' + key + '/status').set('approved');
-
-                // Credit the user's wallet directly on the server so it works
-                // even if the depositor already closed the app.
-                db.ref('users/' + userId + '/wallet/play').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-                db.ref('users/' + userId + '/wallet/deposited').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-            });
-        }
-
-        function adminRejectDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key + '/status').set('rejected');
-        }
+        // Deposit approval/rejection intentionally lives ONLY in the Telegram bot
+        // (main.py) now -- having a second approve/reject path here caused a
+        // wallet-crediting bug, so it was removed on purpose. Use the bot chat
+        // to approve or reject deposits.
 
         function adminApproveWithdrawal(key) {
             if (!db) return;
