@@ -1031,15 +1031,34 @@
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
                             let prizePool = Number(currentGamePrize || 0);
-                            let prizePerWinner = winnersArr.length > 0 ? prizePool / winnersArr.length : 0;
-                            let myPrize = prizePerWinner * myWins.length;
-                            // Idempotent payout: the same user can never be credited twice for the same round.
-                            db.ref('users/' + telegramUserId).transaction(function(current) {
+                            // Split by whole cents so N winners' shares always sum to
+                            // EXACTLY the prize pool (no money lost or invented to
+                            // floating-point rounding). Any leftover cents from the
+                            // division go to the first entries in a fixed, deterministic
+                            // order (sorted by card number) that every winner's client
+                            // computes identically -- so who gets the extra cent is
+                            // consistent no matter whose device runs this code.
+                            let sortedWinners = winnersArr.slice().sort(function(a, b) { return a.cardNum - b.cardNum; });
+                            let numWinners = sortedWinners.length;
+                            let prizePoolCents = Math.round(prizePool * 100);
+                            let baseCents = numWinners > 0 ? Math.floor(prizePoolCents / numWinners) : 0;
+                            let remainderCents = numWinners > 0 ? prizePoolCents - (baseCents * numWinners) : 0;
+                            let myPrizeCents = 0;
+                            sortedWinners.forEach(function(w, idx) {
+                                if (w.by === telegramUserId) {
+                                    myPrizeCents += baseCents + (idx < remainderCents ? 1 : 0);
+                                }
+                            });
+                            let myPrize = myPrizeCents / 100;
+                            // Idempotent payout: the same user can never be credited twice
+                            // for the same round. Credited straight to wallet.main, the
+                            // same field the wallet display and withdrawals actually read.
+                            db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
                                 current = current || { main: 0, play: 0, deposited: 0 };
                                 current.bingoPayouts = current.bingoPayouts || {};
                                 if (current.bingoPayouts[String(currentRoundId)]) return;
                                 current.main = Number(current.main || 0) + myPrize;
-                                current.bingoPayouts[String(currentRoundId)] = { amount: myPrize, winners: winnersArr.length, ts: firebase.database.ServerValue.TIMESTAMP };
+                                current.bingoPayouts[String(currentRoundId)] = { amount: myPrize, winners: numWinners, ts: firebase.database.ServerValue.TIMESTAMP };
                                 return current;
                             }).then(function(result) {
                                 if (result && result.committed) {
@@ -1819,9 +1838,11 @@
             }
 
             if (selectedCards.length === 0) {
-                let randomCard = pickRandomAvailableCard();
-                selectedCards.push(randomCard);
-                claimCardInFirebase(randomCard, function() {}, function() {});
+                // Having a wallet balance is NOT permission to play -- the player
+                // must explicitly pick their own card(s). We no longer auto-pick
+                // one for them just because they have coins available.
+                alert('🎴 Please select at least one card before entering the game.');
+                return;
             }
 
             let totalDeduction = selectedCards.length * selectedStake;
@@ -2456,6 +2477,18 @@
             }
         }
 
+        function numberToWordsAmharic(n) {
+            let ones = ['', 'አንድ', 'ሁለት', 'ሶስት', 'አራት', 'አምስት', 'ስድስት', 'ሰባት', 'ስምንት', 'ዘጠኝ'];
+            let tensWords = ['', 'አስር', 'ሃያ', 'ሰላሳ', 'አርባ', 'ሃምሳ', 'ስልሳ', 'ሰባ'];
+            if (n < 10) return ones[n];
+            if (n === 10) return tensWords[1];
+            if (n < 20) return 'አስራ ' + ones[n - 10];
+            let t = Math.floor(n / 10), o = n % 10;
+            return tensWords[t] + (o > 0 ? ' ' + ones[o] : '');
+        }
+
+        let amharicLetterNames = { B: 'ቢ', I: 'አይ', N: 'ኤን', G: 'ጂ', O: 'ኦ' };
+
         function speakNumber(callText) {
             if (!soundEnabled) return;
 
@@ -2470,24 +2503,22 @@
                     if (cachedVoices.length === 0) {
                         cachedVoices = window.speechSynthesis.getVoices();
                     }
-                    let spokenText = callText.replace('-', ' ');
+                    let parts = callText.split('-');
+                    let letterPart = parts[0] || '';
+                    let numPart = parseInt(parts[1], 10);
+                    let spokenText = !isNaN(numPart)
+                        ? ((amharicLetterNames[letterPart] || letterPart) + ' ' + numberToWordsAmharic(numPart))
+                        : callText.replace('-', ' ');
                     let utterance = new SpeechSynthesisUtterance(spokenText);
-                    utterance.lang = 'en-US';
+                    utterance.lang = 'am-ET';
                     utterance.rate = 0.9;
                     if (cachedVoices.length > 0) {
-                        let enVoice = cachedVoices.find(v =>
-                            v.lang && v.lang.startsWith('en') && /male/i.test(v.name) && !/female/i.test(v.name)
-                        );
-                        if (!enVoice) {
-                            // Common male-voice names across platforms (Windows/Android/iOS/macOS)
-                            enVoice = cachedVoices.find(v =>
-                                v.lang && v.lang.startsWith('en') && /(david|daniel|alex|fred|mark|guy|male)/i.test(v.name)
-                            );
-                        }
-                        if (!enVoice) {
-                            enVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
-                        }
-                        if (enVoice) utterance.voice = enVoice;
+                        let amVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('am'));
+                        if (amVoice) utterance.voice = amVoice;
+                        // If no Amharic voice is installed on this device, we still
+                        // send the Amharic text with lang='am-ET' and let the
+                        // system's default voice attempt it, rather than silently
+                        // falling back to an English voice/reading.
                     }
                     // Small delay so it doesn't collide with the cancel() on some browsers
                     setTimeout(function() {
