@@ -782,13 +782,22 @@
             db.ref('users/' + telegramUserId + '/wallet').on('value', function(snap) {
                 let w = snap.val();
                 isApplyingRemoteWalletUpdate = true;
-                if (w && typeof w.main === 'number' && typeof w.play === 'number') {
-                    mainWalletBalance = w.main;
-                    playWalletBalance = w.play;
+                if (w) {
+                    // A field can legitimately be missing (e.g. the admin panel's
+                    // approve button only ever writes the "play" and "deposited"
+                    // children, never "main"). Default any missing field to 0
+                    // instead of treating a partial object as "no data" and
+                    // wiping the whole wallet back to zero.
+                    mainWalletBalance = typeof w.main === 'number' ? w.main : 0;
+                    playWalletBalance = typeof w.play === 'number' ? w.play : 0;
                     depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
+                    walletLoaded = true;
                     updateWalletDisplay();
                 } else {
+                    // Wallet node genuinely doesn't exist yet (brand new user) --
+                    // safe to initialize it.
                     isApplyingRemoteWalletUpdate = false;
+                    walletLoaded = true;
                     db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
                     updateWalletDisplay();
                     return;
@@ -1315,6 +1324,7 @@
         
         let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
         let playWalletBalance = 0; // starts at 0; gets 10 when player registers
+        let walletLoaded = false; // true only once we've actually synced real wallet data from Firebase at least once -- see updateWalletDisplay()
         let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
         let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
         let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
@@ -1356,7 +1366,7 @@
             // because the live listener just synced in a change from elsewhere
             // (e.g. the bot approving a deposit), writing back would overwrite
             // that change with the stale values this tab already had in memory.
-            if (db && !isApplyingRemoteWalletUpdate) {
+            if (db && !isApplyingRemoteWalletUpdate && walletLoaded) {
                 db.ref('users/' + telegramUserId + '/wallet').set({
                     main: mainWalletBalance,
                     play: playWalletBalance,
@@ -1528,10 +1538,7 @@
                         <div><b>${r.name}</b> — ${r.amount} coins</div>
                         <div style="font-size:11px; color:#64748b;">Txn: ${key} · Phone: ${r.phone || '-'}</div>
                         ${smsHtml}
-                        <div style="display:flex; gap:6px; margin-top:6px;">
-                            <button class="btn btn-green" style="padding:6px;" onclick="adminApproveDeposit('${key}')">Approve</button>
-                            <button class="btn btn-danger" style="padding:6px;" onclick="adminRejectDeposit('${key}')">Reject</button>
-                        </div>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">Approve or reject this from the Telegram bot chat.</div>
                     </div>`;
                 }).join('');
             });
@@ -1560,31 +1567,10 @@
             });
         }
 
-        function adminApproveDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key).once('value').then(function(snap) {
-                let record = snap.val();
-                if (!record || record.status === 'approved') return; // avoid double-crediting
-                let userId = record.by;
-                let amount = Number(record.amount) || 0;
-
-                db.ref('transactions/deposits/' + key + '/status').set('approved');
-
-                // Credit the user's wallet directly on the server so it works
-                // even if the depositor already closed the app.
-                db.ref('users/' + userId + '/wallet/play').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-                db.ref('users/' + userId + '/wallet/deposited').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-            });
-        }
-
-        function adminRejectDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key + '/status').set('rejected');
-        }
+        // Deposit approval/rejection intentionally lives ONLY in the Telegram bot
+        // (main.py) now -- having a second approve/reject path here caused a
+        // wallet-crediting bug, so it was removed on purpose. Use the bot chat
+        // to approve or reject deposits.
 
         function adminApproveWithdrawal(key) {
             if (!db) return;
@@ -2223,11 +2209,14 @@
         }
 
         function renderDepositApprovedStep(txnKey, record) {
-            // The admin/bot is the source of truth for an approved deposit.
-            // Do NOT add the amount locally here: the Firebase wallet listener
-            // will receive the approved wallet and update the UI. Adding it
-            // locally can race with the listener and cause stale values to be
-            // written back over the approved wallet.
+            // NOTE: we intentionally do NOT bump playWalletBalance/depositedBalance
+            // or call updateWalletDisplay() here. The bot (main.py) is the only
+            // thing that credits the wallet in Firebase now. This function used to
+            // also increment the local balance and write it back with a full
+            // .set(), which raced against the bot's own write and could overwrite
+            // it -- that race is what was causing "approved but balance shows 0".
+            // The live wallet listener (loadUserWalletFromFirebase) picks up the
+            // bot's Firebase update automatically and refreshes the display.
             addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
 
             let modalBody = document.getElementById('modalBodyText');
