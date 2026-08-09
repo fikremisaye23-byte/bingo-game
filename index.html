@@ -2206,9 +2206,14 @@
         }
 
         function renderDepositApprovedStep(txnKey, record) {
-            playWalletBalance += record.amount;
-            depositedBalance += record.amount; // this portion is real money — winnings funded by it become withdrawable
-            updateWalletDisplay();
+            // NOTE: we intentionally do NOT bump playWalletBalance/depositedBalance
+            // or call updateWalletDisplay() here. The bot (main.py) is the only
+            // thing that credits the wallet in Firebase now. This function used to
+            // also increment the local balance and write it back with a full
+            // .set(), which raced against the bot's own write and could overwrite
+            // it -- that race is what was causing "approved but balance shows 0".
+            // The live wallet listener (loadUserWalletFromFirebase) picks up the
+            // bot's Firebase update automatically and refreshes the display.
             addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
 
             let modalBody = document.getElementById('modalBodyText');
