@@ -186,12 +186,85 @@
         }
 
         .num-cell.taken {
-            background: linear-gradient(160deg, #7f1d1d, #5c1616);
-            color: #d4a5a5;
+            background: linear-gradient(145deg, #ff4d4d, #dc2626) !important;
+            color: #ffffff !important;
             cursor: not-allowed;
-            opacity: 0.7;
-            box-shadow: none;
+            opacity: 1;
+            border: 2px solid #ffb4b4;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.75), inset 0 0 8px rgba(255,255,255,0.12);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.35);
         }
+
+        .spectator-cards-title {
+            color: #fbbf24;
+            font-weight: 800;
+            font-size: 13px;
+            text-align: center;
+            margin: 2px 0 4px;
+            text-shadow: 0 0 8px rgba(251,191,36,0.35);
+        }
+
+        .spectator-card {
+            background: linear-gradient(160deg, #182342, var(--card-bg));
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+        }
+
+        .spectator-card.owned-by-other {
+            border-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239,68,68,0.18);
+        }
+
+        .spectator-card .spectator-owner {
+            color: #fbbf24;
+            font-size: 10px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .spectator-card .spectator-cell {
+            background: linear-gradient(160deg, #263554, #1d2942);
+            color: #f8fafc;
+            border-radius: 4px;
+            min-height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .spectator-card .spectator-cell.called {
+            background: linear-gradient(145deg, #ff4d4d, #dc2626) !important;
+            color: #fff !important;
+            box-shadow: 0 0 7px rgba(239,68,68,0.6);
+        }
+
+        .spectator-card .spectator-cell.free {
+            background: linear-gradient(145deg, #34d399, #10b981) !important;
+            color: #fff !important;
+        }
+
+        .spectator-card .spectator-header {
+            color: #fff;
+            font-size: 10px;
+            font-weight: 900;
+            text-align: center;
+            padding: 3px 0;
+            border-radius: 5px;
+        }
+
+        .spectator-card .spectator-header.b { background: #3b82f6; }
+        .spectator-card .spectator-header.i { background: #8b5cf6; }
+        .spectator-card .spectator-header.n { background: #a855f7; }
+        .spectator-card .spectator-header.g { background: #10b981; }
+        .spectator-card .spectator-header.o { background: #f97316; }
 
         .bingo-card-container {
             background: linear-gradient(160deg, #182342, var(--card-bg));
@@ -563,7 +636,7 @@
             </div>
             <div class="stat-box" style="background: #231c12; border-color: #533d1e;">
                 <span style="color: #f59e0b; font-size: 9px;">Timer</span>
-                <b id="selectionTimer" style="color: #f59e0b; font-size: 13px;">45s</b>
+                <b id="selectionTimer" style="color: #f59e0b; font-size: 13px;">50s</b>
             </div>
         </div>
         
@@ -616,9 +689,9 @@
             </div>
 
             <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
-            <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px; min-height: 0;">
+            <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 3px 6px; border-radius: 8px; border: 1px solid #1e293b; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
-                    <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 54px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
+                    <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
                     <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 13px; cursor: pointer;">🔊</button>
                 </div>
 
@@ -628,7 +701,7 @@
                 </div>
 
                 <!-- User Cards Container with exact max-height and overflow scroll -->
-                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px; flex: 1; min-height: 0;"></div>
+                <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px;"></div>
             </div>
         </div>
 
@@ -773,6 +846,8 @@
             console.log("Firebase init failed", e);
         }
 
+        watchFirebaseServerTimeOffset();
+
         // --- Wallet balances now live in Firebase (users/<id>/wallet) so they survive refresh ---
         // Uses a live listener (not once()) so a change made elsewhere -- e.g. an admin
         // approving a deposit from the Telegram bot -- shows up immediately here too,
@@ -782,13 +857,22 @@
             db.ref('users/' + telegramUserId + '/wallet').on('value', function(snap) {
                 let w = snap.val();
                 isApplyingRemoteWalletUpdate = true;
-                if (w && typeof w.main === 'number' && typeof w.play === 'number') {
-                    mainWalletBalance = w.main;
-                    playWalletBalance = w.play;
+                if (w) {
+                    // A field can legitimately be missing (e.g. the admin panel's
+                    // approve button only ever writes the "play" and "deposited"
+                    // children, never "main"). Default any missing field to 0
+                    // instead of treating a partial object as "no data" and
+                    // wiping the whole wallet back to zero.
+                    mainWalletBalance = typeof w.main === 'number' ? w.main : 0;
+                    playWalletBalance = typeof w.play === 'number' ? w.play : 0;
                     depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
+                    walletLoaded = true;
                     updateWalletDisplay();
                 } else {
+                    // Wallet node genuinely doesn't exist yet (brand new user) --
+                    // safe to initialize it.
                     isApplyingRemoteWalletUpdate = false;
+                    walletLoaded = true;
                     db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
                     updateWalletDisplay();
                     return;
@@ -914,23 +998,28 @@
             db.ref('room/takenCards').on('value', function(snapshot) {
                 takenCardsData = snapshot.val() || {};
                 renderTakenCardsUI();
+                if (selectedCards.length === 0 && document.getElementById('gameScreen')?.style.display !== 'none') {
+                    renderSpectatorCardsUI();
+                }
             });
         }
 
-        function joinOrResetRound() {
-            if (!db) return;
+        function joinOrResetRound(onReady) {
+            if (!db) { if (onReady) onReady(getServerNow() + CARD_SELECTION_SECONDS * 1000); return; }
+            loadFirebaseServerTimeOffset().then(function() {
             let myRoundValue = null;
             db.ref('room/roundEnded').once('value').then(function(endedSnap) {
                 let isEnded = endedSnap.val() === true;
                 return db.ref('room/roundId').transaction(function(current) {
-                    if (!current || isEnded || (Date.now() - current) > 90000) {
-                        myRoundValue = Date.now();
+                    if (!current || isEnded || (getServerNow() - current) > 90000) {
+                        myRoundValue = getServerNow();
                         return myRoundValue;
                     }
                     return current;
                 });
             }).then(function(result) {
                 currentRoundId = result.snapshot.val();
+                let deadlinePromise;
                 if (result.committed && myRoundValue && result.snapshot.val() === myRoundValue) {
                     db.ref('room/takenCards').remove();
                     db.ref('room/calledNumbers').remove();
@@ -939,15 +1028,34 @@
                     db.ref('room/caller').remove();
                     db.ref('room/prizePool').remove();
                     db.ref('room/roundFinalizing').remove();
+                    // Set ONE shared card-selection deadline for this round, same
+                    // moment on every player's device -- so a 45s countdown started
+                    // by whoever's device happens to create the round reads
+                    // identically (34...33...32) for everyone else, instead of each
+                    // phone running its own independent 45 seconds from whenever it
+                    // happened to open the screen.
+                    let sharedEnd = myRoundValue + CARD_SELECTION_SECONDS * 1000;
+                    deadlinePromise = db.ref('room/cardSelectionEndTime').set(sharedEnd).then(function() { return sharedEnd; });
+                } else {
+                    // Someone else already created this round -- read the deadline
+                    // THEY set, so we count down from the exact same moment.
+                    deadlinePromise = db.ref('room/cardSelectionEndTime').once('value').then(function(snap) {
+                        return snap.val() || (getServerNow() + CARD_SELECTION_SECONDS * 1000);
+                    });
                 }
                 winnerPopupShown = false;
                 roomRoundEndedCached = false;
                 subscribeTakenCards();
+                return deadlinePromise;
+            }).then(function(sharedEnd) {
+                if (onReady) onReady(sharedEnd);
             }).catch(function(err) {
                 console.log("Firebase round join failed", err);
                 winnerPopupShown = false;
                 roomRoundEndedCached = false;
                 subscribeTakenCards();
+                if (onReady) onReady(getServerNow() + CARD_SELECTION_SECONDS * 1000);
+            });
             });
         }
 
@@ -956,7 +1064,7 @@
             let newMatrix = generateBingoMatrix();
             db.ref('room/takenCards/' + cellNum).transaction(function(current) {
                 if (current === null) {
-                    return { by: telegramUserId, name: userName, matrix: newMatrix };
+                    return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
                 }
                 return; // abort - already taken
             }).then(function(result) {
@@ -967,7 +1075,7 @@
                 }
             }).catch(function(err) {
                 console.log("Firebase claim failed", err);
-                onSuccess(newMatrix); // fail open if offline, so the game still works
+                onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
             });
         }
 
@@ -1022,19 +1130,42 @@
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
                             let prizePool = Number(currentGamePrize || 0);
-                            let prizePerWinner = winnersArr.length > 0 ? prizePool / winnersArr.length : 0;
-                            let myPrize = prizePerWinner * myWins.length;
-                            // Idempotent payout: the same user can never be credited twice for the same round.
-                            db.ref('users/' + telegramUserId).transaction(function(current) {
+                            // Split by whole cents so N winners' shares always sum to
+                            // EXACTLY the prize pool (no money lost or invented to
+                            // floating-point rounding). Any leftover cents from the
+                            // division go to the first entries in a fixed, deterministic
+                            // order (sorted by card number) that every winner's client
+                            // computes identically -- so who gets the extra cent is
+                            // consistent no matter whose device runs this code.
+                            let sortedWinners = winnersArr.slice().sort(function(a, b) { return a.cardNum - b.cardNum; });
+                            let numWinners = sortedWinners.length;
+                            let prizePoolCents = Math.round(prizePool * 100);
+                            let baseCents = numWinners > 0 ? Math.floor(prizePoolCents / numWinners) : 0;
+                            let remainderCents = numWinners > 0 ? prizePoolCents - (baseCents * numWinners) : 0;
+                            let myPrizeCents = 0;
+                            sortedWinners.forEach(function(w, idx) {
+                                if (w.by === telegramUserId) {
+                                    myPrizeCents += baseCents + (idx < remainderCents ? 1 : 0);
+                                }
+                            });
+                            let myPrize = myPrizeCents / 100;
+                            // Idempotent payout: the same user can never be credited twice
+                            // for the same round. Credited straight to wallet.main, the
+                            // same field the wallet display and withdrawals actually read.
+                            db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
                                 current = current || { main: 0, play: 0, deposited: 0 };
                                 current.bingoPayouts = current.bingoPayouts || {};
                                 if (current.bingoPayouts[String(currentRoundId)]) return;
                                 current.main = Number(current.main || 0) + myPrize;
-                                current.bingoPayouts[String(currentRoundId)] = { amount: myPrize, winners: winnersArr.length, ts: firebase.database.ServerValue.TIMESTAMP };
+                                current.bingoPayouts[String(currentRoundId)] = { amount: myPrize, winners: numWinners, ts: firebase.database.ServerValue.TIMESTAMP };
                                 return current;
                             }).then(function(result) {
                                 if (result && result.committed) {
-                                    mainWalletBalance += myPrize;
+                                    let updatedWallet = result.snapshot.val() || {};
+                                    mainWalletBalance = Number(updatedWallet.main || 0);
+                                    playWalletBalance = Number(updatedWallet.play || 0);
+                                    depositedBalance = Number(updatedWallet.deposited || 0);
+                                    walletLoaded = true;
                                     updateWalletDisplay();
                                     addHistoryRecord('win', 'Bingo Game Winnings', myPrize);
                                 }
@@ -1069,9 +1200,11 @@
                 // Prize pool = 80% of all cards actually taken in this round (20% commission retained).
                 return db.ref('room/takenCards').once('value').then(function(snap) {
                     let taken = snap.val() || {};
-                    let cardCount = Object.keys(taken).length;
-                    let stake = Number(selectedStake || 0);
-                    let pool = cardCount * stake * 0.8;
+                    let poolBase = 0;
+                    Object.keys(taken).forEach(function(cardNum) {
+                        poolBase += Number((taken[cardNum] || {}).stake || 0);
+                    });
+                    let pool = poolBase * 0.8;
                     return db.ref('room/prizePool').transaction(function(current) {
                         if (Number(current || 0) > 0) return current;
                         return pool;
@@ -1315,6 +1448,10 @@
         
         let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
         let playWalletBalance = 0; // starts at 0; gets 10 when player registers
+        let walletLoaded = false; // true only once we've actually synced real wallet data from Firebase at least once -- see updateWalletDisplay()
+        let gameEntryLocked = false; // guards against processGameEntry() running twice for the same selection (e.g. a double-tap), which would double-deduct the card cost
+        const CARD_SELECTION_SECONDS = 45; // card-selection window per round
+        let isSpectatorThisRound = false; // true if the player missed the card-selection deadline this round -- they can watch but not play/win until the next round
         let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
         let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
         let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
@@ -1334,6 +1471,59 @@
         }
 
         let isApplyingRemoteWalletUpdate = false; // true while syncing FROM Firebase, so updateWalletDisplay() doesn't echo stale local values back and clobber a change made elsewhere (e.g. an admin deposit approval from the bot)
+        let firebaseServerTimeOffset = 0;
+        let serverTimeOffsetLoaded = false;
+
+        function getServerNow() {
+            return Date.now() + (serverTimeOffsetLoaded ? firebaseServerTimeOffset : 0);
+        }
+
+        function loadFirebaseServerTimeOffset() {
+            if (!db) return Promise.resolve();
+            return db.ref('.info/serverTimeOffset').once('value').then(function(snap) {
+                firebaseServerTimeOffset = Number(snap.val() || 0);
+                serverTimeOffsetLoaded = true;
+            }).catch(function(err) {
+                console.log('Server time offset load failed:', err);
+            });
+        }
+        function watchFirebaseServerTimeOffset() {
+            if (!db) return;
+            db.ref('.info/serverTimeOffset').on('value', function(snap) {
+                firebaseServerTimeOffset = Number(snap.val() || 0);
+                serverTimeOffsetLoaded = true;
+            });
+        }
+
+        function applyWalletDelta(mainDelta, playDelta, depositedDelta, onDone) {
+            if (!db) {
+                mainWalletBalance += Number(mainDelta || 0);
+                playWalletBalance += Number(playDelta || 0);
+                depositedBalance += Number(depositedDelta || 0);
+                updateWalletDisplay();
+                if (onDone) onDone(true);
+                return;
+            }
+            db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
+                current = current || { main: 0, play: 0, deposited: 0 };
+                current.main = Number(current.main || 0) + Number(mainDelta || 0);
+                current.play = Number(current.play || 0) + Number(playDelta || 0);
+                current.deposited = Math.max(0, Number(current.deposited || 0) + Number(depositedDelta || 0));
+                return current;
+            }).then(function(result) {
+                if (!result || !result.committed) throw new Error('Wallet transaction was not committed');
+                let w = result.snapshot.val() || {};
+                mainWalletBalance = Number(w.main || 0);
+                playWalletBalance = Number(w.play || 0);
+                depositedBalance = Number(w.deposited || 0);
+                walletLoaded = true;
+                updateWalletDisplay();
+                if (onDone) onDone(true);
+            }).catch(function(err) {
+                console.error('Wallet transaction failed:', err);
+                if (onDone) onDone(false, err);
+            });
+        }
 
         function updateWalletDisplay() {
             let mainEl = document.getElementById('mainWalletBalanceDisplay');
@@ -1356,15 +1546,6 @@
             // because the live listener just synced in a change from elsewhere
             // (e.g. the bot approving a deposit), writing back would overwrite
             // that change with the stale values this tab already had in memory.
-            if (db && !isApplyingRemoteWalletUpdate) {
-                db.ref('users/' + telegramUserId + '/wallet').set({
-                    main: mainWalletBalance,
-                    play: playWalletBalance,
-                    deposited: depositedBalance
-                }).catch(function(err) {
-                    console.log('Wallet save failed', err);
-                });
-            }
         }
 
         function addHistoryRecord(type, desc, amount) {
@@ -1528,10 +1709,7 @@
                         <div><b>${r.name}</b> — ${r.amount} coins</div>
                         <div style="font-size:11px; color:#64748b;">Txn: ${key} · Phone: ${r.phone || '-'}</div>
                         ${smsHtml}
-                        <div style="display:flex; gap:6px; margin-top:6px;">
-                            <button class="btn btn-green" style="padding:6px;" onclick="adminApproveDeposit('${key}')">Approve</button>
-                            <button class="btn btn-danger" style="padding:6px;" onclick="adminRejectDeposit('${key}')">Reject</button>
-                        </div>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">Approve or reject this from the Telegram bot chat.</div>
                     </div>`;
                 }).join('');
             });
@@ -1560,31 +1738,10 @@
             });
         }
 
-        function adminApproveDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key).once('value').then(function(snap) {
-                let record = snap.val();
-                if (!record || record.status === 'approved') return; // avoid double-crediting
-                let userId = record.by;
-                let amount = Number(record.amount) || 0;
-
-                db.ref('transactions/deposits/' + key + '/status').set('approved');
-
-                // Credit the user's wallet directly on the server so it works
-                // even if the depositor already closed the app.
-                db.ref('users/' + userId + '/wallet/play').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-                db.ref('users/' + userId + '/wallet/deposited').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-            });
-        }
-
-        function adminRejectDeposit(key) {
-            if (!db) return;
-            db.ref('transactions/deposits/' + key + '/status').set('rejected');
-        }
+        // Deposit approval/rejection intentionally lives ONLY in the Telegram bot
+        // (main.py) now -- having a second approve/reject path here caused a
+        // wallet-crediting bug, so it was removed on purpose. Use the bot chat
+        // to approve or reject deposits.
 
         function adminApproveWithdrawal(key) {
             if (!db) return;
@@ -1654,7 +1811,8 @@
 
                             let nextCost = (selectedCards.length + 1) * selectedStake;
 
-                            if ((playWalletBalance + mainWalletBalance) < nextCost) {
+                            let canFundCard = (playWalletBalance >= nextCost) || (playWalletBalance === 0 && mainWalletBalance >= nextCost);
+                            if (!canFundCard) {
                                 showToast(`Insufficient wallet balance.`, 3000);
                                 return;
                             }
@@ -1667,7 +1825,8 @@
                             cellElement.classList.add('pending');
                             updateSelectedCardsPreview();
 
-                            claimCardInFirebase(cellNum, function() {
+                            claimCardInFirebase(cellNum, function(matrix) {
+                                takenCardsData[cellNum] = { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: matrix };
                                 cellElement.classList.remove('pending');
                                 updateSelectedCardsPreview();
                             }, function() {
@@ -1685,6 +1844,7 @@
                             cellElement.classList.remove('selected');
                             cellElement.classList.remove('pending');
                             releaseCardInFirebase(cellNum);
+                            delete takenCardsData[cellNum];
                             updateSelectedCardsPreview();
                         }
                     };
@@ -1759,9 +1919,10 @@
                 });
             }
             
-            playWalletBalance += 10;
-            updateWalletDisplay();
-            addHistoryRecord('bonus', 'Registration Bonus', 10);
+            applyWalletDelta(0, 10, 0, function(ok) {
+                if (!ok) return;
+                addHistoryRecord('bonus', 'Registration Bonus', 10);
+            });
 
             let statusEl = document.getElementById('userStatusDisplay');
             if (statusEl) {
@@ -1780,38 +1941,61 @@
         function openSelection() {
             unlockAudio();
             clearInterval(gameInterval);
+            if (selectedCards.length && db) {
+                selectedCards.forEach(function(cardNum) { releaseCardInFirebase(cardNum); });
+            }
             selectedCards = [];
-            
+            gameEntryLocked = false;
+            isSpectatorThisRound = false;
+
             let cells = document.querySelectorAll('.num-cell');
             cells.forEach(cell => cell.classList.remove('selected'));
-            
+
             updateSelectedCardsPreview();
             updateWalletDisplay();
             switchScreen('selectScreen');
-            startSelectionCountdown();
-            joinOrResetRound();
+            // Wait for the round (and its shared deadline) to be established
+            // before starting the countdown, so every device counts down from
+            // the exact same end time instead of each phone's own local 45s.
+            joinOrResetRound(function(sharedEndTime) {
+                startSelectionCountdown(sharedEndTime);
+            });
         }
 
-        function startSelectionCountdown() {
+        function startSelectionCountdown(sharedEndTimeMs) {
             clearInterval(selectionInterval);
-            let timeLeft = 45;
             let timerEl = document.getElementById('selectionTimer');
-            if (timerEl) timerEl.innerText = timeLeft + 's';
 
-            selectionInterval = setInterval(function() {
-                timeLeft--;
+            function tick() {
+                let timeLeft = Math.max(0, Math.ceil((sharedEndTimeMs - getServerNow()) / 1000));
                 if (timerEl) timerEl.innerText = timeLeft + 's';
-
                 if (timeLeft <= 0) {
                     clearInterval(selectionInterval);
                     if (selectedCards.length === 0) {
-                        let randomCard = pickRandomAvailableCard();
-                        selectedCards.push(randomCard);
-                        claimCardInFirebase(randomCard, function() {}, function() {});
+                        // No auto-pick, ever. Missing the deadline makes this
+                        // player a spectator for the round instead of playing.
+                        isSpectatorThisRound = true;
+                        enterSpectatorMode();
+                    } else {
+                        processGameEntry();
                     }
-                    processGameEntry();
                 }
-            }, 1000);
+            }
+
+            tick(); // show the correct time immediately, even for a late joiner
+            selectionInterval = setInterval(tick, 1000);
+        }
+
+        function enterSpectatorMode() {
+            // The round continues normally for everyone else; this player can
+            // watch the shared board and calls but has no card, so they cannot
+            // mark cells or win. They can select a card again next round.
+            switchScreen('gameScreen');
+            let container = document.getElementById('userCardsContainer');
+            if (container) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:13px; padding:16px;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
+            }
+            joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
         }
 
         function pickRandomAvailableCard() {
@@ -1825,23 +2009,39 @@
         }
 
         function processGameEntry() {
-            // Only ONE free (non-deposit) game is allowed per user. After that, playing again requires real money in the wallet.
-            if (depositedBalance <= 0 && hasUsedFreeGame) {
-                alert('🔒 You have already played your one free game. Please deposit to keep playing.');
-                switchNav('walletScreen', 'navWallet');
-                return;
-            }
+            // Guard against this running twice for the same selection (e.g. a
+            // double-tap on the enter/play button) -- without this, the card
+            // cost could get deducted from the wallet more than once.
+            if (gameEntryLocked) return;
+            gameEntryLocked = true;
 
             if (selectedCards.length === 0) {
-                let randomCard = pickRandomAvailableCard();
-                selectedCards.push(randomCard);
-                claimCardInFirebase(randomCard, function() {}, function() {});
+                // Having a wallet balance is NOT permission to play -- the player
+                // must explicitly pick their own card(s). We no longer auto-pick
+                // one for them just because they have coins available.
+                alert('🎴 Please select at least one card before entering the game.');
+                gameEntryLocked = false;
+                return;
             }
 
             let totalDeduction = selectedCards.length * selectedStake;
 
-            if ((playWalletBalance + mainWalletBalance) < totalDeduction) {
+            // Wallet priority (single source of truth):
+            // 1) Play Wallet alone must cover the FULL stake -> deduct from Play only.
+            // 2) Otherwise, ONLY if Play Wallet is exactly 0 and Main Wallet alone
+            //    covers the FULL stake -> deduct from Main only.
+            // 3) Any other case (including "both have some but neither alone is
+            //    enough") -> NOT allowed to combine; show Deposit instead.
+            let source = null; // 'play' or 'main'
+            if (playWalletBalance >= totalDeduction) {
+                source = 'play';
+            } else if (playWalletBalance === 0 && mainWalletBalance >= totalDeduction) {
+                source = 'main';
+            }
+
+            if (!source) {
                 showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
+                gameEntryLocked = false;
                 return;
             }
 
@@ -1854,32 +2054,103 @@
                 }
             }
 
-            // Play Wallet is used first; any shortfall is covered by Main Wallet.
-            // Main Wallet money is already real/withdrawable, so that portion
-            // counts as 100% "real" toward this round's withdrawable fraction.
-            let playPortion = Math.min(playWalletBalance, totalDeduction);
-            let mainPortion = totalDeduction - playPortion;
+            // Idempotent per-round deduction guard: atomically claim "I have
+            // already paid my stake for THIS round" in Firebase, keyed by
+            // round ID. A page refresh, reconnect, or duplicate request all
+            // re-run this same code path, but only the FIRST one to win this
+            // transaction actually deducts anything -- every subsequent one
+            // for the same round is a no-op that just continues into the
+            // game screen without touching the wallet again.
+            function proceedWithDeduction() {
+                if (!db) {
+                    if (source === 'play') {
+                        playWalletBalance -= totalDeduction;
+                    } else {
+                        mainWalletBalance -= totalDeduction;
+                    }
+                    updateWalletDisplay();
+                    addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
+                    finishGameEntry();
+                    return;
+                }
 
-            // Track what fraction of THIS stake is real (deposited) money vs free bonus coins —
-            // only the real fraction of any winnings will be withdrawable.
-            let playDepositedFraction = playWalletBalance > 0 ? Math.min(1, depositedBalance / playWalletBalance) : 0;
-            let realFromPlay = playPortion * playDepositedFraction;
-            let totalReal = realFromPlay + mainPortion;
-            currentRoundDepositedFraction = totalDeduction > 0 ? totalReal / totalDeduction : 0;
-            depositedBalance = Math.max(0, depositedBalance - realFromPlay);
+                let alreadyPaidThisRound = false;
+                db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
+                    current = current || { main: 0, play: 0, deposited: 0 };
+                    if (currentRoundId && current.lastStakeDeductionRound === currentRoundId) {
+                        alreadyPaidThisRound = true;
+                        return current;
+                    }
+                    let play = Number(current.play || 0);
+                    let main = Number(current.main || 0);
+                    let deposited = Number(current.deposited || 0);
+                    let actualSource = null;
+                    if (play >= totalDeduction) actualSource = 'play';
+                    else if (play === 0 && main >= totalDeduction) actualSource = 'main';
+                    if (!actualSource) return;
 
-            playWalletBalance -= playPortion;
-            mainWalletBalance -= mainPortion;
-            updateWalletDisplay();
-            addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
+                    if (actualSource === 'play') {
+                        let beforePlay = play;
+                        play -= totalDeduction;
+                        let realFraction = beforePlay > 0 ? Math.min(1, deposited / beforePlay) : 0;
+                        let realFromPlay = totalDeduction * realFraction;
+                        deposited = Math.max(0, deposited - realFromPlay);
+                    } else {
+                        main -= totalDeduction;
+                    }
 
-            // Derash = (total cards taken this round × card price) × 0.8 (20% platform commission held back)
-            const CARD_PRICE = selectedStake;
-            let totalCardsTakenThisRound = selectedCards.length;
-            if (db) {
-                totalCardsTakenThisRound = Object.keys(takenCardsData).length || selectedCards.length;
+                    current.play = play;
+                    current.main = main;
+                    current.deposited = deposited;
+                    if (currentRoundId) current.lastStakeDeductionRound = currentRoundId;
+                    return current;
+                }).then(function(result) {
+                    if (!result || !result.committed) {
+                        showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
+                        gameEntryLocked = false;
+                        return;
+                    }
+                    if (alreadyPaidThisRound) {
+                        let existing = result.snapshot.val() || {};
+                        mainWalletBalance = Number(existing.main || 0);
+                        playWalletBalance = Number(existing.play || 0);
+                        depositedBalance = Number(existing.deposited || 0);
+                        walletLoaded = true;
+                        updateWalletDisplay();
+                        finishGameEntry();
+                        return;
+                    }
+                    let w = result.snapshot.val() || {};
+                    mainWalletBalance = Number(w.main || 0);
+                    playWalletBalance = Number(w.play || 0);
+                    depositedBalance = Number(w.deposited || 0);
+                    currentRoundDepositedFraction = source === 'main' ? 1 : currentRoundDepositedFraction;
+                    walletLoaded = true;
+                    updateWalletDisplay();
+                    addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
+                    finishGameEntry();
+                }).catch(function(err) {
+                    console.error('Stake deduction failed:', err);
+                    showToast('⚠️ Wallet update failed. Please try again.', 4000);
+                    gameEntryLocked = false;
+                });
             }
-            currentGamePrize = totalCardsTakenThisRound * CARD_PRICE * 0.8;
+
+            proceedWithDeduction();
+        }
+
+        function finishGameEntry() {
+            // Derash = (total cards taken this round × card price) × 0.8 (20% platform commission held back)
+            let totalStakeThisRound = 0;
+            if (db && Object.keys(takenCardsData).length) {
+                Object.keys(takenCardsData).forEach(function(cardNum) {
+                    let entry = takenCardsData[cardNum] || {};
+                    totalStakeThisRound += Number(entry.stake || 0);
+                });
+            } else {
+                totalStakeThisRound = selectedCards.length * Number(selectedStake || 0);
+            }
+            currentGamePrize = totalStakeThisRound * 0.8;
 
             let gamePrizeDisplay = document.getElementById('gamePrizeDisplay');
             if (gamePrizeDisplay) gamePrizeDisplay.innerText = Math.floor(currentGamePrize);
@@ -2223,11 +2494,14 @@
         }
 
         function renderDepositApprovedStep(txnKey, record) {
-            // The admin/bot is the source of truth for an approved deposit.
-            // Do NOT add the amount locally here: the Firebase wallet listener
-            // will receive the approved wallet and update the UI. Adding it
-            // locally can race with the listener and cause stale values to be
-            // written back over the approved wallet.
+            // NOTE: we intentionally do NOT bump playWalletBalance/depositedBalance
+            // or call updateWalletDisplay() here. The bot (main.py) is the only
+            // thing that credits the wallet in Firebase now. This function used to
+            // also increment the local balance and write it back with a full
+            // .set(), which raced against the bot's own write and could overwrite
+            // it -- that race is what was causing "approved but balance shows 0".
+            // The live wallet listener (loadUserWalletFromFirebase) picks up the
+            // bot's Firebase update automatically and refreshes the display.
             addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
 
             let modalBody = document.getElementById('modalBodyText');
@@ -2348,10 +2622,14 @@
                 status: 'pending',
                 timestamp: Date.now()
             }).then(function() {
-                mainWalletBalance -= amount; // hold funds pending admin approval
-                updateWalletDisplay();
-                addHistoryRecord('withdraw', 'Withdraw Requested (pending)', -amount);
-                renderWithdrawPendingStep(pushRef.key, amount);
+                applyWalletDelta(-amount, 0, 0, function(ok) {
+                    if (!ok) {
+                        showToast('⚠️ Could not reserve withdrawal funds.', 4000);
+                        return;
+                    }
+                    addHistoryRecord('withdraw', 'Withdraw Requested (pending)', -amount);
+                    renderWithdrawPendingStep(pushRef.key, amount);
+                });
             }).catch(function(err) {
                 console.log('Withdraw request failed', err);
                 errorEl.innerText = '⚠️ ስህተት ተከስቷል፣ እንደገና ሞክር።';
@@ -2383,9 +2661,9 @@
                     `;
                 } else if (record.status === 'rejected') {
                     db.ref('transactions/withdrawals/' + pushId).off('value');
-                    mainWalletBalance += amount; // refund
-                    updateWalletDisplay();
-                    addHistoryRecord('withdraw', 'Withdraw Rejected (refunded)', amount);
+                    applyWalletDelta(amount, 0, 0, function(ok) {
+                        if (ok) addHistoryRecord('withdraw', 'Withdraw Rejected (refunded)', amount);
+                    });
                     let modalBodyEl = document.getElementById('modalBodyText');
                     modalBodyEl.innerHTML = `
                         <div style="font-size: 42px; margin-bottom: 4px;">❌</div>
@@ -2467,6 +2745,18 @@
             }
         }
 
+        function numberToWordsAmharic(n) {
+            let ones = ['', 'አንድ', 'ሁለት', 'ሶስት', 'አራት', 'አምስት', 'ስድስት', 'ሰባት', 'ስምንት', 'ዘጠኝ'];
+            let tensWords = ['', 'አስር', 'ሃያ', 'ሰላሳ', 'አርባ', 'ሃምሳ', 'ስልሳ', 'ሰባ'];
+            if (n < 10) return ones[n];
+            if (n === 10) return tensWords[1];
+            if (n < 20) return 'አስራ ' + ones[n - 10];
+            let t = Math.floor(n / 10), o = n % 10;
+            return tensWords[t] + (o > 0 ? ' ' + ones[o] : '');
+        }
+
+        let amharicLetterNames = { B: 'ቢ', I: 'አይ', N: 'ኤን', G: 'ጂ', O: 'ኦ' };
+
         function speakNumber(callText) {
             if (!soundEnabled) return;
 
@@ -2481,24 +2771,22 @@
                     if (cachedVoices.length === 0) {
                         cachedVoices = window.speechSynthesis.getVoices();
                     }
-                    let spokenText = callText.replace('-', ' ');
+                    let parts = callText.split('-');
+                    let letterPart = parts[0] || '';
+                    let numPart = parseInt(parts[1], 10);
+                    let spokenText = !isNaN(numPart)
+                        ? ((amharicLetterNames[letterPart] || letterPart) + ' ' + numberToWordsAmharic(numPart))
+                        : callText.replace('-', ' ');
                     let utterance = new SpeechSynthesisUtterance(spokenText);
-                    utterance.lang = 'en-US';
+                    utterance.lang = 'am-ET';
                     utterance.rate = 0.9;
                     if (cachedVoices.length > 0) {
-                        let enVoice = cachedVoices.find(v =>
-                            v.lang && v.lang.startsWith('en') && /male/i.test(v.name) && !/female/i.test(v.name)
-                        );
-                        if (!enVoice) {
-                            // Common male-voice names across platforms (Windows/Android/iOS/macOS)
-                            enVoice = cachedVoices.find(v =>
-                                v.lang && v.lang.startsWith('en') && /(david|daniel|alex|fred|mark|guy|male)/i.test(v.name)
-                            );
-                        }
-                        if (!enVoice) {
-                            enVoice = cachedVoices.find(v => v.lang && v.lang.startsWith('en'));
-                        }
-                        if (enVoice) utterance.voice = enVoice;
+                        let amVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('am'));
+                        if (amVoice) utterance.voice = amVoice;
+                        // If no Amharic voice is installed on this device, we still
+                        // send the Amharic text with lang='am-ET' and let the
+                        // system's default voice attempt it, rather than silently
+                        // falling back to an English voice/reading.
                     }
                     // Small delay so it doesn't collide with the cancel() on some browsers
                     setTimeout(function() {
@@ -2575,6 +2863,49 @@
             return rows;
         }
 
+        function renderSpectatorCardsUI() {
+            let container = document.getElementById('userCardsContainer');
+            if (!container || selectedCards.length !== 0) return;
+
+            let entries = Object.keys(takenCardsData || {}).map(function(cardNum) {
+                return { cardNum: Number(cardNum), info: takenCardsData[cardNum] || {} };
+            }).filter(function(x) { return x.info && x.info.matrix; })
+              .sort(function(a,b) { return a.cardNum - b.cardNum; });
+
+            if (!entries.length) {
+                container.innerHTML = `
+                    <div style="background:var(--card-bg); border-radius:10px; padding:18px 10px; text-align:center; border:1px solid #334155;">
+                        <div style="font-size:17px; font-weight:800; color:#fff; margin-bottom:8px;">👀 Watching Only</div>
+                        <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">ካርድ ያዙ ተጫዋቾች እስኪገቡ<br>ድረስ እዚህ ይቆዩ።</div>
+                    </div>`;
+                return;
+            }
+
+            let html = `<div class="spectator-cards-title">👀 የተጫዋቾች ካርዶች</div>`;
+            html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; width:100%;">`;
+            let calledSet = {};
+            (calledNumbersList || []).forEach(function(n) { calledSet[n] = true; });
+
+            entries.forEach(function(entry) {
+                let m = entry.info.matrix;
+                let owner = entry.info.name || 'Player';
+                html += `<div class="spectator-card owned-by-other">
+                    <div class="spectator-owner">${owner} · Card ${entry.cardNum}</div>
+                    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;">
+                        <div class="spectator-header b">B</div><div class="spectator-header i">I</div><div class="spectator-header n">N</div><div class="spectator-header g">G</div><div class="spectator-header o">O</div>`;
+                for (let r=0; r<5; r++) {
+                    for (let c=0; c<5; c++) {
+                        let val=m[r][c], free=val==='FREE';
+                        let cls='spectator-cell' + (free ? ' free' : (calledSet[val] ? ' called' : ''));
+                        html += `<div class="${cls}">${free ? '✨' : val}</div>`;
+                    }
+                }
+                html += `</div></div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
         function initializeUserCards() {
             let container = document.getElementById('userCardsContainer');
             if (!container) return;
@@ -2583,11 +2914,7 @@
             calledNumbersList = [];
 
             if (selectedCards.length === 0) {
-                container.innerHTML = `
-                    <div style="background: var(--card-bg); border-radius: 8px; padding: 16px 10px; text-align: center; border: 1px solid #1e293b; width: 100%; height: 100%; min-height: 0; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1;">
-                        <div style="font-size: 17px; font-weight: bold; color: white; margin-bottom: 10px;">Watching Only</div>
-                        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.6;">የዚህ ዙር ጨዋታ ተጀምሯል። አዲስ ዙር<br>እስኪጀምር እዚሁ ይጠብቁ።</div>
-                    </div>`;
+                renderSpectatorCardsUI();
                 let autoBtn = document.getElementById('gameAutomaticBtn');
                 if (autoBtn) {
                     autoBtn.disabled = true;
@@ -2659,7 +2986,7 @@
                     return;
                 }
                 attemptCallNextNumber();
-            }, 3500);
+            }, 1500);
         }
 
         function showWinnerPopup(winners) {
