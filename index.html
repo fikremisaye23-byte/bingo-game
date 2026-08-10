@@ -1081,7 +1081,14 @@
                                 return current;
                             }).then(function(result) {
                                 if (result && result.committed) {
-                                    mainWalletBalance += myPrize;
+                                    // Firebase transaction has already added the prize to wallet.main.
+                                    // Do NOT add myPrize again locally: the live wallet listener will
+                                    // sync the committed balance. Reading the committed snapshot here
+                                    // also prevents a race where 38 -> 54 gets followed by 54 + 16 = 70.
+                                    let committedWallet = result.snapshot && result.snapshot.val ? result.snapshot.val() : null;
+                                    if (committedWallet && typeof committedWallet.main === 'number') {
+                                        mainWalletBalance = committedWallet.main;
+                                    }
                                     updateWalletDisplay();
                                     addHistoryRecord('win', 'Bingo Game Winnings', myPrize);
                                 }
