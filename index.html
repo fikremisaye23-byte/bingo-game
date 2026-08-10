@@ -1878,14 +1878,6 @@
             if (gameEntryLocked) return;
             gameEntryLocked = true;
 
-            // Only ONE free (non-deposit) game is allowed per user. After that, playing again requires real money in the wallet.
-            if (depositedBalance <= 0 && hasUsedFreeGame) {
-                alert('🔒 You have already played your one free game. Please deposit to keep playing.');
-                switchNav('walletScreen', 'navWallet');
-                gameEntryLocked = false;
-                return;
-            }
-
             if (selectedCards.length === 0) {
                 // Having a wallet balance is NOT permission to play -- the player
                 // must explicitly pick their own card(s). We no longer auto-pick
@@ -1897,7 +1889,20 @@
 
             let totalDeduction = selectedCards.length * selectedStake;
 
-            if ((playWalletBalance + mainWalletBalance) < totalDeduction) {
+            // Wallet priority (single source of truth):
+            // 1) Play Wallet alone must cover the FULL stake -> deduct from Play only.
+            // 2) Otherwise, ONLY if Play Wallet is exactly 0 and Main Wallet alone
+            //    covers the FULL stake -> deduct from Main only.
+            // 3) Any other case (including "both have some but neither alone is
+            //    enough") -> NOT allowed to combine; show Deposit instead.
+            let source = null; // 'play' or 'main'
+            if (playWalletBalance >= totalDeduction) {
+                source = 'play';
+            } else if (playWalletBalance === 0 && mainWalletBalance >= totalDeduction) {
+                source = 'main';
+            }
+
+            if (!source) {
                 showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 gameEntryLocked = false;
                 return;
@@ -1912,25 +1917,61 @@
                 }
             }
 
-            // Play Wallet is used first; any shortfall is covered by Main Wallet.
-            // Main Wallet money is already real/withdrawable, so that portion
-            // counts as 100% "real" toward this round's withdrawable fraction.
-            let playPortion = Math.min(playWalletBalance, totalDeduction);
-            let mainPortion = totalDeduction - playPortion;
+            // Idempotent per-round deduction guard: atomically claim "I have
+            // already paid my stake for THIS round" in Firebase, keyed by
+            // round ID. A page refresh, reconnect, or duplicate request all
+            // re-run this same code path, but only the FIRST one to win this
+            // transaction actually deducts anything -- every subsequent one
+            // for the same round is a no-op that just continues into the
+            // game screen without touching the wallet again.
+            function proceedWithDeduction() {
+                if (source === 'play') {
+                    playWalletBalance -= totalDeduction;
+                    // Track what fraction of THIS stake is real (deposited) money vs
+                    // free bonus coins -- only the real fraction of any winnings
+                    // will be withdrawable.
+                    let playDepositedFraction = (playWalletBalance + totalDeduction) > 0
+                        ? Math.min(1, depositedBalance / (playWalletBalance + totalDeduction)) : 0;
+                    let realFromPlay = totalDeduction * playDepositedFraction;
+                    currentRoundDepositedFraction = playDepositedFraction;
+                    depositedBalance = Math.max(0, depositedBalance - realFromPlay);
+                } else {
+                    // Main Wallet money is always real (winnings or deposits already
+                    // credited there), so this stake counts as 100% real.
+                    mainWalletBalance -= totalDeduction;
+                    currentRoundDepositedFraction = 1;
+                }
+                updateWalletDisplay();
+                addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
+                finishGameEntry();
+            }
 
-            // Track what fraction of THIS stake is real (deposited) money vs free bonus coins —
-            // only the real fraction of any winnings will be withdrawable.
-            let playDepositedFraction = playWalletBalance > 0 ? Math.min(1, depositedBalance / playWalletBalance) : 0;
-            let realFromPlay = playPortion * playDepositedFraction;
-            let totalReal = realFromPlay + mainPortion;
-            currentRoundDepositedFraction = totalDeduction > 0 ? totalReal / totalDeduction : 0;
-            depositedBalance = Math.max(0, depositedBalance - realFromPlay);
+            if (db && currentRoundId) {
+                let alreadyDeductedHolder = { already: false };
+                db.ref('users/' + telegramUserId + '/lastStakeDeductionRound').transaction(function(current) {
+                    if (current === currentRoundId) {
+                        alreadyDeductedHolder.already = true;
+                        return; // abort -- already claimed for this exact round
+                    }
+                    return currentRoundId;
+                }).then(function() {
+                    if (alreadyDeductedHolder.already) {
+                        // Already paid for this round earlier (e.g. this is a
+                        // refresh/reconnect) -- do NOT deduct again, just continue.
+                        finishGameEntry();
+                    } else {
+                        proceedWithDeduction();
+                    }
+                }).catch(function(err) {
+                    console.log('Stake-deduction claim failed, proceeding offline', err);
+                    proceedWithDeduction();
+                });
+            } else {
+                proceedWithDeduction();
+            }
+        }
 
-            playWalletBalance -= playPortion;
-            mainWalletBalance -= mainPortion;
-            updateWalletDisplay();
-            addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
-
+        function finishGameEntry() {
             // Derash = (total cards taken this round × card price) × 0.8 (20% platform commission held back)
             const CARD_PRICE = selectedStake;
             let totalCardsTakenThisRound = selectedCards.length;
