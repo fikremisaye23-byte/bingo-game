@@ -926,8 +926,8 @@
             });
         }
 
-        function joinOrResetRound() {
-            if (!db) return;
+        function joinOrResetRound(onReady) {
+            if (!db) { if (onReady) onReady(Date.now() + CARD_SELECTION_SECONDS * 1000); return; }
             let myRoundValue = null;
             db.ref('room/roundEnded').once('value').then(function(endedSnap) {
                 let isEnded = endedSnap.val() === true;
@@ -940,6 +940,7 @@
                 });
             }).then(function(result) {
                 currentRoundId = result.snapshot.val();
+                let deadlinePromise;
                 if (result.committed && myRoundValue && result.snapshot.val() === myRoundValue) {
                     db.ref('room/takenCards').remove();
                     db.ref('room/calledNumbers').remove();
@@ -948,15 +949,33 @@
                     db.ref('room/caller').remove();
                     db.ref('room/prizePool').remove();
                     db.ref('room/roundFinalizing').remove();
+                    // Set ONE shared card-selection deadline for this round, same
+                    // moment on every player's device -- so a 35s countdown started
+                    // by whoever's device happens to create the round reads
+                    // identically (34...33...32) for everyone else, instead of each
+                    // phone running its own independent 35 seconds from whenever it
+                    // happened to open the screen.
+                    let sharedEnd = myRoundValue + CARD_SELECTION_SECONDS * 1000;
+                    deadlinePromise = db.ref('room/cardSelectionEndTime').set(sharedEnd).then(function() { return sharedEnd; });
+                } else {
+                    // Someone else already created this round -- read the deadline
+                    // THEY set, so we count down from the exact same moment.
+                    deadlinePromise = db.ref('room/cardSelectionEndTime').once('value').then(function(snap) {
+                        return snap.val() || (Date.now() + CARD_SELECTION_SECONDS * 1000);
+                    });
                 }
                 winnerPopupShown = false;
                 roomRoundEndedCached = false;
                 subscribeTakenCards();
+                return deadlinePromise;
+            }).then(function(sharedEnd) {
+                if (onReady) onReady(sharedEnd);
             }).catch(function(err) {
                 console.log("Firebase round join failed", err);
                 winnerPopupShown = false;
                 roomRoundEndedCached = false;
                 subscribeTakenCards();
+                if (onReady) onReady(Date.now() + CARD_SELECTION_SECONDS * 1000);
             });
         }
 
@@ -1344,6 +1363,9 @@
         let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
         let playWalletBalance = 0; // starts at 0; gets 10 when player registers
         let walletLoaded = false; // true only once we've actually synced real wallet data from Firebase at least once -- see updateWalletDisplay()
+        let gameEntryLocked = false; // guards against processGameEntry() running twice for the same selection (e.g. a double-tap), which would double-deduct the card cost
+        const CARD_SELECTION_SECONDS = 35; // card-selection window per round
+        let isSpectatorThisRound = false; // true if the player missed the card-selection deadline this round -- they can watch but not play/win until the next round
         let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
         let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
         let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
@@ -1786,37 +1808,57 @@
             unlockAudio();
             clearInterval(gameInterval);
             selectedCards = [];
-            
+            gameEntryLocked = false;
+            isSpectatorThisRound = false;
+
             let cells = document.querySelectorAll('.num-cell');
             cells.forEach(cell => cell.classList.remove('selected'));
-            
+
             updateSelectedCardsPreview();
             updateWalletDisplay();
             switchScreen('selectScreen');
-            startSelectionCountdown();
-            joinOrResetRound();
+            // Wait for the round (and its shared deadline) to be established
+            // before starting the countdown, so every device counts down from
+            // the exact same end time instead of each phone's own local 35s.
+            joinOrResetRound(function(sharedEndTime) {
+                startSelectionCountdown(sharedEndTime);
+            });
         }
 
-        function startSelectionCountdown() {
+        function startSelectionCountdown(sharedEndTimeMs) {
             clearInterval(selectionInterval);
-            let timeLeft = 50;
             let timerEl = document.getElementById('selectionTimer');
-            if (timerEl) timerEl.innerText = timeLeft + 's';
 
-            selectionInterval = setInterval(function() {
-                timeLeft--;
+            function tick() {
+                let timeLeft = Math.max(0, Math.ceil((sharedEndTimeMs - Date.now()) / 1000));
                 if (timerEl) timerEl.innerText = timeLeft + 's';
-
                 if (timeLeft <= 0) {
                     clearInterval(selectionInterval);
                     if (selectedCards.length === 0) {
-                        let randomCard = pickRandomAvailableCard();
-                        selectedCards.push(randomCard);
-                        claimCardInFirebase(randomCard, function() {}, function() {});
+                        // No auto-pick, ever. Missing the deadline makes this
+                        // player a spectator for the round instead of playing.
+                        isSpectatorThisRound = true;
+                        enterSpectatorMode();
+                    } else {
+                        processGameEntry();
                     }
-                    processGameEntry();
                 }
-            }, 1000);
+            }
+
+            tick(); // show the correct time immediately, even for a late joiner
+            selectionInterval = setInterval(tick, 1000);
+        }
+
+        function enterSpectatorMode() {
+            // The round continues normally for everyone else; this player can
+            // watch the shared board and calls but has no card, so they cannot
+            // mark cells or win. They can select a card again next round.
+            switchScreen('gameScreen');
+            let container = document.getElementById('userCardsContainer');
+            if (container) {
+                container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:13px; padding:16px;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
+            }
+            joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
         }
 
         function pickRandomAvailableCard() {
@@ -1830,10 +1872,17 @@
         }
 
         function processGameEntry() {
+            // Guard against this running twice for the same selection (e.g. a
+            // double-tap on the enter/play button) -- without this, the card
+            // cost could get deducted from the wallet more than once.
+            if (gameEntryLocked) return;
+            gameEntryLocked = true;
+
             // Only ONE free (non-deposit) game is allowed per user. After that, playing again requires real money in the wallet.
             if (depositedBalance <= 0 && hasUsedFreeGame) {
                 alert('🔒 You have already played your one free game. Please deposit to keep playing.');
                 switchNav('walletScreen', 'navWallet');
+                gameEntryLocked = false;
                 return;
             }
 
@@ -1842,6 +1891,7 @@
                 // must explicitly pick their own card(s). We no longer auto-pick
                 // one for them just because they have coins available.
                 alert('🎴 Please select at least one card before entering the game.');
+                gameEntryLocked = false;
                 return;
             }
 
@@ -1849,6 +1899,7 @@
 
             if ((playWalletBalance + mainWalletBalance) < totalDeduction) {
                 showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
+                gameEntryLocked = false;
                 return;
             }
 
