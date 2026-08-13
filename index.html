@@ -1070,10 +1070,16 @@
                 throw new Error(`❌ Invalid card number: ${cardNum}. Must be between 1 and 600.`);
             }
             
-            let matrix = FIXED_BINGO_MATRICES[cardNum];
+            let raw = FIXED_BINGO_MATRICES[cardNum];
             
-            if (!matrix) {
+            if (!raw) {
                 throw new Error(`❌ No fixed matrix found for card number: ${cardNum}. Please ensure all 600 matrices are defined.`);
+            }
+            
+            // matrices.js stores columns (B,I,N,G,O) — transpose to rows for rendering
+            let matrix = [];
+            for (let r = 0; r < 5; r++) {
+                matrix.push([raw[0][r], raw[1][r], raw[2][r], raw[3][r], raw[4][r]]);
             }
             
             return matrix;
