@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -24,6 +24,10 @@
             --btn-blue: #06b6d4;
             --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.35);
             --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -654,10 +658,133 @@
             max-height: 200px;
         }
 
+        /* SELECTION HEADER - Back and Refresh side by side with title in middle */
+        .selection-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 6px;
+            gap: 6px;
+        }
+
+        .selection-header .btn {
+            flex: 0 0 auto;
+            width: auto;
+            padding: 6px 12px;
+            font-size: 11px;
+            min-width: 60px;
+        }
+
+        .selection-header .title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--orange-color);
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        /* Smaller BINGO header for game screen */
+        .game-board-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+
+        .game-board-header div {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 0;
+            border-radius: 3px;
+            color: white;
+        }
+
+        .game-board-header .b { background: #3b82f6; }
+        .game-board-header .i { background: #8b5cf6; }
+        .game-board-header .n { background: #a855f7; }
+        .game-board-header .g { background: #10b981; }
+        .game-board-header .o { background: #f97316; }
+
+        /* Game screen layout fix - BINGO board smaller */
+        #gameScreen .game-layout {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 6px;
+            box-sizing: border-box;
+            min-height: 0;
+        }
+
+        #gameScreen .game-layout .board-col {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #gameScreen .game-layout .right-col {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        #masterBoardCard {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid #1e293b;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        #gameBoardGrid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            gap: 2px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        #gameBoardGrid div {
+            background: #4a4270;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #ffffff;
+            min-height: 14px;
+        }
+
+        /* Winner popup improvements */
+        .winner-name-display {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--orange-color);
+            text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+        }
+
+        .winner-card-display {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
         @media (max-width: 380px) {
             .num-cell { font-size: 11px; }
             .bingo-cell { font-size: 10px; }
             .btn { font-size: 13px; padding: 10px 6px; }
+            .selection-header .title { font-size: 15px; }
         }
     </style>
 </head>
@@ -699,9 +826,9 @@
 
     <!-- 2. NUMBER SELECTION SCREEN -->
     <div id="selectScreen" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+        <div class="selection-header">
             <button class="btn btn-danger btn-sm" onclick="switchNav('stakeScreen', 'navGame')">✕ Back</button>
-            <h2 style="margin: 0; font-size: 13px; text-align: center; line-height: 1.2; flex: 1;">Temerachi Bingo</h2>
+            <div class="title">Temerachi Bingo</div>
             <button class="btn btn-sm" onclick="refreshSelection()">🔄 Refresh</button>
         </div>
 
@@ -758,21 +885,21 @@
 
         <div id="gamePlayersList" style="width: 100%; margin-bottom: 4px;"></div>
 
-        <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
-            <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
-                <div id="masterBoardCard" style="background: var(--card-bg); border-radius: 10px; padding: 4px; border: 1px solid #1e293b; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0;">
-                    <div id="masterBoardHeader" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; text-align: center; margin-bottom: 3px;">
-                        <div style="background: #3b82f6; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">B</div>
-                        <div style="background: #8b5cf6; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">I</div>
-                        <div style="background: #a855f7; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">N</div>
-                        <div style="background: #10b981; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">G</div>
-                        <div style="background: #f97316; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">O</div>
+        <div class="game-layout">
+            <div class="board-col">
+                <div id="masterBoardCard">
+                    <div class="game-board-header">
+                        <div class="b">B</div>
+                        <div class="i">I</div>
+                        <div class="n">N</div>
+                        <div class="g">G</div>
+                        <div class="o">O</div>
                     </div>
-                    <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
+                    <div id="gameBoardGrid"></div>
                 </div>
             </div>
 
-            <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
+            <div class="right-col">
                 <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 3px 6px; border-radius: 8px; border: 1px solid #1e293b; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
                     <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
                     <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 13px; cursor: pointer;">🔊</button>
@@ -1404,10 +1531,11 @@
                                 return;
                             }
 
-                            let nextCost = (selectedCards.length + 1) * selectedStake;
-                            let canFundCard = (playWalletBalance >= nextCost) || (playWalletBalance === 0 && mainWalletBalance >= nextCost);
+                            // CHECK: Can use Main Wallet if Play Wallet is empty or insufficient
+                            let totalCost = (selectedCards.length + 1) * selectedStake;
+                            let canFundCard = (playWalletBalance >= totalCost) || (mainWalletBalance >= totalCost);
                             if (!canFundCard) {
-                                showToast(`Insufficient wallet balance.`, 3000);
+                                showToast(`Insufficient wallet balance. Need ${totalCost} ብር`, 3000);
                                 return;
                             }
 
@@ -1555,9 +1683,10 @@
 
             let totalDeduction = selectedCards.length * selectedStake;
             let source = null;
+            // CHECK: Can use Main Wallet if Play Wallet is insufficient or empty
             if (playWalletBalance >= totalDeduction) {
                 source = 'play';
-            } else if (playWalletBalance === 0 && mainWalletBalance >= totalDeduction) {
+            } else if (mainWalletBalance >= totalDeduction) {
                 source = 'main';
             }
 
@@ -1600,7 +1729,7 @@
                 let deposited = Number(current.deposited || 0);
                 let actualSource = null;
                 if (play >= totalDeduction) actualSource = 'play';
-                else if (play === 0 && main >= totalDeduction) actualSource = 'main';
+                else if (main >= totalDeduction) actualSource = 'main';
                 if (!actualSource) return;
 
                 if (actualSource === 'play') {
@@ -1775,7 +1904,6 @@
                     let num = matrixCols[c][r];
                     let cell = document.createElement('div');
                     cell.id = `board_cell_${num}`;
-                    cell.style.cssText = "background: #4a4270; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
                     cell.innerText = num;
                     boardGrid.appendChild(cell);
                 }
@@ -1838,16 +1966,16 @@
         }
 
         function syncBoardHeight() {
-            let rightCol = document.getElementById('rightColumnWrapper');
+            let rightCol = document.querySelector('.game-layout .right-col');
             let masterCard = document.getElementById('masterBoardCard');
-            let headerRow = document.getElementById('masterBoardHeader');
+            let headerRow = document.querySelector('.game-board-header');
             let grid = document.getElementById('gameBoardGrid');
             if (!rightCol || !masterCard || !headerRow || !grid) return;
 
             let targetHeight = rightCol.offsetHeight;
             if (!targetHeight) return;
 
-            let cardPadding = 10;
+            let cardPadding = 8;
             let headerHeight = headerRow.offsetHeight;
             let headerMarginBottom = 3;
             let rowGap = 2;
@@ -1856,9 +1984,9 @@
 
             let availableForRows = targetHeight - cardPadding - headerHeight - headerMarginBottom - totalGaps;
             let cellHeight = availableForRows / numRows;
-            cellHeight = Math.max(14, Math.min(cellHeight, 40));
+            cellHeight = Math.max(14, Math.min(cellHeight, 32));
 
-            let fontSize = Math.max(9, Math.min(cellHeight * 0.48, 15));
+            let fontSize = Math.max(8, Math.min(cellHeight * 0.45, 13));
 
             let cells = grid.children;
             for (let i = 0; i < cells.length; i++) {
@@ -1936,6 +2064,10 @@
                             return { cardNum: parseInt(cardNumStr), by: winnersObj[cardNumStr].by, name: winnersObj[cardNumStr].name };
                         });
 
+                        // Show winner popup for 5 seconds
+                        showWinnerPopup(winnersArr);
+
+                        // Award prize to winners
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
                             let prizePool = Number(currentGamePrize || 0);
@@ -1974,7 +2106,6 @@
                         }
 
                         recordGameCompletion(winnersArr.length);
-                        showWinnerPopup(winnersArr);
                     });
                 }
             });
@@ -2327,20 +2458,16 @@
                 mainMatrix = ownCard ? ownCard.matrix : generateBingoMatrix();
             }
 
-            let playersListHTML = `
-                <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
-                    ${winners.map(function(w) {
-                        let displayName = w.name || "Player";
-                        let shortId = (w.by && w.by !== "guest_user") ? w.by.slice(-6) : "guest";
-                        let initial = displayName.charAt(0).toUpperCase();
-                        return `
-                        <div style="background: #1c2640; border: 1px solid #2e3b55; border-radius: 20px; padding: 4px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                            <span style="background: #3b82f6; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${initial}</span>
-                            <span>${displayName} #${shortId} · Cartela ${w.cardNum}</span>
-                        </div>`;
-                    }).join('')}
-                </div>
-            `;
+            let playersListHTML = winners.map(function(w) {
+                let displayName = w.name || "Player";
+                let shortId = (w.by && w.by !== "guest_user") ? w.by.slice(-6) : "guest";
+                let initial = displayName.charAt(0).toUpperCase();
+                return `
+                <div style="background: #1c2640; border: 1px solid #2e3b55; border-radius: 20px; padding: 4px 12px; font-size: 14px; display: flex; align-items: center; gap: 6px; margin: 3px 0;">
+                    <span style="background: #3b82f6; color: white; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${initial}</span>
+                    <span><strong>${displayName}</strong> · Cartela ${w.cardNum}</span>
+                </div>`;
+            }).join('');
 
             let winnersCountText = winners.length === 1 ? "🎉 1 player won!" : `🎉 ${winners.length} players won!`;
 
@@ -2383,9 +2510,12 @@
                 <div style="font-size: 34px; margin-bottom: 2px;">👑</div>
                 <div style="font-size: 22px; font-weight: bold; color: var(--orange-color); margin-bottom: 4px;">BINGO!</div>
                 <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 10px;">${winnersCountText}</div>
-                ${playersListHTML}
+                <div style="margin-bottom: 10px; text-align: left;">
+                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">🏅 Winners:</div>
+                    ${playersListHTML}
+                </div>
                 ${tableHTML}
-                <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                <div id="popupTimer" style="font-size: 14px; color: var(--orange-color); background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
                     🟠 Auto-starting next game in 5s
                 </div>
             `;
