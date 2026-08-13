@@ -553,6 +553,12 @@
 </head>
 <body>
 
+    <div id="connectingOverlay" style="position:fixed; inset:0; background:#0b0f19; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+        <div style="width:44px; height:44px; border:4px solid #263450; border-top-color:var(--accent-color); border-radius:50%; animation:connectSpin 0.8s linear infinite;"></div>
+        <div style="color:#cbd5e1; font-size:14px; font-weight:600;">🔄 በመገናኘት ላይ...</div>
+    </div>
+    <style>@keyframes connectSpin { to { transform: rotate(360deg); } }</style>
+
     <div id="customModal" style="display: none;">
         <div class="modal-content" id="modalBodyText"></div>
     </div>
@@ -793,6 +799,7 @@
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
                     firebaseReady = true;
+                    hideConnectingOverlay();
                     initStatsTracking();
                     loadUserWalletFromFirebase();
                     loadUserRegistrationFromFirebase();
@@ -801,7 +808,18 @@
             });
         } catch (e) {
             console.log("Firebase init failed", e);
+            hideConnectingOverlay();
         }
+
+        // ✅ Hide the "Connecting..." overlay once auth is ready. If Firebase
+        // is slow or unreachable, don't trap the player forever — reveal the
+        // app after a short timeout too (offline/local mode still works).
+        function hideConnectingOverlay() {
+            let overlay = document.getElementById('connectingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+        setTimeout(hideConnectingOverlay, 8000);
+        if (!db) hideConnectingOverlay();
 
         watchFirebaseServerTimeOffset();
 
@@ -1290,6 +1308,16 @@
                             return;
                         }
                         if (cellElement.classList.contains('pending')) {
+                            return;
+                        }
+
+                        // ✅ FIX: Don't allow card claims until Firebase auth is ready.
+                        // Previously, tapping a card before signInAnonymously() finished
+                        // caused the database write to be denied by security rules
+                        // (".write": "auth != null"), which was wrongly shown to the
+                        // player as "this card is already taken".
+                        if (db && !firebaseReady) {
+                            showToast('⏳ እየተገናኘ ነው፣ እባክዎ 1-2 ሰከንድ ጠብቀው እንደገና ይሞክሩ');
                             return;
                         }
 
