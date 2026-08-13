@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ========== CSS ========== */
+        /* ========== CSS (ሙሉ እንደበፊቱ) ========== */
         :root {
             --bg-color: #0b0f19;
             --card-bg: #131b2e;
@@ -642,7 +642,7 @@
 
 <script>
 // ============================================================
-// ✅ FIXED: Complete Bingo Game Logic with proper card selection
+// ✅ FIXED: Complete Bingo Game Logic
 // ============================================================
 
 // ==================== TOAST SYSTEM ====================
@@ -922,7 +922,6 @@ let userBingoMatrices = [];
 const CARD_SELECTION_SECONDS = 45;
 let selectionDeadline = null;
 
-// ✅ Get matrix from FIXED_BINGO_MATRICES
 function getMatrixForCard(cardNum) {
     if (cardNum < 1 || cardNum > 600) {
         throw new Error(`Invalid card number: ${cardNum}. Must be between 1 and 600.`);
@@ -934,7 +933,6 @@ function getMatrixForCard(cardNum) {
     return matrix;
 }
 
-// ✅ Firebase card claim with transaction
 function claimCardInFirebase(cellNum, onSuccess, onTaken) {
     if (!db) {
         try {
@@ -965,7 +963,6 @@ function releaseCardInFirebase(cellNum) {
     db.ref('room/takenCards/' + cellNum).remove();
 }
 
-// ✅ Subscribe to Firebase taken cards
 function subscribeTakenCards() {
     if (!db) return;
     if (takenCardsListenerAttached) { renderTakenCardsUI(); return; }
@@ -977,7 +974,6 @@ function subscribeTakenCards() {
         if (selectedCards.length === 0 && document.getElementById('gameScreen')?.classList.contains('active')) {
             renderSpectatorCardsUI();
         }
-        // ✅ Sync selectedCards with Firebase on refresh
         syncSelectedCardsFromFirebase();
     });
 }
@@ -992,7 +988,7 @@ function syncSelectedCardsFromFirebase() {
             myCards.push(parseInt(cardNum));
         }
     });
-    // Only update if different (avoid loops)
+    // Only update if different
     if (myCards.length !== selectedCards.length || !myCards.every(function(c) { return selectedCards.includes(c); })) {
         selectedCards = myCards;
         updateSelectedCardsPreview();
@@ -1001,13 +997,16 @@ function syncSelectedCardsFromFirebase() {
     }
 }
 
-// ✅ Render UI with proper card states
+// ✅ Render UI with proper card states - FIXED
 function renderTakenCardsUI() {
     for (let i = 1; i <= 600; i++) {
         let cellEl = document.getElementById(`grid_cell_${i}`);
         if (!cellEl) continue;
         let info = takenCardsData[i];
+        
+        // Reset all classes
         cellEl.classList.remove('taken', 'selected', 'pending', 'owner-other', 'blocked');
+        
         if (info && info.by === telegramUserId) {
             // ✅ This is OUR card
             cellEl.classList.add('selected');
@@ -1018,8 +1017,9 @@ function renderTakenCardsUI() {
             cellEl.classList.add('owner-other');
             cellEl.title = `Taken by another player`;
         }
-        // 🔒 Block if already have 2 cards and this isn't one of them
-        if (selectedCards.length >= MAX_CARDS && !selectedCards.includes(i) && !(info && info.by === telegramUserId)) {
+        
+        // 🔒 Block if already have MAX cards AND this isn't selected by us
+        if (selectedCards.length >= MAX_CARDS && !selectedCards.includes(i)) {
             cellEl.classList.add('blocked');
             cellEl.title = 'Maximum 2 cards reached';
         }
@@ -1126,7 +1126,7 @@ if (gridContainer) {
                 // 🛡️ Double-click guard
                 if (isSelectingCard) { console.log('⏳ Selection in progress...'); return; }
                 
-                // 🛡️ Block if already have MAX cards
+                // 🛡️ Block if already have MAX cards and this isn't selected
                 if (selectedCards.length >= MAX_CARDS && !selectedCards.includes(cellNum)) {
                     showToast(`⚠️ You can only select up to ${MAX_CARDS} cards!`);
                     return;
@@ -1208,7 +1208,7 @@ if (gridContainer) {
     }
 }
 
-// ✅ Update selected cards preview
+// ✅ Update selected cards preview - FIXED
 function updateSelectedCardsPreview() {
     let container = document.getElementById('selectedCardsPreviewContainer');
     if (!container) return;
@@ -1221,6 +1221,7 @@ function updateSelectedCardsPreview() {
     let html = '';
     selectedCards.forEach(cardNum => {
         let matrix = null;
+        // First check Firebase data
         if (takenCardsData[cardNum] && takenCardsData[cardNum].matrix) {
             matrix = takenCardsData[cardNum].matrix;
         } else {
@@ -2267,7 +2268,7 @@ if (!isRegistered) {
     }, 1500);
 }
 
-console.log('🎮 Temerachi Bingo v2.1 - FIXED Card Selection!');
+console.log('🎮 Temerachi Bingo v2.2 - FIXED!');
 console.log('📊 Total matrices:', Object.keys(FIXED_BINGO_MATRICES).length);
 console.log('👤 User ID:', telegramUserId);
 </script>
