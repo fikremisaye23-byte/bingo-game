@@ -159,10 +159,10 @@
         }
         .num-cell:active { transform: scale(0.93); }
         .num-cell.selected {
-            background: linear-gradient(160deg, #ef4444, var(--danger-color));
+            background: linear-gradient(160deg, #10b981, var(--success-color)) !important;
             color: white;
             border: 2px solid #fff;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
         }
         .num-cell.taken {
             background: linear-gradient(145deg, #ff4d4d, #dc2626) !important;
@@ -181,6 +181,20 @@
             top: -4px;
             right: -4px;
             font-size: 10px;
+        }
+        /* 🆕 Disabled/Blocked state for 3rd card */
+        .num-cell.blocked {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+        .num-cell.blocked::after {
+            content: '🔒';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            font-size: 12px;
         }
 
         .bingo-card-container {
@@ -543,6 +557,61 @@
             to { transform: rotate(360deg); }
         }
 
+        /* 🆕 Selected Cards Preview - Better visibility */
+        #selectedCardsPreviewContainer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+        #selectedCardsPreviewContainer .empty-state {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            color: #64748b;
+            text-align: center;
+            padding: 20px 4px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 10px;
+            border: 1px dashed #2e3d5c;
+        }
+        .preview-card {
+            background: linear-gradient(160deg, #1a2a44, #0f1a2e);
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 6px;
+            transition: all 0.3s ease;
+        }
+        .preview-card.selected {
+            border-color: var(--success-color);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        .preview-card .card-number {
+            font-size: 10px;
+            color: var(--orange-color);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+        .preview-card .bingo-grid {
+            gap: 2px;
+        }
+        .preview-card .bingo-cell {
+            font-size: 11px;
+            min-height: 28px;
+            border-radius: 4px;
+        }
+        .preview-card .bingo-cell.free {
+            background: var(--success-color);
+            color: white;
+        }
+        .preview-card .bingo-header-cell {
+            font-size: 9px;
+            padding: 2px 0;
+            border-radius: 8px;
+        }
+
         @media (max-width: 380px) {
             .num-cell { font-size: 11px; }
             .bingo-cell { font-size: 10px; }
@@ -583,17 +652,21 @@
             <div class="title">Temerachi Bingo</div>
             <button class="btn btn-sm" onclick="refreshSelection()">🔄 Refresh</button>
         </div>
-        <div class="selection-top-stats" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-            <div class="stat-box"><span style="font-size: 9px;">Main Wallet</span><b id="selMainWallet" style="font-size: 13px;">0</b></div>
-            <div class="stat-box"><span style="font-size: 9px;">Play Wallet</span><b id="selPlayWallet" style="font-size: 13px;">0</b></div>
+        <div class="selection-top-stats" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr;">
+            <div class="stat-box"><span style="font-size: 9px;">Main</span><b id="selMainWallet" style="font-size: 13px;">0</b></div>
+            <div class="stat-box"><span style="font-size: 9px;">Play</span><b id="selPlayWallet" style="font-size: 13px;">0</b></div>
             <div class="stat-box"><span style="font-size: 9px;">Stake</span><b id="selStakeDisplay" style="font-size: 13px;">10 ብር</b></div>
             <div class="stat-box" style="background: #231c12; border-color: #533d1e;">
                 <span style="color: #f59e0b; font-size: 9px;">Timer</span>
                 <b id="selectionTimer" style="color: #f59e0b; font-size: 13px;">45s</b>
             </div>
+            <div class="stat-box" style="background: #0f1a2e; border-color: var(--accent-color);">
+                <span style="color: #94a3b8; font-size: 9px;">Cards</span>
+                <b id="selectedCardCount" style="color: var(--orange-color); font-size: 13px;">0/2</b>
+            </div>
         </div>
-        <div id="selectedCardsPreviewContainer" style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-            <div style="font-size: 13px; color: #64748b; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>
+        <div id="selectedCardsPreviewContainer">
+            <div class="empty-state">👆 Select up to 2 cards from the grid below</div>
         </div>
         <div class="number-grid" id="numberGrid"></div>
     </div>
@@ -765,11 +838,12 @@
         if (profileRefEl) profileRefEl.innerText = refLinkText;
 
         // ==================== GAME STATE ====================
-        let selectedCards = [];
+        let selectedCards = [];  // ✅ በጥብቅ የተጠበቀ array - ከ2 አይበልጥም
         let selectionInterval = null;
         let selectedStake = 10;
         let isAutomaticMode = false;
         let automaticTimer = null;
+        let isSelectingCard = false;  // 🆕 Double-click guard
 
         // ==================== FIREBASE CONFIG ====================
         const firebaseConfig = {
@@ -1061,6 +1135,7 @@
         let userBingoMatrices = [];
         const CARD_SELECTION_SECONDS = 45;
         let selectionDeadline = null;
+        const MAX_CARDS = 2;  // 🆕 Maximum cards per player
 
         // ============================================================
         // ✅ FIXED: getMatrixForCard() - Uses FIXED_BINGO_MATRICES only
@@ -1070,46 +1145,13 @@
                 throw new Error(`❌ Invalid card number: ${cardNum}. Must be between 1 and 600.`);
             }
             
-            let raw = FIXED_BINGO_MATRICES[cardNum];
+            let matrix = FIXED_BINGO_MATRICES[cardNum];
             
-            if (!raw) {
+            if (!matrix) {
                 throw new Error(`❌ No fixed matrix found for card number: ${cardNum}. Please ensure all 600 matrices are defined.`);
             }
             
-            // matrices.js stores columns (B,I,N,G,O) — transpose to rows for rendering
-            let matrix = [];
-            for (let r = 0; r < 5; r++) {
-                matrix.push([raw[0][r], raw[1][r], raw[2][r], raw[3][r], raw[4][r]]);
-            }
-            
             return matrix;
-        }
-
-        // ⚠️ generateBingoMatrix() - KEPT FOR COMPATIBILITY BUT NOT USED
-        function generateBingoMatrix() {
-            console.warn('⚠️ generateBingoMatrix() called - this should NOT happen with fixed matrices!');
-            let matrix = [];
-            let ranges = [[1,15], [16,30], [31,45], [46,60], [61,75]];
-            for(let col = 0; col < 5; col++) {
-                let colNums = [];
-                let min = ranges[col][0];
-                let max = ranges[col][1];
-                while(colNums.length < 5) {
-                    let r = Math.floor(Math.random() * (max - min + 1)) + min;
-                    if(!colNums.includes(r)) colNums.push(r);
-                }
-                matrix.push(colNums);
-            }
-            let rows = [];
-            for(let r = 0; r < 5; r++) {
-                let row = [];
-                for(let c = 0; c < 5; c++) {
-                    row.push(matrix[c][r]);
-                }
-                rows.push(row);
-            }
-            rows[2][2] = 'FREE';
-            return rows;
         }
 
         // ============================================================
@@ -1169,33 +1211,50 @@
             });
         }
 
+        // ============================================================
+        // ✅ FIXED: renderTakenCardsUI() - Shows selected cards properly
+        // ============================================================
         function renderTakenCardsUI() {
             for (let i = 1; i <= 600; i++) {
                 let cellEl = document.getElementById(`grid_cell_${i}`);
                 if (!cellEl) continue;
                 let info = takenCardsData[i];
-                if (info && info.by !== telegramUserId) {
+                
+                // Reset all classes first
+                cellEl.classList.remove('taken', 'selected', 'pending', 'owner-other', 'blocked');
+                
+                if (info && info.by === telegramUserId) {
+                    // ✅ This is OUR card - show as selected
+                    cellEl.classList.add('selected');
+                    cellEl.title = `Your Card ${i}`;
+                } else if (info && info.by !== telegramUserId) {
+                    // ❌ Taken by another player
                     cellEl.classList.add('taken');
-                    cellEl.classList.remove('selected');
-                    cellEl.classList.remove('pending');
-                } else {
-                    cellEl.classList.remove('taken');
-                }
-                if (info && info.by !== telegramUserId) {
                     cellEl.classList.add('owner-other');
                     cellEl.title = `Taken by Player`;
-                } else {
-                    cellEl.classList.remove('owner-other');
-                    cellEl.title = '';
+                }
+                
+                // 🆕 Block if already have 2 cards and this isn't one of them
+                if (selectedCards.length >= MAX_CARDS && !selectedCards.includes(i) && !(info && info.by === telegramUserId)) {
+                    cellEl.classList.add('blocked');
+                    cellEl.title = 'Maximum 2 cards reached';
                 }
             }
             updateActivePlayersCount();
+            // 🆕 Update card count display
+            updateCardCountDisplay();
         }
 
         function updateActivePlayersCount() {
             let uniquePlayers = new Set(Object.values(takenCardsData).map(v => v.by));
             let el = document.getElementById('activePlayersCountDisplay');
             if (el) el.innerText = uniquePlayers.size || 0;
+        }
+
+        // 🆕 Update card count display
+        function updateCardCountDisplay() {
+            let el = document.getElementById('selectedCardCount');
+            if (el) el.innerText = `${selectedCards.length}/${MAX_CARDS}`;
         }
 
         function renderGamePlayersList() {
@@ -1291,56 +1350,87 @@
                 cell.id = `grid_cell_${i}`;
                 cell.onclick = (function(cellNum, cellElement) {
                     return function() {
+                        // 🆕 Double-click guard
+                        if (isSelectingCard) {
+                            console.log('⏳ Selection in progress, please wait...');
+                            return;
+                        }
+                        
+                        // 🆕 Block if already have MAX cards
+                        if (selectedCards.length >= MAX_CARDS && !selectedCards.includes(cellNum)) {
+                            showToast(`⚠️ You can only select up to ${MAX_CARDS} cards!`);
+                            return;
+                        }
+
                         if (cellElement.classList.contains('taken')) {
-                            showToast('ይህ ካርድ ቀድሞ በሌላ ተጫዋች ተይዟል!');
+                            showToast('⚠️ This card is already taken by another player!');
                             return;
                         }
                         if (cellElement.classList.contains('pending')) {
+                            return;
+                        }
+                        if (cellElement.classList.contains('blocked')) {
+                            showToast(`⚠️ Maximum ${MAX_CARDS} cards reached!`);
                             return;
                         }
 
                         let index = selectedCards.indexOf(cellNum);
 
                         if (index === -1) {
-                            if (selectedCards.length >= 2) {
-                                showToast('You cannot select more than 2 cards!');
+                            // ✅ Add card
+                            if (selectedCards.length >= MAX_CARDS) {
+                                showToast(`⚠️ You can only select up to ${MAX_CARDS} cards!`);
                                 return;
                             }
 
                             let totalCost = (selectedCards.length + 1) * selectedStake;
                             let canFundCard = (playWalletBalance >= totalCost) || (mainWalletBalance >= totalCost);
                             if (!canFundCard) {
-                                showToast(`Insufficient wallet balance. Need ${totalCost} ብር`, 3000);
+                                showToast(`⚠️ Insufficient balance! Need ${totalCost} ብር`, 3000);
                                 return;
                             }
 
+                            // ✅ Set guard and add card
+                            isSelectingCard = true;
                             selectedCards.push(cellNum);
                             cellElement.classList.add('selected');
                             cellElement.classList.add('pending');
                             updateSelectedCardsPreview();
+                            updateCardCountDisplay();
 
                             claimCardInFirebase(cellNum, function(matrix) {
                                 takenCardsData[cellNum] = { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: matrix };
                                 cellElement.classList.remove('pending');
+                                // ✅ Re-render to show proper state
+                                renderTakenCardsUI();
                                 updateSelectedCardsPreview();
                                 renderGamePlayersList();
+                                isSelectingCard = false;
                             }, function() {
+                                // ❌ Card was taken by someone else
                                 let idx = selectedCards.indexOf(cellNum);
                                 if (idx !== -1) selectedCards.splice(idx, 1);
                                 cellElement.classList.remove('selected');
                                 cellElement.classList.remove('pending');
                                 cellElement.classList.add('taken');
-                                showToast('ይህ ካርድ ልክ አሁን በሌላ ተጫዋች ተይዞ ነበር!');
+                                showToast('⚠️ This card was just taken by another player!');
                                 updateSelectedCardsPreview();
+                                updateCardCountDisplay();
+                                isSelectingCard = false;
                             });
                         } else {
+                            // ✅ Remove card (deselect)
+                            isSelectingCard = true;
                             selectedCards.splice(index, 1);
                             cellElement.classList.remove('selected');
                             cellElement.classList.remove('pending');
                             releaseCardInFirebase(cellNum);
                             delete takenCardsData[cellNum];
+                            renderTakenCardsUI();
                             updateSelectedCardsPreview();
                             renderGamePlayersList();
+                            updateCardCountDisplay();
+                            isSelectingCard = false;
                         }
                     };
                 })(i, cell);
@@ -1349,14 +1439,14 @@
         }
 
         // ============================================================
-        // ✅ FIXED: Preview shows EXACT matrix from Firebase (NO random generation)
+        // ✅ FIXED: updateSelectedCardsPreview() - Shows selected cards clearly
         // ============================================================
         function updateSelectedCardsPreview() {
             let container = document.getElementById('selectedCardsPreviewContainer');
             if (!container) return;
             
             if (selectedCards.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; font-size: 13px; color: #64748b; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>`;
+                container.innerHTML = `<div class="empty-state">👆 Select up to ${MAX_CARDS} cards from the grid below</div>`;
                 return;
             }
 
@@ -1371,9 +1461,9 @@
                     } catch(e) {
                         console.error(e);
                         html += `
-                        <div class="bingo-card-container">
-                            <div style="font-size:10px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>
-                            <div style="text-align:center; color:#ef4444; padding:10px;">❌ Matrix not found</div>
+                        <div class="preview-card" style="border-color: #ef4444;">
+                            <div class="card-number">❌ Card ${cardNum}</div>
+                            <div style="text-align:center; color:#ef4444; padding:10px;">Matrix not found</div>
                         </div>`;
                         return;
                     }
@@ -1381,16 +1471,16 @@
                 
                 if (!matrix) {
                     html += `
-                    <div class="bingo-card-container">
-                        <div style="font-size:10px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>
-                        <div style="text-align:center; color:#ef4444; padding:10px;">❌ Matrix not found</div>
+                    <div class="preview-card" style="border-color: #ef4444;">
+                        <div class="card-number">❌ Card ${cardNum}</div>
+                        <div style="text-align:center; color:#ef4444; padding:10px;">Matrix not found</div>
                     </div>`;
                     return;
                 }
 
                 html += `
-                <div class="bingo-card-container">
-                    <div style="font-size:10px; margin-bottom:2px; color:var(--orange-color); font-weight: bold; text-align: center;">Cartela No : ${cardNum}</div>
+                <div class="preview-card selected">
+                    <div class="card-number">🎯 Card ${cardNum}</div>
                     <div class="bingo-grid">
                         <div class="bingo-header-cell">B</div>
                         <div class="bingo-header-cell">I</div>
@@ -1437,6 +1527,8 @@
         function refreshSelection() {
             updateWalletDisplay();
             renderTakenCardsUI();
+            updateSelectedCardsPreview();
+            updateCardCountDisplay();
             if (selectionDeadline) {
                 startSelectionCountdown(selectionDeadline);
             } else {
@@ -1456,6 +1548,7 @@
         function openSelection() {
             unlockAudio();
             clearInterval(gameInterval);
+            // 🆕 Reset selection state on re-entry
             if (roomRoundEndedCached) {
                 selectedCards.forEach(function(cardNum) { releaseCardInFirebase(cardNum); });
                 selectedCards = [];
@@ -1464,6 +1557,7 @@
                 let cells = document.querySelectorAll('.num-cell');
                 cells.forEach(cell => cell.classList.remove('selected'));
                 updateSelectedCardsPreview();
+                updateCardCountDisplay();
             }
             
             updateWalletDisplay();
@@ -1484,6 +1578,13 @@
 
             if (selectedCards.length === 0) {
                 showToast('🎴 Please select at least one card before entering the game.');
+                gameEntryLocked = false;
+                return;
+            }
+
+            // 🆕 Double-check max cards
+            if (selectedCards.length > MAX_CARDS) {
+                showToast(`⚠️ You cannot have more than ${MAX_CARDS} cards!`);
                 gameEntryLocked = false;
                 return;
             }
@@ -2601,9 +2702,17 @@
         }
 
         // ============================================================
-        // ✅ DEPOSIT / WITHDRAW (እንደበፊቱ - ምንም አልተለወጠም)
+        // ✅ DEPOSIT / WITHDRAW
         // ============================================================
-        // ... (All deposit/withdraw functions remain exactly as before)
+        function handleDeposit() {
+            switchNav('walletScreen', 'navProfile');
+            showToast('💰 Go to Profile > Wallet to deposit');
+        }
+
+        function handleWithdraw() {
+            switchNav('walletScreen', 'navProfile');
+            showToast('💸 Go to Profile > Wallet to withdraw');
+        }
 
         // ==================== INVITE & INSTRUCTIONS ====================
         function handleInvite() {
@@ -2626,7 +2735,7 @@
 
 1. ጨዋታውን ለመጀመር ከሚመጣልን ከ1-600 የካርድ መምረጫ ቦርድ ውስጥ እስከ 2 የመጫወቻ ካርድ (ካርቴላ) መምረጥ ይቻላል።
 
-2. የካርድ መምረጫ ቦርድ ላይ በቀይ ቀለም የተመረጡ ቁጥሮች የሚያሳዩት መጫወቻ ካርዱ (ካርቴላው) በሌላ ተጫዋች መመረጡን ነው።
+2. የካርድ መምረጫ ቦርድ ላይ በአረንጓዴ ቀለም የተመረጡ ቁጥሮች የሚያሳዩት መጫወቻ ካርዱ (ካርቴላው) በእርስዎ መመረጡን ነው።
 
 3. የመጫወቻ ካርዱን (ካርቴላውን) ሲመርጡት ከታች የሚይዛቸውን ቁጥሮች ያሳያል።
 
