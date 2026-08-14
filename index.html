@@ -12,23 +12,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: #131b2e;
-            --cell-bg: #1c2640;
-            --accent-color: #3b82f6;
+            --bg-color: #030b21;
+            --card-bg: #05153c;
+            --cell-bg: #071d55;
+            --accent-color: #3480fd;
             --text-color: #ffffff;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --orange-color: #f59e0b;
-            --btn-green: #10b981;
-            --btn-blue: #06b6d4;
+            --danger-color: #fb3838;
+            --success-color: #04c585;
+            --orange-color: #fca003;
+            --btn-green: #04c585;
+            --btn-blue: #01b9d9;
             --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.35);
             --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.45);
         }
 
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background: radial-gradient(circle at 50% 0%, #1a1836 0%, #0b0f19 55%, #090c14 100%);
+            background: radial-gradient(circle at 50% 0%, #0a0648 0%, #030b21 55%, #02091b 100%);
             color: var(--text-color);
             margin: 0;
             padding: 4px;
@@ -59,7 +59,7 @@
             font-size: 21px;
             font-weight: 700;
             letter-spacing: 0.3px;
-            text-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+            text-shadow: 0 0 14px rgba(252, 160, 3, 0.35);
         }
 
         .menu-grid {
@@ -71,7 +71,7 @@
         }
 
         .btn {
-            background: linear-gradient(145deg, #0891b2, var(--btn-blue));
+            background: linear-gradient(145deg, #0295b8, var(--btn-blue));
             color: white;
             border: none;
             padding: 13px 8px;
@@ -92,18 +92,18 @@
             filter: brightness(0.95);
         }
 
-        .btn-green { background: linear-gradient(145deg, #059669, var(--btn-green)); }
-        .btn-danger { background: linear-gradient(145deg, #dc2626, var(--danger-color)); }
-        .btn-orange { background: linear-gradient(145deg, #d97706, var(--orange-color)); color: #1a1200; }
+        .btn-green { background: linear-gradient(145deg, #019a6a, var(--btn-green)); }
+        .btn-danger { background: linear-gradient(145deg, #f60c0c, var(--danger-color)); }
+        .btn-orange { background: linear-gradient(145deg, #de7701, var(--orange-color)); color: #1a1200; }
 
         .main-card {
-            background: linear-gradient(160deg, #182342, var(--card-bg));
+            background: linear-gradient(160deg, #061a54, var(--card-bg));
             border-radius: 16px;
             padding: 15px;
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 15px;
-            border: 1px solid #263450;
+            border: 1px solid #092a6d;
             text-align: center;
             box-shadow: var(--shadow-soft);
         }
@@ -113,18 +113,18 @@
             grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 6px;
             width: 100%;
-            background: linear-gradient(160deg, #182342, var(--card-bg));
+            background: linear-gradient(160deg, #061a54, var(--card-bg));
             padding: 8px;
             border-radius: 12px;
             box-sizing: border-box;
             margin-bottom: 12px;
-            border: 1px solid #263450;
+            border: 1px solid #092a6d;
             box-shadow: var(--shadow-soft);
         }
 
         .stat-box {
-            background: linear-gradient(160deg, #1f2a44, #192237);
-            border: 1px solid #2e3d5c;
+            background: linear-gradient(160deg, #07205c, #061a4a);
+            border: 1px solid #0a3180;
             border-radius: 10px;
             padding: 6px 4px;
             text-align: center;
@@ -133,7 +133,7 @@
 
         .stat-box span {
             font-size: 11px;
-            color: #94a3b8;
+            color: #5a99f2;
             display: block;
             margin-bottom: 2px;
         }
@@ -146,23 +146,23 @@
         .number-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            gap: 6px;
+            gap: 0;
             width: 100%;
             height: 540px;
             overflow-y: auto;
-            background: linear-gradient(160deg, #182342, var(--card-bg));
+            background: linear-gradient(160deg, #061a54, var(--card-bg));
             padding: 12px;
             border-radius: 12px;
             box-sizing: border-box;
             margin-bottom: 10px;
-            border: 1px solid #263450;
+            border: 1px solid #092a6d;
             box-shadow: var(--shadow-soft);
         }
 
         .num-cell {
             aspect-ratio: 1;
-            background: linear-gradient(160deg, #223052, var(--cell-bg));
-            border-radius: 8px;
+            background: linear-gradient(160deg, #202f54, #192543);
+            border-radius: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -170,7 +170,7 @@
             font-weight: 600;
             cursor: pointer;
             user-select: none;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            box-shadow: none;
             transition: transform 0.1s ease, background 0.15s ease;
         }
 
@@ -179,46 +179,46 @@
         }
 
         .num-cell.selected {
-            background: linear-gradient(160deg, #ef4444, var(--danger-color));
+            background: linear-gradient(160deg, #fb3838, var(--danger-color));
             color: white;
             border: 2px solid #fff;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 10px rgba(251, 56, 56, 0.5);
         }
 
         .num-cell.taken {
-            background: linear-gradient(145deg, #ff4d4d, #dc2626) !important;
+            background: linear-gradient(145deg, #ff4d4d, #f60c0c) !important;
             color: #ffffff !important;
             cursor: not-allowed;
             opacity: 1;
             border: 2px solid #ffb4b4;
-            box-shadow: 0 0 14px rgba(239, 68, 68, 0.75), inset 0 0 8px rgba(255,255,255,0.12);
+            box-shadow: 0 0 14px rgba(251, 56, 56, 0.75), inset 0 0 8px rgba(255,255,255,0.12);
             text-shadow: 0 1px 2px rgba(0,0,0,0.35);
         }
 
         .spectator-cards-title {
-            color: #fbbf24;
+            color: #fec021;
             font-weight: 800;
             font-size: 13px;
             text-align: center;
             margin: 2px 0 4px;
-            text-shadow: 0 0 8px rgba(251,191,36,0.35);
+            text-shadow: 0 0 8px rgba(254, 192, 33, 0.35);
         }
 
         .spectator-card {
-            background: linear-gradient(160deg, #182342, var(--card-bg));
-            border: 2px solid #334155;
+            background: linear-gradient(160deg, #061a54, var(--card-bg));
+            border: 2px solid #0a3a7e;
             border-radius: 10px;
             padding: 4px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.28);
         }
 
         .spectator-card.owned-by-other {
-            border-color: #ef4444;
-            box-shadow: 0 0 10px rgba(239,68,68,0.18);
+            border-color: #fb3838;
+            box-shadow: 0 0 10px rgba(251, 56, 56, 0.18);
         }
 
         .spectator-card .spectator-owner {
-            color: #fbbf24;
+            color: #fec021;
             font-size: 10px;
             font-weight: 800;
             text-align: center;
@@ -229,8 +229,8 @@
         }
 
         .spectator-card .spectator-cell {
-            background: linear-gradient(160deg, #263554, #1d2942);
-            color: #f8fafc;
+            background: linear-gradient(160deg, #092b71, #072158);
+            color: #f6fafe;
             border-radius: 4px;
             min-height: 25px;
             display: flex;
@@ -241,13 +241,13 @@
         }
 
         .spectator-card .spectator-cell.called {
-            background: linear-gradient(145deg, #ff4d4d, #dc2626) !important;
+            background: linear-gradient(145deg, #ff4d4d, #f60c0c) !important;
             color: #fff !important;
-            box-shadow: 0 0 7px rgba(239,68,68,0.6);
+            box-shadow: 0 0 7px rgba(251, 56, 56, 0.6);
         }
 
         .spectator-card .spectator-cell.free {
-            background: linear-gradient(145deg, #34d399, #10b981) !important;
+            background: linear-gradient(145deg, #13f4a2, #04c585) !important;
             color: #fff !important;
         }
 
@@ -260,14 +260,14 @@
             border-radius: 5px;
         }
 
-        .spectator-card .spectator-header.b { background: #3b82f6; }
-        .spectator-card .spectator-header.i { background: #8b5cf6; }
-        .spectator-card .spectator-header.n { background: #a855f7; }
-        .spectator-card .spectator-header.g { background: #10b981; }
-        .spectator-card .spectator-header.o { background: #f97316; }
+        .spectator-card .spectator-header.b { background: #3480fd; }
+        .spectator-card .spectator-header.i { background: #8855fd; }
+        .spectator-card .spectator-header.n { background: #a84ffd; }
+        .spectator-card .spectator-header.g { background: #04c585; }
+        .spectator-card .spectator-header.o { background: #fe7211; }
 
         .bingo-card-container {
-            background: linear-gradient(160deg, #182342, var(--card-bg));
+            background: linear-gradient(160deg, #061a54, var(--card-bg));
             border-radius: 10px;
             padding: 4px;
             width: 100%;
@@ -293,7 +293,7 @@
         }
 
         .bingo-table td {
-            background: linear-gradient(160deg, #223052, var(--cell-bg));
+            background: linear-gradient(160deg, #08256c, var(--cell-bg));
             border-radius: 3px;
             height: 27px;
             font-size: 13px;
@@ -346,16 +346,16 @@
             text-align: center;
         }
 
-        .bingo-header-cell:nth-child(1) { background: linear-gradient(160deg, #5b9bff, #3b82f6); } /* B */
-        .bingo-header-cell:nth-child(2) { background: linear-gradient(160deg, #a78bfa, #8b5cf6); } /* I */
-        .bingo-header-cell:nth-child(3) { background: linear-gradient(160deg, #c084fc, #a855f7); } /* N */
-        .bingo-header-cell:nth-child(4) { background: linear-gradient(160deg, #34d399, #10b981); } /* G */
-        .bingo-header-cell:nth-child(5) { background: linear-gradient(160deg, #fb923c, #f97316); } /* O */
+        .bingo-header-cell:nth-child(1) { background: linear-gradient(160deg, #5b9bff, #3480fd); } /* B */
+        .bingo-header-cell:nth-child(2) { background: linear-gradient(160deg, #a587fe, #8855fd); } /* I */
+        .bingo-header-cell:nth-child(3) { background: linear-gradient(160deg, #c082fe, #a84ffd); } /* N */
+        .bingo-header-cell:nth-child(4) { background: linear-gradient(160deg, #13f4a2, #04c585); } /* G */
+        .bingo-header-cell:nth-child(5) { background: linear-gradient(160deg, #fe9239, #fe7211); } /* O */
 
         .bingo-cell {
             aspect-ratio: 1.15 / 1;
-            background: #e9ecf2;
-            color: #1e293b;
+            background: #dfe9fc;
+            color: #072352;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 700;
@@ -388,7 +388,7 @@
             width: 30px;
             height: 30px;
             background: #ffffff;
-            border: 3px solid #f5b301;
+            border: 3px solid #f6b300;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -396,7 +396,7 @@
             font-size: 11px;
             font-weight: 800;
             margin: 3px auto;
-            box-shadow: 0 0 12px rgba(245, 179, 1, 0.45);
+            box-shadow: 0 0 12px rgba(246, 179, 0, 0.45);
             position: relative;
         }
 
@@ -419,7 +419,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #f5b301;
+            background: #f6b300;
             opacity: 0.85;
         }
 
@@ -454,12 +454,12 @@
         }
 
         .modal-content {
-            background: linear-gradient(145deg, #162035, #0d1322);
+            background: linear-gradient(145deg, #051a46, #030f2c);
             padding: 18px;
             border-radius: 20px;
             width: 100%;
             max-width: 340px;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(252, 160, 3, 0.3);
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             box-sizing: border-box;
@@ -475,7 +475,7 @@
         .deposit-spinner {
             width: 46px;
             height: 46px;
-            border: 4px solid #2e3b55;
+            border: 4px solid #0a2f79;
             border-top: 4px solid var(--orange-color);
             border-radius: 50%;
             margin: 10px auto;
@@ -486,8 +486,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #1c2640;
-            border: 1px solid #2e3b55;
+            background: #071d55;
+            border: 1px solid #0a2f79;
             border-radius: 10px;
             padding: 10px 12px;
             margin-bottom: 8px;
@@ -500,8 +500,8 @@
         }
 
         .deposit-amount-btn {
-            background: #1c2640;
-            border: 1px solid #2e3b55;
+            background: #071d55;
+            border: 1px solid #0a2f79;
             color: white;
             border-radius: 8px;
             padding: 10px 0;
@@ -521,11 +521,11 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(180deg, #0d1220, #070a10);
+            background: linear-gradient(180deg, #030d2a, #020815);
             display: flex;
             justify-content: space-around;
             padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
-            border-top: 1px solid #263450;
+            border-top: 1px solid #092a6d;
             box-shadow: 0 -6px 18px rgba(0,0,0,0.35);
             z-index: 100;
             box-sizing: border-box;
@@ -534,7 +534,7 @@
         .nav-item {
             background: none;
             border: none;
-            color: #64748b;
+            color: #1265dd;
             font-size: 13px;
             cursor: pointer;
             display: flex;
@@ -546,7 +546,7 @@
 
         .nav-item:active { transform: scale(0.95); }
 
-        .nav-item.active { color: var(--btn-blue); text-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
+        .nav-item.active { color: var(--btn-blue); text-shadow: 0 0 10px rgba(1, 185, 217, 0.5); }
 
         #customToast {
             display: none;
@@ -554,11 +554,11 @@
             left: 50%;
             bottom: 80px;
             transform: translateX(-50%);
-            background: linear-gradient(145deg, #162035, #0d1322);
+            background: linear-gradient(145deg, #051a46, #030f2c);
             color: #ffffff;
             padding: 12px 18px;
             border-radius: 12px;
-            border: 1px solid rgba(245, 158, 11, 0.4);
+            border: 1px solid rgba(252, 160, 3, 0.4);
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             font-size: 14px;
             font-weight: bold;
@@ -634,14 +634,14 @@
                 <span style="font-size: 9px;">Stake</span>
                 <b id="selStakeDisplay" style="font-size: 13px;">10</b>
             </div>
-            <div class="stat-box" style="background: #231c12; border-color: #533d1e;">
-                <span style="color: #f59e0b; font-size: 9px;">Timer</span>
-                <b id="selectionTimer" style="color: #f59e0b; font-size: 13px;">45s</b>
+            <div class="stat-box" style="background: #311e04; border-color: #6a4108;">
+                <span style="color: #fca003; font-size: 9px;">Timer</span>
+                <b id="selectionTimer" style="color: #fca003; font-size: 13px;">45s</b>
             </div>
         </div>
         
         <div id="selectedCardsPreviewContainer" style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-            <div style="font-size: 13px; color: #64748b; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>
+            <div style="font-size: 13px; color: #1265dd; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>
         </div>
 
         <div class="number-grid" id="numberGrid"></div>
@@ -650,25 +650,25 @@
     <!-- 3. LIVE GAME ROOM SCREEN -->
     <div id="gameScreen" class="screen" style="max-width: 420px;">
         <!-- Top Info Header -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: var(--card-bg); padding: 5px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #1e293b; text-align: center; box-sizing: border-box;">
-            <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #94a3b8;">Game ID</div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: var(--card-bg); padding: 5px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #072352; text-align: center; box-sizing: border-box;">
+            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
+                <div style="font-size: 12px; color: #5a99f2;">Game ID</div>
                 <div id="gameIdDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">BBX54</div>
             </div>
-            <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #94a3b8;">Players</div>
+            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
+                <div style="font-size: 12px; color: #5a99f2;">Players</div>
                 <div style="font-size: 14px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
             </div>
-            <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #94a3b8;">Bet</div>
+            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
+                <div style="font-size: 12px; color: #5a99f2;">Bet</div>
                 <div style="font-size: 14px; font-weight: bold; color: white;">10</div>
             </div>
-            <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #94a3b8;">Derash 🪙</div>
+            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
+                <div style="font-size: 12px; color: #5a99f2;">Derash 🪙</div>
                 <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: var(--success-color);">16</div>
             </div>
-            <div style="background: #192237; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #94a3b8;">Called</div>
+            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
+                <div style="font-size: 12px; color: #5a99f2;">Called</div>
                 <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">0</div>
             </div>
         </div>
@@ -676,13 +676,13 @@
         <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
             <!-- Left Side: 5-Column BINGO Board -->
             <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
-                <div id="masterBoardCard" style="background: var(--card-bg); border-radius: 10px; padding: 4px; border: 1px solid #1e293b; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                <div id="masterBoardCard" style="background: var(--card-bg); border-radius: 10px; padding: 4px; border: 1px solid #072352; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0;">
                     <div id="masterBoardHeader" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; text-align: center; margin-bottom: 3px;">
-                        <div style="background: #3b82f6; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">B</div>
-                        <div style="background: #8b5cf6; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">I</div>
-                        <div style="background: #a855f7; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">N</div>
-                        <div style="background: #10b981; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">G</div>
-                        <div style="background: #f97316; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">O</div>
+                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">B</div>
+                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">I</div>
+                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">N</div>
+                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">G</div>
+                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">O</div>
                     </div>
                     <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
                 </div>
@@ -690,12 +690,12 @@
 
             <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
             <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 3px 6px; border-radius: 8px; border: 1px solid #1e293b; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 3px 6px; border-radius: 8px; border: 1px solid #072352; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
                     <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
                     <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 13px; cursor: pointer;">🔊</button>
                 </div>
 
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 4px; text-align: center; border: 1px solid #1e293b; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 4px; text-align: center; border: 1px solid #072352; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
                     <div class="called-circle" id="currentCalledNum">-</div>
                     <div id="gameStatusText" style="font-size: 10px; color: var(--orange-color); font-weight: bold; margin-top: 1px;">Game in progress...</div>
                 </div>
@@ -718,19 +718,19 @@
     <div id="walletScreen" class="screen">
         <h2>🪙 Your Wallets</h2>
         <div class="main-card">
-            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">Main Wallet (withdrawable winnings)</div>
+            <div style="font-size: 13px; color: #5a99f2; margin-bottom: 4px;">Main Wallet (withdrawable winnings)</div>
             <div id="mainWalletBalanceDisplay" style="color: var(--success-color); font-size: 24px; font-weight: bold; margin-bottom: 10px;">0 coins</div>
             <button class="btn btn-orange" onclick="handleWithdraw()">Withdraw 💸</button>
         </div>
 
         <div class="main-card">
-            <div style="font-size: 13px; color: #94a3b8; margin-bottom: 4px;">Play Wallet (used to join games)</div>
+            <div style="font-size: 13px; color: #5a99f2; margin-bottom: 4px;">Play Wallet (used to join games)</div>
             <div id="playWalletBalanceDisplay" style="color: var(--btn-blue); font-size: 24px; font-weight: bold; margin-bottom: 10px;">0 coins</div>
             <button class="btn btn-green" onclick="handleDeposit()">Deposit 🪙</button>
         </div>
 
         <div class="main-card">
-            <div style="font-size: 12px; color: #64748b;">
+            <div style="font-size: 12px; color: #1265dd;">
                 Play Wallet coins are used to join games. When you win a game, winnings automatically move to your Main Wallet. Deposits go into your Play Wallet. Only real deposited winnings can be withdrawn from your Main Wallet.
             </div>
         </div>
@@ -747,7 +747,7 @@
             <button class="btn" onclick="handleInvite()">Invite Friends 🔗</button>
             <button class="btn btn-green" onclick="showInstructions()">Instruction 📖</button>
             <div id="adminLinkContainer" style="text-align:center; margin-top:14px; display:none;">
-                <span onclick="openAdminPanel()" style="font-size:11px; color:#475569; cursor:pointer;">🛠 Admin <span id="adminPendingBadge" style="display:none; background:var(--danger-color); color:white; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:bold; margin-left:2px;"></span></span>
+                <span onclick="openAdminPanel()" style="font-size:11px; color:#0d4ba3; cursor:pointer;">🛠 Admin <span id="adminPendingBadge" style="display:none; background:var(--danger-color); color:white; border-radius:10px; padding:1px 6px; font-size:10px; font-weight:bold; margin-left:2px;"></span></span>
             </div>
         </div>
     </div>
@@ -757,13 +757,9 @@
         <button class="btn" style="margin-bottom:12px;" onclick="switchNav('profileScreen', 'navProfile')">⬅ Back to Profile</button>
 
         <div class="main-card" style="text-align:left;">
-            <div style="font-weight:bold; color:var(--orange-color); margin-bottom:8px;">⏳ Pending Deposits</div>
-            <div id="adminDepositsList" style="font-size:13px; color:#94a3b8;">Loading...</div>
-        </div>
-
-        <div class="main-card" style="text-align:left;">
             <div style="font-weight:bold; color:var(--orange-color); margin-bottom:8px;">⏳ Pending Withdrawals</div>
-            <div id="adminWithdrawalsList" style="font-size:13px; color:#94a3b8;">Loading...</div>
+            <div style="font-size:11px; color:#1265dd; margin-bottom:8px;">Deposits are approved from the bot chat only — not shown here.</div>
+            <div id="adminWithdrawalsList" style="font-size:13px; color:#5a99f2;">Loading...</div>
         </div>
     </div>
     <div class="nav-bar">
@@ -1410,7 +1406,7 @@
             else if (num >= 46 && num <= 60) letter = 'G';
             else if (num >= 61 && num <= 75) letter = 'O';
 
-            let letterColors = { B: '#3b82f6', I: '#8b5cf6', N: '#a855f7', G: '#10b981', O: '#f97316' };
+            let letterColors = { B: '#3480fd', I: '#8855fd', N: '#a84ffd', G: '#04c585', O: '#fe7211' };
             let letterColor = letterColors[letter];
 
             let displayCall = `${letter}-${num}`;
@@ -1418,8 +1414,8 @@
             if (calledBox) {
                 calledBox.innerText = displayCall;
                 calledBox.style.color = letterColor;
-                calledBox.style.borderColor = '#f5b301';
-                calledBox.style.boxShadow = `0 0 16px rgba(245, 179, 1, 0.55)`;
+                calledBox.style.borderColor = '#f6b300';
+                calledBox.style.boxShadow = `0 0 16px rgba(246, 179, 0, 0.55)`;
                 calledBox.classList.remove('pop');
                 void calledBox.offsetWidth; // restart animation even if same number pattern repeats
                 calledBox.classList.add('pop');
@@ -1582,7 +1578,7 @@
             modalBody.innerHTML = `
                 <div style="font-size: 30px; margin-bottom: 4px;">📖</div>
                 <div style="font-size: 19px; font-weight: bold; color: var(--orange-color); margin-bottom: 12px;">Instructions</div>
-                <div style="text-align: left; font-size: 14px; line-height: 1.7; color: #e2e8f0; white-space: pre-line;">🃏 መጫወቻ ካርድ
+                <div style="text-align: left; font-size: 14px; line-height: 1.7; color: #d6e6fc; white-space: pre-line;">🃏 መጫወቻ ካርድ
 
 1. ጨዋታውን ለመጀመር ከሚመጣልን ከ1-600 የካርድ መምረጫ ቦርድ ውስጥ እስከ 2 የመጫወቻ ካርድ (ካርቴላ) መምረጥ ይቻላል።
 
@@ -1618,13 +1614,12 @@
         const HARDCODED_ADMIN_IDS = ["7078415767"];
 
         let pendingBadgeListenersAttached = false;
-        let pendingDepositCount = 0;
         let pendingWithdrawalCount = 0;
 
         function updatePendingBadge() {
             let badge = document.getElementById('adminPendingBadge');
             if (!badge) return;
-            let total = pendingDepositCount + pendingWithdrawalCount;
+            let total = pendingWithdrawalCount;
             if (total > 0) {
                 badge.innerText = total;
                 badge.style.display = 'inline-block';
@@ -1642,12 +1637,9 @@
             if (!db || pendingBadgeListenersAttached) return;
             pendingBadgeListenersAttached = true;
 
-            db.ref('transactions/deposits').on('value', function(snapshot) {
-                let all = snapshot.val() || {};
-                pendingDepositCount = Object.keys(all).filter(k => all[k].status === 'pending').length;
-                updatePendingBadge();
-            });
-
+            // Note: deposits are intentionally not watched here — approval
+            // lives only in the bot chat (main.py), which uses
+            // 'transactions/pendingDeposits', not 'transactions/deposits'.
             db.ref('transactions/withdrawals').on('value', function(snapshot) {
                 let all = snapshot.val() || {};
                 pendingWithdrawalCount = Object.keys(all).filter(k => all[k].status === 'pending').length;
@@ -1696,27 +1688,8 @@
             if (!db || adminListenersAttached) return;
             adminListenersAttached = true;
 
-            db.ref('transactions/deposits').on('value', function(snapshot) {
-                let all = snapshot.val() || {};
-                let listEl = document.getElementById('adminDepositsList');
-                if (!listEl) return;
-                let pendingKeys = Object.keys(all).filter(k => all[k].status === 'pending');
-                if (pendingKeys.length === 0) {
-                    listEl.innerHTML = 'No pending deposits.';
-                    return;
-                }
-                listEl.innerHTML = pendingKeys.map(function(key) {
-                    let r = all[key];
-                    let smsHtml = r.smsText ? `<div style="font-size:11px; color:#cbd5e1; background:#0f172a; border-radius:6px; padding:6px; margin-top:6px; white-space:pre-wrap; word-break:break-word;">${r.smsText}</div>` : '';
-                    return `
-                    <div style="background:#1c2640; border:1px solid #2e3b55; border-radius:8px; padding:8px; margin-bottom:8px;">
-                        <div><b>${r.name}</b> — ${r.amount} coins</div>
-                        <div style="font-size:11px; color:#64748b;">Txn: ${key} · Phone: ${r.phone || '-'}</div>
-                        ${smsHtml}
-                        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">Approve or reject this from the Telegram bot chat.</div>
-                    </div>`;
-                }).join('');
-            });
+            // Deposits are intentionally not listed here — approval lives only
+            // in the bot chat (main.py, 'transactions/pendingDeposits').
 
             db.ref('transactions/withdrawals').on('value', function(snapshot) {
                 let all = snapshot.val() || {};
@@ -1730,9 +1703,9 @@
                 listEl.innerHTML = pendingKeys.map(function(key) {
                     let r = all[key];
                     return `
-                    <div style="background:#1c2640; border:1px solid #2e3b55; border-radius:8px; padding:8px; margin-bottom:8px;">
+                    <div style="background:#071d55; border:1px solid #0a2f79; border-radius:8px; padding:8px; margin-bottom:8px;">
                         <div><b>${r.name}</b> — ${r.amount} coins</div>
-                        <div style="font-size:11px; color:#64748b;">Telegram: ${r.telegramName || '-'} · Send to: ${r.phone || '-'}</div>
+                        <div style="font-size:11px; color:#1265dd;">Telegram: ${r.telegramName || '-'} · Send to: ${r.phone || '-'}</div>
                         <div style="display:flex; gap:6px; margin-top:6px;">
                             <button class="btn btn-green" style="padding:6px;" onclick="adminApproveWithdrawal('${key}')">Approve (Sent)</button>
                             <button class="btn btn-danger" style="padding:6px;" onclick="adminRejectWithdrawal('${key}')">Reject</button>
@@ -1862,7 +1835,7 @@
             if (!container) return;
             
             if (selectedCards.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; font-size: 13px; color: #64748b; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>`;
+                container.innerHTML = `<div style="grid-column: 1 / -1; font-size: 13px; color: #1265dd; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>`;
                 return;
             }
 
@@ -1999,7 +1972,7 @@
             switchScreen('gameScreen');
             let container = document.getElementById('userCardsContainer');
             if (container) {
-                container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:13px; padding:16px;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
+                container.innerHTML = '<div style="text-align:center; color:#5a99f2; font-size:13px; padding:16px;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
             }
             joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
         }
@@ -2214,15 +2187,15 @@
             openSelection();
         }
 
-        // Fun mode UI demo: Telebirr-only manual deposit with rotating numbers + Firebase-backed anti-duplicate transaction ID check
-        let depositSelectedAmount = 50;
-        let depositSelectedNumber = null;
-
-        const telebirrNumbers = [
-            { phone: "0923160399", name: "Fikre" },
-            { phone: "0900619106", name: "Fikr" },
-            { phone: "0921466712", name: "asebechimariyam" }
-        ];
+        // Deposit is chat-only now: the in-app self-service form used to write
+        // directly to 'transactions/deposits/{txnKey}', but deposit approval
+        // lives ONLY in the Telegram bot (main.py), which watches
+        // 'transactions/pendingDeposits' instead. Anything submitted from this
+        // in-app form went to a node the bot never checks, so it could never be
+        // approved and the user's coins would never arrive. The whole in-app
+        // deposit form has been removed; deposits must go through the bot chat,
+        // where main.py's SMS-parsing + admin-approval flow already works
+        // correctly end-to-end.
 
         function closeCustomModal() {
             let modalBox = document.getElementById('customModal');
@@ -2230,303 +2203,22 @@
         }
 
         function handleDeposit() {
-            renderDepositAmountStep();
-        }
-
-        function renderDepositAmountStep() {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+                window.Telegram.WebApp.openTelegramLink('https://t.me/Temerachibingo_bot?start=deposit');
+                return;
+            }
             let modalBox = document.getElementById('customModal');
             let modalBody = document.getElementById('modalBodyText');
-
             modalBody.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
                     <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">🪙 Deposit to Play Wallet</div>
-                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
+                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #1265dd;">✕</div>
                 </div>
-                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 12px; text-align: left;">Choose an amount (fun coins — no real money):</div>
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px;">
-                    <div class="deposit-amount-btn active" id="depAmt10" onclick="selectDepositAmount(10)">10</div>
-                    <div class="deposit-amount-btn" id="depAmt50" onclick="selectDepositAmount(50)">50</div>
-                    <div class="deposit-amount-btn" id="depAmt100" onclick="selectDepositAmount(100)">100</div>
-                    <div class="deposit-amount-btn" id="depAmt200" onclick="selectDepositAmount(200)">200</div>
-                    <div class="deposit-amount-btn" id="depAmt500" onclick="selectDepositAmount(500)">500</div>
-                </div>
-                <div style="text-align:left; margin-bottom:6px; font-size:12px; color:#94a3b8;">ወይም የፈለከውን መጠን አስገባ (ዝቅተኛ 10)</div>
-                <input type="number" id="depositCustomAmount" min="10" max="10000" step="1" placeholder="ለምሳሌ 30" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:14px; margin-bottom:6px;" oninput="selectCustomDepositAmount(this.value)">
-                <div id="depositAmountErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;">ዝቅተኛ የማስገቢያ መጠን 10 ኮይን ነው።</div>
-                <button class="btn btn-green" onclick="confirmDepositAmountAndContinue()">Continue ➜</button>
+                <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px; text-align: left;">ዲፖዚት የሚደረገው በቦቱ chat በኩል ብቻ ነው። እባክዎ ወደ ቦቱ ገብተው /deposit የሚለውን ይላኩ ወይም ከዚህ በታች ያለውን ይጫኑ።</div>
+                <a href="https://t.me/Temerachibingo_bot?start=deposit" target="_blank" class="btn btn-green" style="display:block; text-decoration:none; text-align:center;">Open Bot Chat 🤖</a>
+                <button class="btn" style="margin-top:6px;" onclick="closeCustomModal()">Close</button>
             `;
-            depositSelectedAmount = 10;
             modalBox.style.display = 'flex';
-        }
-
-        function selectDepositAmount(amount) {
-            depositSelectedAmount = amount;
-            document.querySelectorAll('.deposit-amount-btn').forEach(b => b.classList.remove('active'));
-            let btn = document.getElementById('depAmt' + amount);
-            if (btn) btn.classList.add('active');
-            let customInput = document.getElementById('depositCustomAmount');
-            if (customInput) customInput.value = '';
-            let errorEl = document.getElementById('depositAmountErrorMsg');
-            if (errorEl) errorEl.style.display = 'none';
-        }
-
-        function selectCustomDepositAmount(value) {
-            document.querySelectorAll('.deposit-amount-btn').forEach(b => b.classList.remove('active'));
-            let amount = parseInt(value, 10);
-            depositSelectedAmount = (!isNaN(amount) && amount > 0) ? amount : 0;
-        }
-
-        function confirmDepositAmountAndContinue() {
-            let errorEl = document.getElementById('depositAmountErrorMsg');
-            if (!depositSelectedAmount || depositSelectedAmount < 10) {
-                if (errorEl) {
-                    errorEl.innerText = 'ዝቅተኛ የማስገቢያ መጠን 10 ኮይን ነው።';
-                    errorEl.style.display = 'block';
-                }
-                return;
-            }
-            if (depositSelectedAmount > 10000) {
-                if (errorEl) {
-                    errorEl.innerText = 'ከፍተኛ የማስገቢያ መጠን 10,000 ኮይን ነው። ከዚህ በላይ ከፈለጉ Support ያግኙ።';
-                    errorEl.style.display = 'block';
-                }
-                return;
-            }
-            if (errorEl) errorEl.style.display = 'none';
-            renderDepositTelebirrStep();
-        }
-
-        function getNextTelebirrNumber(callback) {
-            if (!db) {
-                callback(telebirrNumbers[Math.floor(Math.random() * telebirrNumbers.length)]);
-                return;
-            }
-            db.ref('deposits/rotationIndex').transaction(function(current) {
-                return (typeof current === 'number') ? current + 1 : 0;
-            }).then(function(result) {
-                let idx = result.committed ? result.snapshot.val() : 0;
-                callback(telebirrNumbers[idx % telebirrNumbers.length]);
-            }).catch(function() {
-                callback(telebirrNumbers[Math.floor(Math.random() * telebirrNumbers.length)]);
-            });
-        }
-
-        function renderDepositTelebirrStep() {
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                    <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">📱 Pay with Telebirr</div>
-                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
-                </div>
-                <div class="deposit-spinner" style="width:28px; height:28px; border-width:3px;"></div>
-            `;
-
-            getNextTelebirrNumber(function(numberObj) {
-                depositSelectedNumber = numberObj;
-                modalBody.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                        <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">📱 Pay with Telebirr</div>
-                        <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
-                    </div>
-                    <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; text-align: left;">Depositing <b style="color: var(--success-color);">${depositSelectedAmount}</b></div>
-                    <div style="background:#1c2640; border:1px solid #2e3b55; border-radius:10px; padding:14px; margin-bottom:14px;">
-                        <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">ወደዚህ ቁጥር Telebirr ይላኩ</div>
-                        <div style="font-size:22px; font-weight:bold; color:var(--orange-color); margin-bottom:2px;">${numberObj.phone}</div>
-                        <div style="font-size:13px; color:#cbd5e1;">${numberObj.name}</div>
-                    </div>
-                    <button class="btn btn-green" onclick="renderDepositProofStep()">ላክኩ - ቀጥል ➜</button>
-                    <button class="btn" style="margin-top:6px;" onclick="renderDepositAmountStep()">⬅ Back</button>
-                `;
-            });
-        }
-
-        function pasteTelebirrSms() {
-            if (!navigator.clipboard || !navigator.clipboard.readText) {
-                showToast('📋 የዚህ ብራውዘር ገደብ Paste አይፈቅድም - በእጅ ይለጥፉ (long-press → Paste)።');
-                return;
-            }
-            navigator.clipboard.readText().then(function(text) {
-                if (!text) {
-                    showToast('📋 ክሊፕቦርድ ላይ ምንም ጽሑፍ አልተገኘም።');
-                    return;
-                }
-                let inputEl = document.getElementById('depositSmsText');
-                if (inputEl) inputEl.value = text.trim();
-            }).catch(function(err) {
-                console.log('Clipboard read failed', err);
-                showToast('📋 ከክሊፕቦርድ ማንበብ አልተቻለም - በእጅ ይለጥፉ (long-press → Paste)።');
-            });
-        }
-
-        function extractTxnIdFromSms(text) {
-            let labelMatch = text.match(/(?:transaction\s*id|txn\s*id|reference\s*(?:no|number)?|ref\s*no)[\s:.\-]*([A-Za-z0-9]{6,})/i);
-            if (labelMatch) return labelMatch[1];
-            let tokens = text.split(/\s+/);
-            let candidates = tokens.filter(function(t) {
-                return /^[A-Za-z0-9]{8,}$/.test(t) && /[0-9]/.test(t) && /[A-Za-z]/.test(t);
-            });
-            if (candidates.length > 0) return candidates[candidates.length - 1];
-            return null;
-        }
-
-        function validateTelebirrSms(text, amount) {
-            if (!text || text.trim().length < 25) {
-                return 'ኤስኤምኤስ በጣም አጭር ነው። ሙሉ የቴሌብር ማረጋገጫ መልዕክት ይለጥፉ።';
-            }
-            if (!/telebirr|ቴሌብር|confirmed|receipt|successful/i.test(text)) {
-                return '⚠️ ይሄ የቴሌብር ማረጋገጫ መልዕክት አይመስልም። ትክክለኛውን SMS ይለጥፉ።';
-            }
-            let txnId = extractTxnIdFromSms(text);
-            if (!txnId) {
-                return 'የትራንዛክሽን ID በኤስኤምኤስ ውስጥ ማግኘት አልተቻለም። ሙሉውን SMS ኮፒ አድርገው ለጥፉ።';
-            }
-            if (amount && text.indexOf(String(amount)) === -1) {
-                return `⚠️ የገባው መጠን (${amount}) በኤስኤምኤስ ውስጥ አልተገኘም። ትክክለኛውን SMS ለጥፉ።`;
-            }
-            return null;
-        }
-
-        function renderDepositProofStep() {
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                    <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">🧾 Confirm Payment</div>
-                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
-                </div>
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#94a3b8;">ሙሉ የቴሌብር ማረጋገጫ SMS ኮፒ አድርገው ይለጥፉ</div>
-                <textarea id="depositSmsText" rows="4" placeholder="Dear ..., you have transferred ETB ... Transaction ID: ..." style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:13px; margin-bottom:6px; resize:vertical;"></textarea>
-                <button type="button" onclick="pasteTelebirrSms()" style="width:100%; background:#1c2640; border:1px solid #2e3b55; color:var(--orange-color); border-radius:8px; padding:8px; font-size:12px; font-weight:bold; cursor:pointer; margin-bottom:10px;">📋 Paste from Clipboard</button>
-                <div id="depositErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;"></div>
-                <button class="btn btn-green" onclick="submitDepositProof()">Submit for Approval ✅</button>
-                <button class="btn" style="margin-top:6px;" onclick="renderDepositTelebirrStep()">⬅ Back</button>
-            `;
-        }
-
-        function copyDepositRequestText() {
-            let smsRaw = (document.getElementById('depositSmsText').value || '').trim() || '[SMS text]';
-            let phone = depositSelectedNumber ? depositSelectedNumber.phone : '[number]';
-            let text = `🪙 Deposit Request\nAmount: ${depositSelectedAmount} coins\nTelegram: ${userName} (#${userShortId})\nSent to Telebirr: ${phone}\nSMS: ${smsRaw}`;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function() {
-                    showToast('📋 Copied! Send this to the admin.');
-                }).catch(function() {
-                    showToast('⚠️ Could not copy automatically — select and copy manually.');
-                });
-            } else {
-                showToast('⚠️ Clipboard not available on this browser.');
-            }
-        }
-
-        function submitDepositProof() {
-            let smsRaw = (document.getElementById('depositSmsText').value || '').trim();
-            let errorEl = document.getElementById('depositErrorMsg');
-            errorEl.style.display = 'none';
-
-            if (!smsRaw) {
-                errorEl.innerText = 'እባክህ ሙሉ የቴሌብር ማረጋገጫ SMS ይለጥፉ።';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            let validationError = validateTelebirrSms(smsRaw, depositSelectedAmount);
-            if (validationError) {
-                errorEl.innerText = validationError;
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            let txnIdRaw = extractTxnIdFromSms(smsRaw);
-            let txnKey = txnIdRaw.replace(/[.#$\[\]\/\s]/g, '').toUpperCase();
-            if (!txnKey) {
-                errorEl.innerText = 'ልክ ያልሆነ Transaction ID።';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            if (!db) {
-                errorEl.innerText = '⚠️ ከFirebase ጋር መገናኘት አልተቻለም። እባክህ ኢንተርኔትህን አረጋግጥ።';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            db.ref('transactions/deposits/' + txnKey).transaction(function(current) {
-                if (current === null) {
-                    return {
-                        by: telegramUserId,
-                        name: userName,
-                        amount: depositSelectedAmount,
-                        phone: depositSelectedNumber ? depositSelectedNumber.phone : '',
-                        smsText: smsRaw,
-                        status: 'pending',
-                        timestamp: Date.now()
-                    };
-                }
-                return; // abort - already used
-            }).then(function(result) {
-                if (result.committed) {
-                    renderDepositPendingStep(txnKey);
-                } else {
-                    errorEl.innerText = '⚠️ ይህ Transaction ID ቀድሞ ጥቅም ላይ ውሏል! ማጭበርበር አይፈቀድም።';
-                    errorEl.style.display = 'block';
-                }
-            }).catch(function(err) {
-                console.log('Deposit txn check failed', err);
-                errorEl.innerText = '⚠️ ስህተት ተከስቷል፣ እንደገና ሞክር። (' + (err && err.message ? err.message : err) + ')';
-                errorEl.style.display = 'block';
-            });
-        }
-
-        function renderDepositPendingStep(txnKey) {
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="padding: 10px 0 6px 0;">
-                    <div class="deposit-spinner"></div>
-                    <div style="font-size: 15px; font-weight: bold; margin-top: 8px;">⏳ Waiting for admin approval...</div>
-                    <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Transaction ID: ${txnKey}</div>
-                </div>
-            `;
-
-            db.ref('transactions/deposits/' + txnKey).on('value', function(snapshot) {
-                let record = snapshot.val();
-                if (!record) return;
-                if (record.status === 'approved') {
-                    db.ref('transactions/deposits/' + txnKey).off('value');
-                    renderDepositApprovedStep(txnKey, record);
-                } else if (record.status === 'rejected') {
-                    db.ref('transactions/deposits/' + txnKey).off('value');
-                    renderDepositRejectedStep(txnKey);
-                }
-            });
-        }
-
-        function renderDepositApprovedStep(txnKey, record) {
-            // NOTE: we intentionally do NOT bump playWalletBalance/depositedBalance
-            // or call updateWalletDisplay() here. The bot (main.py) is the only
-            // thing that credits the wallet in Firebase now. This function used to
-            // also increment the local balance and write it back with a full
-            // .set(), which raced against the bot's own write and could overwrite
-            // it -- that race is what was causing "approved but balance shows 0".
-            // The live wallet listener (loadUserWalletFromFirebase) picks up the
-            // bot's Firebase update automatically and refreshes the display.
-            addHistoryRecord('deposit', `Deposit via Telebirr (${txnKey})`, record.amount);
-
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="font-size: 42px; margin-bottom: 4px;">✅</div>
-                <div style="font-size: 18px; font-weight: bold; color: var(--success-color); margin-bottom: 6px;">Deposit Approved!</div>
-                <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 14px;">${record.amount} coins added to your Play Wallet.<br>Transaction ID: ${txnKey}</div>
-                <button class="btn btn-green" onclick="closeCustomModal()">Done</button>
-            `;
-        }
-
-        function renderDepositRejectedStep(txnKey) {
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="font-size: 42px; margin-bottom: 4px;">❌</div>
-                <div style="font-size: 18px; font-weight: bold; color: var(--danger-color); margin-bottom: 6px;">Deposit Rejected</div>
-                <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 14px;">Your deposit request (${txnKey}) was rejected by the admin. Please double-check your payment and try again.</div>
-                <button class="btn" onclick="closeCustomModal()">Close</button>
-            `;
         }
 
         function handleWithdraw() {
@@ -2551,16 +2243,16 @@
             modalBody.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
                     <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">💸 Withdraw via Telebirr</div>
-                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #64748b;">✕</div>
+                    <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #1265dd;">✕</div>
                 </div>
-                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 10px; text-align: left;">Main Wallet balance: <b style="color: var(--success-color);">${Math.floor(mainWalletBalance)} coins</b></div>
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#94a3b8;">ወጪ ማድረግ የፈለጉት መጠን</div>
-                <input type="number" id="withdrawAmount" min="50" max="${Math.floor(mainWalletBalance)}" step="1" placeholder="e.g. 100" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:14px; margin-bottom:10px;">
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#94a3b8;">ስም (Full Name)</div>
-                <input type="text" id="withdrawName" value="${userName}" placeholder="e.g. Abebe Kebede" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:14px; margin-bottom:10px;">
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#94a3b8;">Your Telebirr Number</div>
-                <input type="text" id="withdrawPhone" placeholder="e.g. 0911223344" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #2e3b55; background:#1c2640; color:white; font-size:14px; margin-bottom:10px;">
-                <button type="button" onclick="copyWithdrawRequestText()" style="width:100%; background:#1c2640; border:1px solid #2e3b55; color:#cbd5e1; border-radius:8px; padding:8px; font-size:12px; margin-bottom:10px; cursor:pointer;">📋 Copy Request Text (send to admin)</button>
+                <div style="font-size: 13px; color: #5a99f2; margin-bottom: 10px; text-align: left;">Main Wallet balance: <b style="color: var(--success-color);">${Math.floor(mainWalletBalance)} coins</b></div>
+                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">ወጪ ማድረግ የፈለጉት መጠን</div>
+                <input type="number" id="withdrawAmount" min="50" max="${Math.floor(mainWalletBalance)}" step="1" placeholder="e.g. 100" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
+                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">ስም (Full Name)</div>
+                <input type="text" id="withdrawName" value="${userName}" placeholder="e.g. Abebe Kebede" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
+                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">Your Telebirr Number</div>
+                <input type="text" id="withdrawPhone" placeholder="e.g. 0911223344" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
+                <button type="button" onclick="copyWithdrawRequestText()" style="width:100%; background:#071d55; border:1px solid #0a2f79; color:#b3d3f9; border-radius:8px; padding:8px; font-size:12px; margin-bottom:10px; cursor:pointer;">📋 Copy Request Text (send to admin)</button>
                 <div id="withdrawErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;"></div>
                 <button class="btn btn-orange" onclick="submitWithdrawRequest()">Submit Request ✅</button>
             `;
@@ -2649,7 +2341,7 @@
                 <div style="padding: 10px 0 6px 0;">
                     <div class="deposit-spinner"></div>
                     <div style="font-size: 15px; font-weight: bold; margin-top: 8px;">⏳ Waiting for admin to send your payment...</div>
-                    <div style="font-size: 12px; color: #64748b; margin-top: 4px;">${amount} coins requested</div>
+                    <div style="font-size: 12px; color: #1265dd; margin-top: 4px;">${amount} coins requested</div>
                 </div>
             `;
 
@@ -2662,7 +2354,7 @@
                     modalBodyEl.innerHTML = `
                         <div style="font-size: 42px; margin-bottom: 4px;">✅</div>
                         <div style="font-size: 18px; font-weight: bold; color: var(--success-color); margin-bottom: 6px;">Payment Sent!</div>
-                        <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 14px;">${amount} coins sent to ${record.phone} via Telebirr.</div>
+                        <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px;">${amount} coins sent to ${record.phone} via Telebirr.</div>
                         <button class="btn btn-green" onclick="closeCustomModal()">Done</button>
                     `;
                 } else if (record.status === 'rejected') {
@@ -2674,7 +2366,7 @@
                     modalBodyEl.innerHTML = `
                         <div style="font-size: 42px; margin-bottom: 4px;">❌</div>
                         <div style="font-size: 18px; font-weight: bold; color: var(--danger-color); margin-bottom: 6px;">Withdrawal Rejected</div>
-                        <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 14px;">Your ${amount} coins have been refunded to your Main Wallet.</div>
+                        <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px;">Your ${amount} coins have been refunded to your Main Wallet.</div>
                         <button class="btn" onclick="closeCustomModal()">Close</button>
                     `;
                 }
@@ -2835,7 +2527,7 @@
                     let num = matrixCols[c][r];
                     let cell = document.createElement('div');
                     cell.id = `board_cell_${num}`;
-                    cell.style.cssText = "background: #4a4270; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
+                    cell.style.cssText = "background: #280da5; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
                     cell.innerText = num;
                     boardGrid.appendChild(cell);
                 }
@@ -2932,9 +2624,9 @@
 
             if (!entries.length) {
                 container.innerHTML = `
-                    <div style="background:var(--card-bg); border-radius:10px; padding:18px 10px; text-align:center; border:1px solid #334155;">
+                    <div style="background:var(--card-bg); border-radius:10px; padding:18px 10px; text-align:center; border:1px solid #0a3a7e;">
                         <div style="font-size:17px; font-weight:800; color:#fff; margin-bottom:8px;">👀 Watching Only</div>
-                        <div style="font-size:12px; color:#cbd5e1; line-height:1.6;">ካርድ ያዙ ተጫዋቾች እስኪገቡ<br>ድረስ እዚህ ይቆዩ።</div>
+                        <div style="font-size:12px; color:#b3d3f9; line-height:1.6;">ካርድ ያዙ ተጫዋቾች እስኪገቡ<br>ድረስ እዚህ ይቆዩ።</div>
                     </div>`;
                 return;
             }
@@ -3068,8 +2760,8 @@
                         let shortId = (w.by && w.by !== "guest_user") ? w.by.slice(-6) : "guest";
                         let initial = displayName.charAt(0).toUpperCase();
                         return `
-                        <div style="background: #1c2640; border: 1px solid #2e3b55; border-radius: 20px; padding: 4px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                            <span style="background: #3b82f6; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${initial}</span>
+                        <div style="background: #071d55; border: 1px solid #0a2f79; border-radius: 20px; padding: 4px 10px; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                            <span style="background: #3480fd; color: white; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">${initial}</span>
                             <span>${displayName} #${shortId} · Cartela ${w.cardNum}</span>
                         </div>`;
                     }).join('')}
@@ -3079,14 +2771,14 @@
             let winnersCountText = winners.length === 1 ? "🎉 1 player won!" : `🎉 ${winners.length} players won!`;
 
             let tableHTML = `
-                <div class="bingo-card-container" style="margin-bottom: 12px; border: 1px solid rgba(59, 130, 246, 0.4); background: #131b2e; padding: 8px; border-radius: 12px;">
+                <div class="bingo-card-container" style="margin-bottom: 12px; border: 1px solid rgba(52, 128, 253, 0.4); background: #05153c; padding: 8px; border-radius: 12px;">
                     <div style="font-size:13px; margin-bottom:6px; color:var(--orange-color); font-weight: bold; text-align: center;">🏆 Winning Cartela : ${mainWinner.cardNum}</div>
                     <div class="bingo-grid">
-                        <div class="bingo-header-cell" style="background-color:#3b82f6;">B</div>
-                        <div class="bingo-header-cell" style="background-color:#8b5cf6;">I</div>
-                        <div class="bingo-header-cell" style="background-color:#a855f7;">N</div>
-                        <div class="bingo-header-cell" style="background-color:#10b981;">G</div>
-                        <div class="bingo-header-cell" style="background-color:#f97316;">O</div>`;
+                        <div class="bingo-header-cell" style="background-color:#3480fd;">B</div>
+                        <div class="bingo-header-cell" style="background-color:#8855fd;">I</div>
+                        <div class="bingo-header-cell" style="background-color:#a84ffd;">N</div>
+                        <div class="bingo-header-cell" style="background-color:#04c585;">G</div>
+                        <div class="bingo-header-cell" style="background-color:#fe7211;">O</div>`;
 
             let calledSetForPopup = {};
             calledNumbersList.forEach(function(n) { calledSetForPopup[n] = true; });
@@ -3116,10 +2808,10 @@
             modalBody.innerHTML = `
                 <div style="font-size: 34px; margin-bottom: 2px;">👑</div>
                 <div style="font-size: 22px; font-weight: bold; color: var(--orange-color); margin-bottom: 4px;">BINGO!</div>
-                <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 10px;">${winnersCountText}</div>
+                <div style="font-size: 13px; color: #b3d3f9; margin-bottom: 10px;">${winnersCountText}</div>
                 ${playersListHTML}
                 ${tableHTML}
-                <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(245, 158, 11, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
+                <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(252, 160, 3, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(252, 160, 3, 0.2);">
                     🟠 Auto-starting next game in 5s
                 </div>
             `;
