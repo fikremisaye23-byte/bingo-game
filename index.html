@@ -12,31 +12,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #150a35;
-            --card-bg: #2a1861;
-            --cell-bg: #3a2470;
-            --accent-color: #8855fd;
+            --bg-color: #120a2b;
+            --card-bg: #241457;
+            --cell-bg: #33206e;
+            --accent-color: #8a5cff;
             --text-color: #ffffff;
-            --danger-color: #fb3838;
-            --success-color: #04c585;
-            --orange-color: #fca003;
-            --btn-green: #04c585;
-            --btn-blue: #01b9d9;
-            --shadow-soft: 0 4px 14px rgba(20, 6, 60, 0.45);
-            --shadow-strong: 0 8px 26px rgba(20, 6, 60, 0.55);
-            --glow-purple: 0 0 18px rgba(136, 85, 253, 0.35);
+            --text-dim: #b9a9ec;
+            --danger-color: #ff4d5e;
+            --success-color: #1fd694;
+            --orange-color: #ffb020;
+            --btn-green: #1fd694;
+            --btn-blue: #2fc7e8;
+            --col-b: #3480fd;
+            --col-i: #8855fd;
+            --col-n: #c24ffd;
+            --col-g: #04c585;
+            --col-o: #fe7211;
+            --border-soft: rgba(255, 255, 255, 0.09);
+            --border-accent: rgba(138, 92, 255, 0.45);
+            --radius-lg: 18px;
+            --radius-md: 13px;
+            --radius-sm: 9px;
+            --shadow-soft: 0 4px 14px rgba(10, 4, 30, 0.45);
+            --shadow-strong: 0 8px 26px rgba(10, 4, 30, 0.55);
+            --glow-purple: 0 0 18px rgba(138, 92, 255, 0.25);
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background: radial-gradient(circle at 50% 0%, #3a1f8a 0%, #1c0d47 55%, #120826 100%);
+            background: radial-gradient(circle at 50% 0%, #35208a 0%, #190c40 55%, #0f0820 100%);
             color: var(--text-color);
             margin: 0;
-            padding: 4px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 90px;
+            padding-bottom: 92px;
             overflow-x: hidden;
             min-height: 100vh;
         }
@@ -44,7 +57,7 @@
         .screen {
             display: none;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             flex-direction: column;
             align-items: center;
         }
@@ -54,13 +67,13 @@
         }
 
         h2 {
-            margin: 6px 0 10px 0;
+            margin: 6px 0 12px 0;
             text-align: center;
             color: var(--orange-color);
-            font-size: 21px;
+            font-size: 20px;
             font-weight: 700;
             letter-spacing: 0.3px;
-            text-shadow: 0 0 14px rgba(252, 160, 3, 0.35);
+            text-shadow: 0 0 14px rgba(255, 176, 32, 0.3);
         }
 
         .menu-grid {
@@ -72,13 +85,14 @@
         }
 
         .btn {
-            background: linear-gradient(145deg, #0295b8, var(--btn-blue));
+            background: linear-gradient(150deg, #17b6da, var(--btn-blue));
             color: white;
             border: none;
             padding: 13px 8px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            border-radius: 14px;
+            letter-spacing: 0.2px;
+            border-radius: var(--radius-md);
             cursor: pointer;
             width: 100%;
             text-align: center;
@@ -93,18 +107,18 @@
             filter: brightness(0.95);
         }
 
-        .btn-green { background: linear-gradient(145deg, #019a6a, var(--btn-green)); }
-        .btn-danger { background: linear-gradient(145deg, #f60c0c, var(--danger-color)); }
-        .btn-orange { background: linear-gradient(145deg, #de7701, var(--orange-color)); color: #1a1200; }
+        .btn-green { background: linear-gradient(150deg, #17c98e, var(--btn-green)); }
+        .btn-danger { background: linear-gradient(150deg, #ff6b78, var(--danger-color)); }
+        .btn-orange { background: linear-gradient(150deg, #ffc85c, var(--orange-color)); color: #241200; }
 
         .main-card {
-            background: linear-gradient(160deg, #3a2088, var(--card-bg));
-            border-radius: 18px;
-            padding: 15px;
+            background: linear-gradient(165deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01)), linear-gradient(165deg, #3a2088, var(--card-bg));
+            border-radius: var(--radius-lg);
+            padding: 16px;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 15px;
-            border: 1px solid #4a2c9e;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-soft);
             text-align: center;
             box-shadow: var(--shadow-soft), var(--glow-purple);
         }
@@ -112,29 +126,29 @@
         .selection-top-stats {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 6px;
+            gap: 7px;
             width: 100%;
-            background: linear-gradient(160deg, #3a2088, var(--card-bg));
-            padding: 8px;
-            border-radius: 16px;
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            padding: 9px;
+            border-radius: var(--radius-lg);
             box-sizing: border-box;
             margin-bottom: 12px;
-            border: 1px solid #4a2c9e;
+            border: 1px solid var(--border-soft);
             box-shadow: var(--shadow-soft), var(--glow-purple);
         }
 
         .stat-box {
-            background: linear-gradient(160deg, #5a3fc0, #3f2a8f);
-            border: 1px solid #6a4bd6;
-            border-radius: 12px;
-            padding: 6px 4px;
+            background: linear-gradient(165deg, #5d43c4, #3f2a8f);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: var(--radius-sm);
+            padding: 7px 4px;
             text-align: center;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
         .stat-box span {
-            font-size: 11px;
-            color: #c9b6ff;
+            font-size: 10.5px;
+            color: var(--text-dim);
             display: block;
             margin-bottom: 2px;
         }
@@ -147,31 +161,31 @@
         .number-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
+            gap: 5px;
             width: 100%;
             height: 540px;
             overflow-y: auto;
-            background: linear-gradient(160deg, #1c1040, #170c34);
+            background: linear-gradient(165deg, #1a1038, #150b30);
             padding: 12px;
-            border-radius: 18px;
+            border-radius: var(--radius-lg);
             box-sizing: border-box;
             margin-bottom: 10px;
-            border: 1px solid #322268;
+            border: 1px solid var(--border-soft);
             box-shadow: var(--shadow-soft);
         }
 
         .num-cell {
             aspect-ratio: 1;
-            background: linear-gradient(160deg, #6653a8, #4f3f8a);
-            border-radius: 9px;
+            background: linear-gradient(160deg, #6a58ae, #503f8e);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 600;
             cursor: pointer;
             user-select: none;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.08);
             transition: transform 0.1s ease, background 0.15s ease;
         }
 
@@ -180,46 +194,46 @@
         }
 
         .num-cell.selected {
-            background: linear-gradient(160deg, #fb3838, var(--danger-color));
+            background: linear-gradient(160deg, #ff6b78, var(--danger-color));
             color: white;
             border: 2px solid #fff;
-            box-shadow: 0 0 10px rgba(251, 56, 56, 0.5);
+            box-shadow: 0 0 10px rgba(255, 77, 94, 0.5);
         }
 
         .num-cell.taken {
-            background: linear-gradient(145deg, #ff4d4d, #f60c0c) !important;
+            background: linear-gradient(150deg, #ff8080, #f04949) !important;
             color: #ffffff !important;
             cursor: not-allowed;
             opacity: 1;
-            border: 2px solid #ffb4b4;
-            box-shadow: 0 0 14px rgba(251, 56, 56, 0.75), inset 0 0 8px rgba(255,255,255,0.12);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 0 14px rgba(255, 77, 94, 0.65), inset 0 0 8px rgba(255,255,255,0.1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .spectator-cards-title {
-            color: #fec021;
+            color: var(--orange-color);
             font-weight: 800;
             font-size: 13px;
             text-align: center;
             margin: 2px 0 4px;
-            text-shadow: 0 0 8px rgba(254, 192, 33, 0.35);
+            text-shadow: 0 0 8px rgba(255, 176, 32, 0.3);
         }
 
         .spectator-card {
-            background: linear-gradient(160deg, #3a2088, var(--card-bg));
-            border: 2px solid #4a2c9e;
-            border-radius: 12px;
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            border: 2px solid var(--border-soft);
+            border-radius: var(--radius-sm);
             padding: 4px;
             box-shadow: var(--shadow-soft);
         }
 
         .spectator-card.owned-by-other {
-            border-color: #fb3838;
-            box-shadow: 0 0 10px rgba(251, 56, 56, 0.18);
+            border-color: var(--danger-color);
+            box-shadow: 0 0 10px rgba(255, 77, 94, 0.16);
         }
 
         .spectator-card .spectator-owner {
-            color: #fec021;
+            color: var(--orange-color);
             font-size: 10px;
             font-weight: 800;
             text-align: center;
@@ -230,9 +244,9 @@
         }
 
         .spectator-card .spectator-cell {
-            background: linear-gradient(160deg, #6653a8, #4f3f8a);
+            background: linear-gradient(160deg, #6a58ae, #503f8e);
             color: #f6fafe;
-            border-radius: 5px;
+            border-radius: 6px;
             min-height: 25px;
             display: flex;
             align-items: center;
@@ -242,14 +256,14 @@
         }
 
         .spectator-card .spectator-cell.called {
-            background: linear-gradient(145deg, #ff4d4d, #f60c0c) !important;
+            background: linear-gradient(150deg, #ff8080, #f04949) !important;
             color: #fff !important;
-            box-shadow: 0 0 7px rgba(251, 56, 56, 0.6);
+            box-shadow: 0 0 7px rgba(255, 77, 94, 0.55);
         }
 
         .spectator-card .spectator-cell.free {
-            background: linear-gradient(145deg, #13f4a2, #04c585) !important;
-            color: #fff !important;
+            background: linear-gradient(150deg, #4dfcbc, var(--success-color)) !important;
+            color: #073826 !important;
         }
 
         .spectator-card .spectator-header {
@@ -258,23 +272,23 @@
             font-weight: 900;
             text-align: center;
             padding: 3px 0;
-            border-radius: 5px;
+            border-radius: 6px;
         }
 
-        .spectator-card .spectator-header.b { background: #3480fd; }
-        .spectator-card .spectator-header.i { background: #8855fd; }
-        .spectator-card .spectator-header.n { background: #a84ffd; }
-        .spectator-card .spectator-header.g { background: #04c585; }
-        .spectator-card .spectator-header.o { background: #fe7211; }
+        .spectator-card .spectator-header.b { background: var(--col-b); }
+        .spectator-card .spectator-header.i { background: var(--col-i); }
+        .spectator-card .spectator-header.n { background: var(--col-n); }
+        .spectator-card .spectator-header.g { background: var(--col-g); }
+        .spectator-card .spectator-header.o { background: var(--col-o); }
 
         .bingo-card-container {
-            background: linear-gradient(160deg, #061a54, var(--card-bg));
-            border-radius: 10px;
-            padding: 4px;
+            background: linear-gradient(165deg, #241257, var(--card-bg));
+            border-radius: var(--radius-md);
+            padding: 8px;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 4px;
-            border: 1px solid var(--accent-color);
+            margin-bottom: 6px;
+            border: 1px solid var(--border-accent);
             box-shadow: var(--shadow-soft);
         }
 
@@ -294,7 +308,7 @@
         }
 
         .bingo-table td {
-            background: linear-gradient(160deg, #08256c, var(--cell-bg));
+            background: linear-gradient(160deg, #2a1a63, var(--cell-bg));
             border-radius: 3px;
             height: 27px;
             font-size: 13px;
@@ -314,91 +328,94 @@
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 2px;
+            gap: 4px;
         }
 
         .bingo-card-container.compact {
-            padding: 3px;
-            margin-bottom: 3px;
+            padding: 6px;
+            margin-bottom: 5px;
         }
 
         .bingo-grid.compact {
-            gap: 1px;
+            gap: 3px;
         }
 
         .bingo-header-cell.compact {
-            font-size: 10px;
-            padding: 2px 0;
-            border-radius: 10px;
+            font-size: 10.5px;
+            padding: 3px 0;
+            border-radius: 8px;
         }
 
         .bingo-cell.compact {
-            font-size: 11px;
-            border-radius: 5px;
+            font-size: 12px;
+            border-radius: 7px;
         }
 
         .bingo-header-cell {
-            background: linear-gradient(160deg, #5b9bff, var(--accent-color));
             color: white;
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 700;
-            padding: 5px 0;
-            border-radius: 16px;
+            padding: 6px 0;
+            border-radius: var(--radius-sm);
             text-align: center;
         }
 
-        .bingo-header-cell:nth-child(1) { background: linear-gradient(160deg, #5b9bff, #3480fd); } /* B */
-        .bingo-header-cell:nth-child(2) { background: linear-gradient(160deg, #a587fe, #8855fd); } /* I */
-        .bingo-header-cell:nth-child(3) { background: linear-gradient(160deg, #c082fe, #a84ffd); } /* N */
-        .bingo-header-cell:nth-child(4) { background: linear-gradient(160deg, #13f4a2, #04c585); } /* G */
-        .bingo-header-cell:nth-child(5) { background: linear-gradient(160deg, #fe9239, #fe7211); } /* O */
+        .bingo-header-cell:nth-child(1) { background: linear-gradient(160deg, #6ba8ff, var(--col-b)); }
+        .bingo-header-cell:nth-child(2) { background: linear-gradient(160deg, #a587fe, var(--col-i)); }
+        .bingo-header-cell:nth-child(3) { background: linear-gradient(160deg, #da9bff, var(--col-n)); }
+        .bingo-header-cell:nth-child(4) { background: linear-gradient(160deg, #4defb0, var(--col-g)); }
+        .bingo-header-cell:nth-child(5) { background: linear-gradient(160deg, #fe9239, var(--col-o)); }
 
         .bingo-cell {
-            aspect-ratio: 1.15 / 1;
-            background: #dfe9fc;
-            color: #072352;
-            border-radius: 8px;
-            font-size: 13px;
+            aspect-ratio: 1.05 / 1;
+            background: #f2f1fb;
+            color: #241457;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.05);
         }
 
         .bingo-cell.marked {
-            background: var(--success-color) !important;
-            color: white;
+            background: linear-gradient(160deg, #4defb0, var(--success-color)) !important;
+            color: #073826;
+            box-shadow: 0 0 10px rgba(31, 214, 148, 0.5);
         }
 
         .bingo-cell.free {
-            background: var(--success-color) !important;
-            color: white;
+            background: linear-gradient(160deg, #ffd77a, var(--orange-color)) !important;
+            color: #3a2400;
+            box-shadow: 0 0 10px rgba(255, 176, 32, 0.45);
         }
 
         .bingo-cell.win-pattern {
-            background: var(--success-color) !important;
-            color: white;
+            background: linear-gradient(160deg, #4defb0, var(--success-color)) !important;
+            color: #073826;
+            box-shadow: 0 0 12px rgba(31, 214, 148, 0.7);
         }
 
         .bingo-cell.called-not-pattern {
-            background: var(--orange-color) !important;
-            color: white;
+            background: linear-gradient(160deg, #ffd77a, var(--orange-color)) !important;
+            color: #3a2400;
         }
 
         .called-circle {
-            width: 46px;
-            height: 46px;
-            background: #ffffff;
-            border: 3px solid #f6b300;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 32% 28%, #ffffff, #f3eeff 60%, #e2d6ff 100%);
+            border: 3px solid var(--orange-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 15px;
+            font-size: 14.5px;
             font-weight: 800;
             color: #4f2ba8;
             margin: 4px auto;
-            box-shadow: 0 0 22px rgba(246, 179, 0, 0.6), 0 0 6px rgba(246, 179, 0, 0.9);
+            box-shadow: 0 0 22px rgba(255, 176, 32, 0.55), 0 0 6px rgba(255, 176, 32, 0.85);
             position: relative;
         }
 
@@ -421,22 +438,22 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #f6b300;
+            background: var(--orange-color);
             opacity: 0.85;
         }
 
         .recent-call-badge {
-            width: 38px;
-            height: 38px;
-            min-width: 38px;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 700;
             color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
             animation: calledPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
@@ -456,14 +473,14 @@
         }
 
         .modal-content {
-            background: linear-gradient(145deg, #051a46, #030f2c);
+            background: linear-gradient(155deg, #241257, #150b30);
             padding: 18px;
-            border-radius: 20px;
+            border-radius: var(--radius-lg);
             width: 100%;
             max-width: 340px;
-            border: 1px solid rgba(252, 160, 3, 0.3);
+            border: 1px solid var(--border-accent);
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-shadow: var(--shadow-strong);
             box-sizing: border-box;
             max-height: 90vh;
             overflow-y: auto;
@@ -477,7 +494,7 @@
         .deposit-spinner {
             width: 46px;
             height: 46px;
-            border: 4px solid #0a2f79;
+            border: 4px solid var(--cell-bg);
             border-top: 4px solid var(--orange-color);
             border-radius: 50%;
             margin: 10px auto;
@@ -488,9 +505,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #071d55;
-            border: 1px solid #0a2f79;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-sm);
             padding: 10px 12px;
             margin-bottom: 8px;
             cursor: pointer;
@@ -502,10 +519,10 @@
         }
 
         .deposit-amount-btn {
-            background: #071d55;
-            border: 1px solid #0a2f79;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-soft);
             color: white;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             padding: 10px 0;
             font-size: 14px;
             font-weight: bold;
@@ -515,7 +532,7 @@
         .deposit-amount-btn.active {
             background: var(--orange-color);
             border-color: var(--orange-color);
-            color: #1a1200;
+            color: #241200;
         }
 
         .nav-bar {
@@ -523,11 +540,11 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(180deg, #030d2a, #020815);
+            background: linear-gradient(180deg, #160c38, #0c0620);
             display: flex;
             justify-content: space-around;
             padding: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px)) 0;
-            border-top: 1px solid #092a6d;
+            border-top: 1px solid var(--border-soft);
             box-shadow: 0 -6px 18px rgba(0,0,0,0.35);
             z-index: 100;
             box-sizing: border-box;
@@ -536,7 +553,7 @@
         .nav-item {
             background: none;
             border: none;
-            color: #1265dd;
+            color: #6a5aa8;
             font-size: 13px;
             cursor: pointer;
             display: flex;
@@ -548,7 +565,7 @@
 
         .nav-item:active { transform: scale(0.95); }
 
-        .nav-item.active { color: var(--btn-blue); text-shadow: 0 0 10px rgba(1, 185, 217, 0.5); }
+        .nav-item.active { color: var(--btn-blue); text-shadow: 0 0 10px rgba(47, 199, 232, 0.5); }
 
         #customToast {
             display: none;
@@ -556,12 +573,12 @@
             left: 50%;
             bottom: 80px;
             transform: translateX(-50%);
-            background: linear-gradient(145deg, #051a46, #030f2c);
+            background: linear-gradient(150deg, #241257, #150b30);
             color: #ffffff;
             padding: 12px 18px;
-            border-radius: 12px;
-            border: 1px solid rgba(252, 160, 3, 0.4);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 176, 32, 0.4);
+            box-shadow: var(--shadow-strong);
             font-size: 14px;
             font-weight: bold;
             text-align: center;
@@ -574,6 +591,101 @@
         #customToast.show {
             display: block;
             opacity: 1;
+        }
+
+        .top-stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            width: 100%;
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            padding: 6px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 7px;
+            border: 1px solid var(--border-soft);
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: var(--shadow-soft), var(--glow-purple);
+        }
+
+        .top-stat {
+            background: linear-gradient(165deg, #5d43c4, #3f2a8f);
+            border-radius: var(--radius-sm);
+            padding: 4px 2px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .top-stat .lbl {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        .top-stat .val {
+            font-size: 13.5px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .board-panel {
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            border: 1px solid var(--border-soft);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            box-shadow: var(--shadow-soft), var(--glow-purple);
+        }
+
+        .board-header {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            text-align: center;
+            margin-bottom: 3px;
+        }
+
+        .board-header div {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 0;
+            border-radius: 7px;
+        }
+
+        .side-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            padding: 4px 7px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+            width: calc(100% - 28px);
+            margin: 0 auto;
+            box-sizing: border-box;
+            box-shadow: var(--shadow-soft), var(--glow-purple);
+        }
+
+        .caller-panel {
+            background: linear-gradient(165deg, #3a2088, var(--card-bg));
+            border-radius: var(--radius-lg);
+            padding: 6px;
+            text-align: center;
+            border: 1px solid var(--border-soft);
+            width: calc(100% - 28px);
+            margin: 0 auto;
+            box-sizing: border-box;
+            box-shadow: var(--shadow-soft), var(--glow-purple);
+        }
+
+        @media (max-width: 360px) {
+            .top-stat .val { font-size: 11.5px; }
+            .top-stat .lbl { font-size: 8.5px; }
+            .bingo-cell { font-size: 12px; }
+            h2 { font-size: 17px; }
         }
     </style>
 </head>
@@ -652,39 +764,39 @@
     <!-- 3. LIVE GAME ROOM SCREEN -->
     <div id="gameScreen" class="screen" style="max-width: 420px;">
         <!-- Top Info Header -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: linear-gradient(160deg, #3a2088, var(--card-bg)); padding: 5px; border-radius: 14px; margin-bottom: 6px; border: 1px solid #4a2c9e; text-align: center; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Game ID</div>
-                <div id="gameIdDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">BBX54</div>
+        <div class="top-stats-bar">
+            <div class="top-stat">
+                <div class="lbl">Game ID</div>
+                <div id="gameIdDisplay" class="val" style="color: var(--orange-color);">BBX54</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Players</div>
-                <div style="font-size: 14px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
+            <div class="top-stat">
+                <div class="lbl">Players</div>
+                <div class="val" id="activePlayersCountDisplay">2</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Bet</div>
-                <div style="font-size: 14px; font-weight: bold; color: white;">10</div>
+            <div class="top-stat">
+                <div class="lbl">Bet</div>
+                <div class="val">10</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Derash 🪙</div>
-                <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: var(--success-color);">16</div>
+            <div class="top-stat">
+                <div class="lbl">Derash 🪙</div>
+                <div id="gamePrizeDisplay" class="val" style="color: var(--success-color);">16</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Called</div>
-                <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">0</div>
+            <div class="top-stat">
+                <div class="lbl">Called</div>
+                <div id="calledCountDisplay" class="val" style="color: var(--orange-color);">0</div>
             </div>
         </div>
 
         <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
             <!-- Left Side: 5-Column BINGO Board -->
             <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
-                <div id="masterBoardCard" style="background: linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius: 14px; padding: 4px; border: 1px solid #4a2c9e; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: var(--shadow-soft), var(--glow-purple);">
-                    <div id="masterBoardHeader" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; text-align: center; margin-bottom: 3px;">
-                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">B</div>
-                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">I</div>
-                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">N</div>
-                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">G</div>
-                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">O</div>
+                <div id="masterBoardCard" class="board-panel">
+                    <div id="masterBoardHeader" class="board-header">
+                        <div style="background: var(--col-b);">B</div>
+                        <div style="background: var(--col-i);">I</div>
+                        <div style="background: var(--col-n);">N</div>
+                        <div style="background: var(--col-g);">G</div>
+                        <div style="background: var(--col-o);">O</div>
                     </div>
                     <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
                 </div>
@@ -692,12 +804,12 @@
 
             <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
             <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(160deg, #3a2088, var(--card-bg)); padding: 3px 6px; border-radius: 14px; border: 1px solid #4a2c9e; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
-                    <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
-                    <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 13px; cursor: pointer;">🔊</button>
+                <div class="side-panel">
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
+                    <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 15px; cursor: pointer;">🔊</button>
                 </div>
 
-                <div style="background: linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius: 14px; padding: 4px; text-align: center; border: 1px solid #4a2c9e; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
+                <div class="caller-panel">
                     <div class="called-circle" id="currentCalledNum">-</div>
                     <div id="gameStatusText" style="font-size: 10px; color: var(--orange-color); font-weight: bold; margin-top: 1px;">Game in progress...</div>
                 </div>
@@ -709,10 +821,10 @@
 
 
         <!-- Bottom Action Buttons -->
-        <div style="display: flex; gap: 6px; width: 100%; margin-top: 2px;">
-            <button class="btn btn-danger" style="padding: 7px; font-size: 11px; flex: 1;" onclick="goBackToSelection()">Leave</button>
-            <button class="btn btn-orange" style="padding: 7px; font-size: 11px; flex: 1;" onclick="openSelection()">🔄 Refresh</button>
-            <button id="gameAutomaticBtn" class="btn btn-green" style="padding: 7px; font-size: 11px; flex: 1;" onclick="alert('Automatic mode is active!')">Automatic</button>
+        <div style="display: flex; gap: 7px; width: 100%; margin-top: 3px;">
+            <button class="btn btn-danger" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="goBackToSelection()">Leave</button>
+            <button class="btn btn-orange" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="openSelection()">🔄 Refresh</button>
+            <button id="gameAutomaticBtn" class="btn btn-green" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="alert('Automatic mode is active!')">Automatic</button>
         </div>
     </div>
 
@@ -2529,7 +2641,7 @@
                     let num = matrixCols[c][r];
                     let cell = document.createElement('div');
                     cell.id = `board_cell_${num}`;
-                    cell.style.cssText = "background: #280da5; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
+                    cell.style.cssText = "background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #c9b6ff; min-height: 18px;";
                     cell.innerText = num;
                     boardGrid.appendChild(cell);
                 }
@@ -2838,17 +2950,27 @@
         let lastCalledBoardCellNum = null;
 
         function markBoardAndCards(num) {
+            let boardColColor = function(n) {
+                if (n <= 15) return 'var(--col-b)';
+                if (n <= 30) return 'var(--col-i)';
+                if (n <= 45) return 'var(--col-n)';
+                if (n <= 60) return 'var(--col-g)';
+                return 'var(--col-o)';
+            };
             if (lastCalledBoardCellNum !== null) {
                 let prevCell = document.getElementById(`board_cell_${lastCalledBoardCellNum}`);
                 if (prevCell) {
-                    prevCell.style.background = "var(--orange-color)";
+                    prevCell.style.background = boardColColor(lastCalledBoardCellNum);
                     prevCell.style.color = "white";
+                    prevCell.style.border = "1px solid rgba(255,255,255,0.15)";
                 }
             }
             let boardCell = document.getElementById(`board_cell_${num}`);
             if (boardCell) {
-                boardCell.style.background = "var(--success-color)";
+                boardCell.style.background = boardColColor(num);
                 boardCell.style.color = "white";
+                boardCell.style.border = "2px solid #fff";
+                boardCell.style.boxShadow = "0 0 8px rgba(255,255,255,0.5)";
             }
             lastCalledBoardCellNum = num;
 
