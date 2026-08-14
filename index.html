@@ -642,26 +642,18 @@
         .board-header {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 3px;
+            gap: 2px;
             text-align: center;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
         }
 
         .board-header div {
             color: white;
-            font-size: 16px;
-            font-weight: 800;
-            padding: 6px 0;
-            border-radius: 8px;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 0;
+            border-radius: 7px;
         }
-
-        .board-header .b { background: var(--col-b); }
-        .board-header .i { background: var(--col-i); }
-        .board-header .n { background: var(--col-n); }
-        .board-header .g { background: var(--col-g); }
-        .board-header .o { background: var(--col-o); }
 
         .side-panel {
             display: flex;
@@ -796,21 +788,21 @@
         </div>
 
         <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
-            <!-- Left Side: 5x5 BINGO Board -->
+            <!-- Left Side: 5-Column BINGO Board -->
             <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
                 <div id="masterBoardCard" class="board-panel">
                     <div id="masterBoardHeader" class="board-header">
-                        <div class="b">B</div>
-                        <div class="i">I</div>
-                        <div class="n">N</div>
-                        <div class="g">G</div>
-                        <div class="o">O</div>
+                        <div style="background: var(--col-b);">B</div>
+                        <div style="background: var(--col-i);">I</div>
+                        <div style="background: var(--col-n);">N</div>
+                        <div style="background: var(--col-g);">G</div>
+                        <div style="background: var(--col-o);">O</div>
                     </div>
-                    <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 4px; flex: 1; min-height: 0;"></div>
+                    <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
                 </div>
             </div>
 
-            <!-- Right Side: Called Number & User Cartelas -->
+            <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
             <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
                 <div class="side-panel">
                     <div style="display: flex; gap: 4px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
@@ -822,10 +814,11 @@
                     <div id="gameStatusText" style="font-size: 10px; color: var(--orange-color); font-weight: bold; margin-top: 1px;">Game in progress...</div>
                 </div>
 
-                <!-- User Cards Container -->
+                <!-- User Cards Container with exact max-height and overflow scroll -->
                 <div id="userCardsContainer" style="width: 100%; display: flex; flex-direction: column; gap: 4px; padding-right: 2px;"></div>
             </div>
         </div>
+
 
         <!-- Bottom Action Buttons -->
         <div style="display: flex; gap: 7px; width: 100%; margin-top: 3px;">
@@ -966,18 +959,28 @@
         watchFirebaseServerTimeOffset();
 
         // --- Wallet balances now live in Firebase (users/<id>/wallet) so they survive refresh ---
+        // Uses a live listener (not once()) so a change made elsewhere -- e.g. an admin
+        // approving a deposit from the Telegram bot -- shows up immediately here too,
+        // instead of only appearing the next time the Mini App is reopened.
         function loadUserWalletFromFirebase() {
             if (!db) return;
             db.ref('users/' + telegramUserId + '/wallet').on('value', function(snap) {
                 let w = snap.val();
                 isApplyingRemoteWalletUpdate = true;
                 if (w) {
+                    // A field can legitimately be missing (e.g. the admin panel's
+                    // approve button only ever writes the "play" and "deposited"
+                    // children, never "main"). Default any missing field to 0
+                    // instead of treating a partial object as "no data" and
+                    // wiping the whole wallet back to zero.
                     mainWalletBalance = typeof w.main === 'number' ? w.main : 0;
                     playWalletBalance = typeof w.play === 'number' ? w.play : 0;
                     depositedBalance = typeof w.deposited === 'number' ? w.deposited : 0;
                     walletLoaded = true;
                     updateWalletDisplay();
                 } else {
+                    // Wallet node genuinely doesn't exist yet (brand new user) --
+                    // safe to initialize it.
                     isApplyingRemoteWalletUpdate = false;
                     walletLoaded = true;
                     db.ref('users/' + telegramUserId + '/wallet').set({ main: mainWalletBalance, play: playWalletBalance, deposited: depositedBalance });
@@ -990,6 +993,7 @@
             });
         }
 
+        // --- Registration status now lives in Firebase (users/<id>/registered) too ---
         function loadUserRegistrationFromFirebase() {
             if (!db) return;
             db.ref('users/' + telegramUserId + '/registered').once('value').then(function(snap) {
@@ -1013,6 +1017,7 @@
             });
         }
 
+        // --- Live stats: start at 0, count for real as the app is actually used ---
         let statsListenersAttached = false;
         let currentRoundId = null;
 
@@ -1020,6 +1025,7 @@
             if (!db || statsListenersAttached) return;
             statsListenersAttached = true;
 
+            // Active Players = number of currently-connected users (real-time presence)
             try {
                 let presenceRef = db.ref('presence/' + telegramUserId);
                 presenceRef.set(true);
@@ -1034,11 +1040,13 @@
                 if (el) el.innerText = count;
             });
 
+            // Games Played = total completed rounds, counted once per round
             db.ref('stats/gamesPlayed').on('value', function(snapshot) {
                 let el = document.getElementById('statGamesPlayed');
                 if (el) el.innerText = snapshot.val() || 0;
             });
 
+            // Winners Daily = winners counted today, resets automatically each new day
             let todayKey = new Date().toISOString().slice(0, 10);
             db.ref('stats/winnersDaily/' + todayKey).on('value', function(snapshot) {
                 let el = document.getElementById('statWinnersDaily');
@@ -1046,12 +1054,13 @@
             });
         }
 
+        // Called once per round when it actually ends, so the counters reflect real games
         function recordGameCompletion(winnersCount) {
             if (!db) return;
             let claimId = currentRoundId || 'unknown_' + Math.floor(Date.now() / 60000);
             db.ref('stats/countedRounds/' + claimId).transaction(function(current) {
                 if (current === null) return true;
-                return;
+                return; // abort — this round was already counted
             }).then(function(result) {
                 if (result.committed) {
                     db.ref('stats/gamesPlayed').transaction(function(c) { return (c || 0) + 1; });
@@ -1129,9 +1138,17 @@
                     db.ref('room/caller').remove();
                     db.ref('room/prizePool').remove();
                     db.ref('room/roundFinalizing').remove();
+                    // Set ONE shared card-selection deadline for this round, same
+                    // moment on every player's device -- so a 45s countdown started
+                    // by whoever's device happens to create the round reads
+                    // identically (34...33...32) for everyone else, instead of each
+                    // phone running its own independent 45 seconds from whenever it
+                    // happened to open the screen.
                     let sharedEnd = myRoundValue + CARD_SELECTION_SECONDS * 1000;
                     deadlinePromise = db.ref('room/cardSelectionEndTime').set(sharedEnd).then(function() { return sharedEnd; });
                 } else {
+                    // Someone else already created this round -- read the deadline
+                    // THEY set, so we count down from the exact same moment.
                     deadlinePromise = db.ref('room/cardSelectionEndTime').once('value').then(function(snap) {
                         return snap.val() || (getServerNow() + CARD_SELECTION_SECONDS * 1000);
                     });
@@ -1159,7 +1176,7 @@
                 if (current === null) {
                     return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
                 }
-                return;
+                return; // abort - already taken
             }).then(function(result) {
                 if (result.committed) {
                     onSuccess(result.snapshot.val().matrix);
@@ -1168,7 +1185,7 @@
                 }
             }).catch(function(err) {
                 console.log("Firebase claim failed", err);
-                onTaken();
+                onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
             });
         }
 
@@ -1176,7 +1193,9 @@
             if (!db) return;
             db.ref('room/takenCards/' + cellNum).remove();
         }
+        // --- end Firebase card locking ---
 
+        // --- Shared number-calling + real winner detection across all real players ---
         function subscribeCalledNumbers() {
             if (!db) return;
             if (calledNumbersListenerAttached) return;
@@ -1221,6 +1240,13 @@
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
                             let prizePool = Number(currentGamePrize || 0);
+                            // Split by whole cents so N winners' shares always sum to
+                            // EXACTLY the prize pool (no money lost or invented to
+                            // floating-point rounding). Any leftover cents from the
+                            // division go to the first entries in a fixed, deterministic
+                            // order (sorted by card number) that every winner's client
+                            // computes identically -- so who gets the extra cent is
+                            // consistent no matter whose device runs this code.
                             let sortedWinners = winnersArr.slice().sort(function(a, b) { return a.cardNum - b.cardNum; });
                             let numWinners = sortedWinners.length;
                             let prizePoolCents = Math.round(prizePool * 100);
@@ -1233,6 +1259,9 @@
                                 }
                             });
                             let myPrize = myPrizeCents / 100;
+                            // Idempotent payout: the same user can never be credited twice
+                            // for the same round. Credited straight to wallet.main, the
+                            // same field the wallet display and withdrawals actually read.
                             db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
                                 current = current || { main: 0, play: 0, deposited: 0 };
                                 current.bingoPayouts = current.bingoPayouts || {};
@@ -1277,6 +1306,8 @@
                 if (callerLabel) callerLabel.innerText = isRoundCaller ? '🎱 Caller is active' : 'Watching Caller...';
                 if (!isRoundCaller) return;
 
+                // Only the elected caller establishes the shared prize pool.
+                // Prize pool = 80% of all cards actually taken in this round (20% commission retained).
                 return db.ref('room/takenCards').once('value').then(function(snap) {
                     let taken = snap.val() || {};
                     let poolBase = 0;
@@ -1376,6 +1407,9 @@
             let calledSet = {};
             calledNumbersList.forEach(function(n) { calledSet[n] = true; });
 
+            // Combine Firebase-synced taken cards with the player's own locally-tracked
+            // cards. takenCardsData can be empty (offline, or local-fallback calling mode),
+            // and without this merge a win would never be detected in that case.
             let cardsToCheck = {};
             Object.keys(takenCardsData).forEach(function(cardNumStr) {
                 cardsToCheck[cardNumStr] = takenCardsData[cardNumStr];
@@ -1413,6 +1447,7 @@
                 }
 
                 if (!isWinner) {
+                    // Diagonal (top-left to bottom-right)
                     let diag1Win = true;
                     for (let i = 0; i < 5; i++) {
                         let val = matrix[i][i];
@@ -1422,6 +1457,7 @@
                 }
 
                 if (!isWinner) {
+                    // Diagonal (top-right to bottom-left)
                     let diag2Win = true;
                     for (let i = 0; i < 5; i++) {
                         let val = matrix[i][4 - i];
@@ -1431,6 +1467,7 @@
                 }
 
                 if (!isWinner) {
+                    // Four corners
                     let corners = [matrix[0][0], matrix[0][4], matrix[4][0], matrix[4][4]];
                     let cornersWin = corners.every(function(val) {
                         return val === 'FREE' || calledSet[val];
@@ -1449,6 +1486,7 @@
 
         function finalizeRoundWinners(winners) {
             if (!db || !isRoundCaller || !winners || !winners.length) return;
+            // Lock finalization first, then write the complete winner list, then publish roundEnded.
             db.ref('room/roundFinalizing').transaction(function(current) {
                 if (current === true) return;
                 return true;
@@ -1469,146 +1507,64 @@
             });
         }
 
-        // ============================================================
-        // ★★★ የተሻሻለው የቢንጎ ቦርድ ኮድ - 5x5 እውነተኛ ቅርፅ ★★★
-        // ============================================================
+        function handleNumberCalled(num) {
+            lastCallTime = Date.now();
+            let calledBox = document.getElementById('currentCalledNum');
+            let calledCountEl = document.getElementById('calledCountDisplay');
+            let recentContainer = document.getElementById('recentCalledContainer');
 
-        function initializeGameBoard() {
-            let boardGrid = document.getElementById('gameBoardGrid');
-            if (!boardGrid) return;
-            boardGrid.innerHTML = '';
-            lastCalledBoardCellNum = null;
+            let letter = 'B';
+            if (num >= 1 && num <= 15) letter = 'B';
+            else if (num >= 16 && num <= 30) letter = 'I';
+            else if (num >= 31 && num <= 45) letter = 'N';
+            else if (num >= 46 && num <= 60) letter = 'G';
+            else if (num >= 61 && num <= 75) letter = 'O';
 
-            // ለእያንዳንዱ አምድ የቢንጎ ቁጥሮች
-            let bCol = [];
-            let iCol = [];
-            let nCol = [];
-            let gCol = [];
-            let oCol = [];
-            
-            // B: 1-15, I: 16-30, N: 31-45, G: 46-60, O: 61-75
-            for (let i = 1; i <= 15; i++) {
-                bCol.push(i);
-                iCol.push(i + 15);
-                nCol.push(i + 30);
-                gCol.push(i + 45);
-                oCol.push(i + 60);
+            let letterColors = { B: '#3480fd', I: '#8855fd', N: '#a84ffd', G: '#04c585', O: '#fe7211' };
+            let letterColor = letterColors[letter];
+
+            let displayCall = `${letter}-${num}`;
+
+            if (calledBox) {
+                calledBox.innerText = displayCall;
+                calledBox.style.color = letterColor;
+                calledBox.style.borderColor = '#f6b300';
+                calledBox.style.boxShadow = `0 0 16px rgba(246, 179, 0, 0.55)`;
+                calledBox.classList.remove('pop');
+                void calledBox.offsetWidth; // restart animation even if same number pattern repeats
+                calledBox.classList.add('pop');
+            }
+            if (calledCountEl) calledCountEl.innerText = calledNumbersList.length;
+
+            if (recentContainer) {
+                let newTag = `<div class="recent-call-badge" style="background: ${letterColor};">${displayCall}</div>`;
+                recentContainer.insertAdjacentHTML('afterbegin', newTag);
             }
 
-            // ከእያንዳንዱ አምድ 5 ቁጥሮች በዘፈቀደ መምረጥ
-            function shuffleArray(arr) {
-                let shuffled = [...arr];
-                for (let i = shuffled.length - 1; i > 0; i--) {
-                    let j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-                return shuffled;
-            }
+            speakNumber(displayCall);
+            markBoardAndCards(num);
 
-            let bShuffled = shuffleArray(bCol).slice(0, 5);
-            let iShuffled = shuffleArray(iCol).slice(0, 5);
-            let nShuffled = shuffleArray(nCol).slice(0, 5);
-            let gShuffled = shuffleArray(gCol).slice(0, 5);
-            let oShuffled = shuffleArray(oCol).slice(0, 5);
-
-            // 5x5 ማትሪክስ (ረድፍ በረድፍ)
-            let matrix = [];
-            for (let row = 0; row < 5; row++) {
-                matrix.push([
-                    bShuffled[row],
-                    iShuffled[row],
-                    nShuffled[row],
-                    gShuffled[row],
-                    oShuffled[row]
-                ]);
-            }
-            // መሃል ላይ FREE (እውነተኛ ቢንጎ)
-            matrix[2][2] = 'FREE';
-
-            // ለየትኛውም ተጠቃሚ መታወቅ እንዲችል ማስታወስ
-            window.currentBoardMatrix = matrix;
-
-            // ማሳያ
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < 5; col++) {
-                    let val = matrix[row][col];
-                    let cell = document.createElement('div');
-                    let isFree = (val === 'FREE');
-                    cell.id = `board_cell_${row}_${col}`;
-                    cell.style.cssText = `
-                        background: ${isFree ? 'linear-gradient(160deg, #ffd77a, var(--orange-color))' : 'rgba(255,255,255,0.08)'};
-                        border: ${isFree ? '2px solid var(--orange-color)' : '1px solid rgba(255,255,255,0.08)'};
-                        border-radius: 6px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: ${isFree ? '11px' : '14px'};
-                        font-weight: ${isFree ? '700' : '600'};
-                        color: ${isFree ? '#3a2400' : '#e2d6ff'};
-                        min-height: 32px;
-                        box-shadow: ${isFree ? '0 0 12px rgba(255, 176, 32, 0.25)' : 'none'};
-                    `;
-                    cell.innerText = isFree ? '✨' : val;
-                    boardGrid.appendChild(cell);
-                }
+            if (isRoundCaller && !roomRoundEndedCached) {
+                let winners = checkGlobalWinConditions();
+                if (winners.length > 0) finalizeRoundWinners(winners);
             }
         }
-
-        // ============================================================
-        // የተሻሻለው የምልክት ማድረጊያ ተግባር
-        // ============================================================
-
-        function markBoardAndCards(num) {
-            let matrix = window.currentBoardMatrix;
-            if (!matrix) return;
-
-            // በሰንጠረዡ ላይ ያለውን ቁጥር ምልክት ማድረግ
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < 5; col++) {
-                    if (matrix[row][col] === num) {
-                        let cell = document.getElementById(`board_cell_${row}_${col}`);
-                        if (cell) {
-                            cell.style.background = 'linear-gradient(160deg, #4defb0, var(--success-color))';
-                            cell.style.color = '#073826';
-                            cell.style.border = '2px solid white';
-                            cell.style.boxShadow = '0 0 12px rgba(31, 214, 148, 0.6)';
-                        }
-                    }
-                }
-            }
-
-            // የተጠቃሚ ካርዶችን ምልክት ማድረግ
-            userBingoMatrices.forEach((cardObj, idx) => {
-                let matrix = cardObj.matrix;
-                for(let r = 0; r < 5; r++) {
-                    for(let c = 0; c < 5; c++) {
-                        if(matrix[r][c] === num) {
-                            let cell = document.getElementById(`c_${idx}_${r}_${c}`);
-                            if(cell) cell.classList.add('marked');
-                        }
-                    }
-                }
-            });
-        }
-
-        // ============================================================
-        // ቀሪው ኮድ ሳይለወጥ ይቆያል
-        // ============================================================
+        // --- end shared calling / win detection ---
 
         let gameInterval = null;
         let calledNumbersList = [];
         let lastCallTime = 0;
         let userBingoMatrices = [];
         
-        let mainWalletBalance = 0;
-        let playWalletBalance = 0;
-        let walletLoaded = false;
-        let gameEntryLocked = false;
-        const CARD_SELECTION_SECONDS = 45;
-        let isSpectatorThisRound = false;
-        let depositedBalance = 0;
-        let currentRoundDepositedFraction = 0;
-        let hasUsedFreeGame = false;
+        let mainWalletBalance = 0; // winnings land here automatically; withdraw from here
+        let playWalletBalance = 0; // starts at 0; gets 10 when player registers
+        let walletLoaded = false; // true only once we've actually synced real wallet data from Firebase at least once -- see updateWalletDisplay()
+        let gameEntryLocked = false; // guards against processGameEntry() running twice for the same selection (e.g. a double-tap), which would double-deduct the card cost
+        const CARD_SELECTION_SECONDS = 45; // card-selection window per round
+        let isSpectatorThisRound = false; // true if the player missed the card-selection deadline this round -- they can watch but not play/win until the next round
+        let depositedBalance = 0; // tracks how much of playWalletBalance came from REAL Telebirr deposits (vs free bonus coins) — only this fraction of any winnings becomes withdrawable
+        let currentRoundDepositedFraction = 0; // what fraction of this round's stake was funded by real deposits (0 = pure bonus, 1 = pure deposited money)
+        let hasUsedFreeGame = false; // once true, playing again requires a real Telebirr deposit — bonus coins alone are no longer enough
         let gameHistoryList = [];
         
         let isRegistered = false;
@@ -1624,7 +1580,7 @@
             }
         }
 
-        let isApplyingRemoteWalletUpdate = false;
+        let isApplyingRemoteWalletUpdate = false; // true while syncing FROM Firebase, so updateWalletDisplay() doesn't echo stale local values back and clobber a change made elsewhere (e.g. an admin deposit approval from the bot)
         let firebaseServerTimeOffset = 0;
         let serverTimeOffsetLoaded = false;
 
@@ -1634,6 +1590,9 @@
 
         function loadFirebaseServerTimeOffset() {
             if (!db) return Promise.resolve();
+            // watchFirebaseServerTimeOffset() already keeps this value live for the
+            // whole session -- re-fetching it with once() on every single round start
+            // just adds an extra network round-trip before the countdown can begin.
             if (serverTimeOffsetLoaded) return Promise.resolve();
             return db.ref('.info/serverTimeOffset').once('value').then(function(snap) {
                 firebaseServerTimeOffset = Number(snap.val() || 0);
@@ -1642,7 +1601,6 @@
                 console.log('Server time offset load failed:', err);
             });
         }
-
         function watchFirebaseServerTimeOffset() {
             if (!db) return;
             db.ref('.info/serverTimeOffset').on('value', function(snap) {
@@ -1696,6 +1654,12 @@
 
             let selStakeEl = document.getElementById('selStakeDisplay');
             if (selStakeEl) selStakeEl.innerText = selectedStake;
+
+            // Only push to Firebase when the change originated locally (a game
+            // result, a deposit/withdraw in this session, etc). If we're here
+            // because the live listener just synced in a change from elsewhere
+            // (e.g. the bot approving a deposit), writing back would overwrite
+            // that change with the stale values this tab already had in memory.
         }
 
         function addHistoryRecord(type, desc, amount) {
@@ -1759,7 +1723,8 @@
             modalBox.style.display = 'flex';
         }
 
-        // --- Admin panel ---
+        // --- Admin panel: approve/reject pending deposit & withdrawal requests ---
+        // Hardcoded admin Telegram IDs — add/remove IDs here, no need to touch Firebase.
         const HARDCODED_ADMIN_IDS = ["7078415767"];
 
         let pendingBadgeListenersAttached = false;
@@ -1786,6 +1751,9 @@
             if (!db || pendingBadgeListenersAttached) return;
             pendingBadgeListenersAttached = true;
 
+            // Note: deposits are intentionally not watched here — approval
+            // lives only in the bot chat (main.py), which uses
+            // 'transactions/pendingDeposits', not 'transactions/deposits'.
             db.ref('transactions/withdrawals').on('value', function(snapshot) {
                 let all = snapshot.val() || {};
                 pendingWithdrawalCount = Object.keys(all).filter(k => all[k].status === 'pending').length;
@@ -1803,6 +1771,7 @@
                 return;
             }
 
+            // 1) Check the hardcoded list first (works even if Firebase 'admins' node doesn't exist)
             if (HARDCODED_ADMIN_IDS.includes(String(telegramUserId))) {
                 adminUnlocked = true;
                 switchScreen('adminScreen');
@@ -1810,6 +1779,7 @@
                 return;
             }
 
+            // 2) Fallback: check Firebase 'admins/<id>' node, in case it's set up there instead
             if (!db) {
                 alert("❌ You are not authorized to access the admin panel.");
                 return;
@@ -1831,6 +1801,9 @@
         function subscribeAdminRequests() {
             if (!db || adminListenersAttached) return;
             adminListenersAttached = true;
+
+            // Deposits are intentionally not listed here — approval lives only
+            // in the bot chat (main.py, 'transactions/pendingDeposits').
 
             db.ref('transactions/withdrawals').on('value', function(snapshot) {
                 let all = snapshot.val() || {};
@@ -1856,6 +1829,11 @@
             });
         }
 
+        // Deposit approval/rejection intentionally lives ONLY in the Telegram bot
+        // (main.py) now -- having a second approve/reject path here caused a
+        // wallet-crediting bug, so it was removed on purpose. Use the bot chat
+        // to approve or reject deposits.
+
         function adminApproveWithdrawal(key) {
             if (!db) return;
             db.ref('transactions/withdrawals/' + key + '/status').set('approved');
@@ -1865,11 +1843,14 @@
             if (!db) return;
             db.ref('transactions/withdrawals/' + key).once('value').then(function(snap) {
                 let record = snap.val();
-                if (!record || record.status !== 'pending') return;
+                if (!record || record.status !== 'pending') return; // already handled
                 let userId = record.by;
                 let amount = Number(record.amount) || 0;
 
                 db.ref('transactions/withdrawals/' + key + '/status').set('rejected');
+
+                // Refund the amount back to the user's main wallet, since it
+                // was deducted immediately when they submitted the request.
                 db.ref('users/' + userId + '/wallet/main').transaction(function(current) {
                     return (current || 0) + amount;
                 });
@@ -1892,6 +1873,8 @@
             modalBox.style.display = 'flex';
         }
 
+        
+
         const gridContainer = document.getElementById('numberGrid');
         if (gridContainer) {
             for (let i = 1; i <= 600; i++) {
@@ -1906,7 +1889,7 @@
                             return;
                         }
                         if (cellElement.classList.contains('pending')) {
-                            return;
+                            return; // a claim for this cell is already in flight
                         }
 
                         let index = selectedCards.indexOf(cellNum);
@@ -1925,6 +1908,9 @@
                                 return;
                             }
 
+                            // Reserve the slot immediately (synchronously) so rapid taps
+                            // can never push more than 2 cards while the Firebase claim
+                            // for an earlier tap is still in flight.
                             selectedCards.push(cellNum);
                             cellElement.classList.add('selected');
                             cellElement.classList.add('pending');
@@ -1935,6 +1921,7 @@
                                 cellElement.classList.remove('pending');
                                 updateSelectedCardsPreview();
                             }, function() {
+                                // Someone else actually holds this card — roll back the reservation
                                 let idx = selectedCards.indexOf(cellNum);
                                 if (idx !== -1) selectedCards.splice(idx, 1);
                                 cellElement.classList.remove('selected');
@@ -2058,6 +2045,10 @@
             updateSelectedCardsPreview();
             updateWalletDisplay();
             switchScreen('selectScreen');
+            // Start a provisional local countdown immediately so the timer never
+            // looks frozen while we wait on Firebase -- it gets replaced with the
+            // exact shared deadline the moment joinOrResetRound resolves (usually
+            // within the same second, so the visible number rarely even jumps).
             startSelectionCountdown(getServerNow() + CARD_SELECTION_SECONDS * 1000);
             joinOrResetRound(function(sharedEndTime) {
                 startSelectionCountdown(sharedEndTime);
@@ -2074,6 +2065,8 @@
                 if (timeLeft <= 0) {
                     clearInterval(selectionInterval);
                     if (selectedCards.length === 0) {
+                        // No auto-pick, ever. Missing the deadline makes this
+                        // player a spectator for the round instead of playing.
                         isSpectatorThisRound = true;
                         enterSpectatorMode();
                     } else {
@@ -2082,17 +2075,20 @@
                 }
             }
 
-            tick();
+            tick(); // show the correct time immediately, even for a late joiner
             selectionInterval = setInterval(tick, 1000);
         }
 
         function enterSpectatorMode() {
+            // The round continues normally for everyone else; this player can
+            // watch the shared board and calls but has no card, so they cannot
+            // mark cells or win. They can select a card again next round.
             switchScreen('gameScreen');
             let container = document.getElementById('userCardsContainer');
             if (container) {
                 container.innerHTML = '<div style="background:linear-gradient(160deg, #3a2088, var(--card-bg)); border:1px solid #4a2c9e; border-radius:14px; box-shadow: var(--shadow-soft), var(--glow-purple); text-align:center; color:#c9b6ff; font-size:13px; padding:18px 14px; line-height:1.6;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
             }
-            joinOrResetRound(function() {});
+            joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
         }
 
         function pickRandomAvailableCard() {
@@ -2106,10 +2102,16 @@
         }
 
         function processGameEntry() {
+            // Guard against this running twice for the same selection (e.g. a
+            // double-tap on the enter/play button) -- without this, the card
+            // cost could get deducted from the wallet more than once.
             if (gameEntryLocked) return;
             gameEntryLocked = true;
 
             if (selectedCards.length === 0) {
+                // Having a wallet balance is NOT permission to play -- the player
+                // must explicitly pick their own card(s). We no longer auto-pick
+                // one for them just because they have coins available.
                 alert('🎴 Please select at least one card before entering the game.');
                 gameEntryLocked = false;
                 return;
@@ -2117,7 +2119,13 @@
 
             let totalDeduction = selectedCards.length * selectedStake;
 
-            let source = null;
+            // Wallet priority (single source of truth):
+            // 1) Play Wallet alone must cover the FULL stake -> deduct from Play only.
+            // 2) Otherwise, if Main Wallet alone covers the FULL stake -> deduct
+            //    from Main only (regardless of any leftover Play balance).
+            // 3) Any other case (neither wallet alone is enough) -> NOT allowed
+            //    to combine; show Deposit instead.
+            let source = null; // 'play' or 'main'
             if (playWalletBalance >= totalDeduction) {
                 source = 'play';
             } else if (mainWalletBalance >= totalDeduction) {
@@ -2139,6 +2147,13 @@
                 }
             }
 
+            // Idempotent per-round deduction guard: atomically claim "I have
+            // already paid my stake for THIS round" in Firebase, keyed by
+            // round ID. A page refresh, reconnect, or duplicate request all
+            // re-run this same code path, but only the FIRST one to win this
+            // transaction actually deducts anything -- every subsequent one
+            // for the same round is a no-op that just continues into the
+            // game screen without touching the wallet again.
             function proceedWithDeduction() {
                 if (!db) {
                     if (source === 'play') {
@@ -2218,6 +2233,7 @@
         }
 
         function finishGameEntry() {
+            // Derash = (total cards taken this round × card price) × 0.8 (20% platform commission held back)
             let totalStakeThisRound = 0;
             if (db && Object.keys(takenCardsData).length) {
                 Object.keys(takenCardsData).forEach(function(cardNum) {
@@ -2260,11 +2276,11 @@
             let targetHeight = rightCol.offsetHeight;
             if (!targetHeight) return;
 
-            let cardPadding = 10;
+            let cardPadding = 10; // ~4px top+4px bottom padding + 1px border top/bottom on masterCard
             let headerHeight = headerRow.offsetHeight;
             let headerMarginBottom = 3;
-            let rowGap = 4;
-            let numRows = 5;
+            let rowGap = 2;
+            let numRows = 15;
             let totalGaps = (numRows - 1) * rowGap;
 
             let availableForRows = targetHeight - cardPadding - headerHeight - headerMarginBottom - totalGaps;
@@ -2284,6 +2300,16 @@
             clearInterval(gameInterval);
             openSelection();
         }
+
+        // Deposit is chat-only now: the in-app self-service form used to write
+        // directly to 'transactions/deposits/{txnKey}', but deposit approval
+        // lives ONLY in the Telegram bot (main.py), which watches
+        // 'transactions/pendingDeposits' instead. Anything submitted from this
+        // in-app form went to a node the bot never checks, so it could never be
+        // approved and the user's coins would never arrive. The whole in-app
+        // deposit form has been removed; deposits must go through the bot chat,
+        // where main.py's SMS-parsing + admin-approval flow already works
+        // correctly end-to-end.
 
         function closeCustomModal() {
             let modalBox = document.getElementById('customModal');
@@ -2461,7 +2487,7 @@
             });
         }
 
-        // ---- Audio system ----
+        // ---- Audio system: unlock on first tap, beep + speech, so it works even in in-app WebViews ----
         let audioCtx = null;
         let cachedVoices = [];
         let audioUnlocked = false;
@@ -2472,11 +2498,16 @@
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
+                // Prime speechSynthesis with a silent utterance so later calls aren't blocked
                 if ('speechSynthesis' in window) {
                     let primer = new SpeechSynthesisUtterance('');
                     primer.volume = 0;
                     window.speechSynthesis.speak(primer);
                     cachedVoices = window.speechSynthesis.getVoices();
+                    // Some in-app WebViews (Telegram on Android especially) load the
+                    // voice list asynchronously and never fire onvoiceschanged, so a
+                    // single getVoices() right here can come back empty. Re-check a
+                    // few times over the next couple seconds to catch it once it's ready.
                     if (cachedVoices.length === 0) {
                         [300, 800, 1500, 3000].forEach(function(delay) {
                             setTimeout(function() {
@@ -2485,6 +2516,10 @@
                             }, delay);
                         });
                     }
+                    // Chrome/WebView TTS engines silently stop speaking after being idle
+                    // or after ~15s of continuous speech (a long-standing Chromium bug).
+                    // Nudging pause()+resume() periodically keeps the engine alive so
+                    // later calls don't just go silent.
                     setInterval(function() {
                         if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
                             window.speechSynthesis.pause();
@@ -2537,11 +2572,14 @@
         function speakNumber(callText) {
             if (!soundEnabled) return;
 
+            // Always play a beep first - this works even where speech synthesis is blocked (e.g. Telegram WebView)
             playBeep();
 
             if ('speechSynthesis' in window) {
                 try {
                     window.speechSynthesis.cancel();
+                    // Re-check the voice list right before speaking too -- on some
+                    // WebViews it's still empty at unlock time but ready a bit later.
                     if (cachedVoices.length === 0) {
                         cachedVoices = window.speechSynthesis.getVoices();
                     }
@@ -2557,7 +2595,12 @@
                     if (cachedVoices.length > 0) {
                         let amVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('am'));
                         if (amVoice) utterance.voice = amVoice;
+                        // If no Amharic voice is installed on this device, we still
+                        // send the Amharic text with lang='am-ET' and let the
+                        // system's default voice attempt it, rather than silently
+                        // falling back to an English voice/reading.
                     }
+                    // Small delay so it doesn't collide with the cancel() on some browsers
                     setTimeout(function() {
                         window.speechSynthesis.speak(utterance);
                     }, 120);
@@ -2576,7 +2619,37 @@
             }
         }
 
-        // --- Fixed per-card matrices ---
+        function initializeGameBoard() {
+            let boardGrid = document.getElementById('gameBoardGrid');
+            if (!boardGrid) return;
+            boardGrid.innerHTML = '';
+            lastCalledBoardCellNum = null;
+
+            let ranges = [[1,15], [16,30], [31,45], [46,60], [61,75]];
+            let matrixCols = [];
+
+            for(let c=0; c<5; c++) {
+                let colNums = [];
+                for(let n=ranges[c][0]; n<=ranges[c][1]; n++) {
+                    colNums.push(n);
+                }
+                matrixCols.push(colNums);
+            }
+
+            for(let r=0; r<15; r++) {
+                for(let c=0; c<5; c++) {
+                    let num = matrixCols[c][r];
+                    let cell = document.createElement('div');
+                    cell.id = `board_cell_${num}`;
+                    cell.style.cssText = "background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #c9b6ff; min-height: 18px;";
+                    cell.innerText = num;
+                    boardGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // --- Fixed per-card matrices (card #N always has the same B-I-N-G-O numbers) ---
+        // Deterministic PRNG so results are reproducible from a numeric seed.
         function _mulberry32(seed) {
             return function() {
                 seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -2616,6 +2689,9 @@
         const TOTAL_FIXED_CARDS = 600;
         let _fixedCardMatrices = null;
 
+        // Builds all 600 card matrices once (seeded by card number), retrying with a
+        // different seed variant on the rare chance two cards collide, so every
+        // card number ends up with its own permanently-fixed, unique matrix.
         function _buildFixedCardMatrices() {
             let table = {};
             let seenKeys = new Set();
@@ -2641,6 +2717,9 @@
             return _fixedCardMatrices[cardNum];
         }
 
+        // cardNum is required for the fixed-per-card behavior. If somehow called
+        // without one, falls back to a one-off random matrix (old behavior) so
+        // nothing crashes.
         function generateBingoMatrix(cardNum) {
             if (cardNum && cardNum >= 1 && cardNum <= TOTAL_FIXED_CARDS) {
                 return getFixedCardMatrix(cardNum);
@@ -2774,53 +2853,11 @@
             }, 3000);
         }
 
-        function handleNumberCalled(num) {
-            lastCallTime = Date.now();
-            let calledBox = document.getElementById('currentCalledNum');
-            let calledCountEl = document.getElementById('calledCountDisplay');
-            let recentContainer = document.getElementById('recentCalledContainer');
-
-            let letter = 'B';
-            if (num >= 1 && num <= 15) letter = 'B';
-            else if (num >= 16 && num <= 30) letter = 'I';
-            else if (num >= 31 && num <= 45) letter = 'N';
-            else if (num >= 46 && num <= 60) letter = 'G';
-            else if (num >= 61 && num <= 75) letter = 'O';
-
-            let letterColors = { B: '#3480fd', I: '#8855fd', N: '#a84ffd', G: '#04c585', O: '#fe7211' };
-            let letterColor = letterColors[letter];
-
-            let displayCall = `${letter}-${num}`;
-
-            if (calledBox) {
-                calledBox.innerText = displayCall;
-                calledBox.style.color = letterColor;
-                calledBox.style.borderColor = '#f6b300';
-                calledBox.style.boxShadow = `0 0 16px rgba(246, 179, 0, 0.55)`;
-                calledBox.classList.remove('pop');
-                void calledBox.offsetWidth;
-                calledBox.classList.add('pop');
-            }
-            if (calledCountEl) calledCountEl.innerText = calledNumbersList.length;
-
-            if (recentContainer) {
-                let newTag = `<div class="recent-call-badge" style="background: ${letterColor};">${displayCall}</div>`;
-                recentContainer.insertAdjacentHTML('afterbegin', newTag);
-            }
-
-            speakNumber(displayCall);
-            markBoardAndCards(num);
-
-            if (isRoundCaller && !roomRoundEndedCached) {
-                let winners = checkGlobalWinConditions();
-                if (winners.length > 0) finalizeRoundWinners(winners);
-            }
-        }
-
         function showWinnerPopup(winners) {
             let modalBox = document.getElementById('customModal');
             let modalBody = document.getElementById('modalBodyText');
 
+            // winners: [{ cardNum, by, name }] — all real, from Firebase (or local fallback)
             let mainWinner = winners[0] || { cardNum: null, by: telegramUserId, name: userName };
             let mainMatrix = null;
             if (mainWinner.cardNum && takenCardsData[mainWinner.cardNum] && takenCardsData[mainWinner.cardNum].matrix) {
@@ -2911,6 +2948,44 @@
         }
 
         let lastCalledBoardCellNum = null;
+
+        function markBoardAndCards(num) {
+            let boardColColor = function(n) {
+                if (n <= 15) return 'var(--col-b)';
+                if (n <= 30) return 'var(--col-i)';
+                if (n <= 45) return 'var(--col-n)';
+                if (n <= 60) return 'var(--col-g)';
+                return 'var(--col-o)';
+            };
+            if (lastCalledBoardCellNum !== null) {
+                let prevCell = document.getElementById(`board_cell_${lastCalledBoardCellNum}`);
+                if (prevCell) {
+                    prevCell.style.background = boardColColor(lastCalledBoardCellNum);
+                    prevCell.style.color = "white";
+                    prevCell.style.border = "1px solid rgba(255,255,255,0.15)";
+                }
+            }
+            let boardCell = document.getElementById(`board_cell_${num}`);
+            if (boardCell) {
+                boardCell.style.background = boardColColor(num);
+                boardCell.style.color = "white";
+                boardCell.style.border = "2px solid #fff";
+                boardCell.style.boxShadow = "0 0 8px rgba(255,255,255,0.5)";
+            }
+            lastCalledBoardCellNum = num;
+
+            userBingoMatrices.forEach((cardObj, idx) => {
+                let matrix = cardObj.matrix;
+                for(let r = 0; r < 5; r++) {
+                    for(let c = 0; c < 5; c++) {
+                        if(matrix[r][c] === num) {
+                            let cell = document.getElementById(`c_${idx}_${r}_${c}`);
+                            if(cell) cell.classList.add('marked');
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
