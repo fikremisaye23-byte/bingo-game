@@ -12,23 +12,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #030b21;
-            --card-bg: #05153c;
-            --cell-bg: #071d55;
-            --accent-color: #3480fd;
+            --bg-color: #150a35;
+            --card-bg: #2a1861;
+            --cell-bg: #3a2470;
+            --accent-color: #8855fd;
             --text-color: #ffffff;
             --danger-color: #fb3838;
             --success-color: #04c585;
             --orange-color: #fca003;
             --btn-green: #04c585;
             --btn-blue: #01b9d9;
-            --shadow-soft: 0 4px 14px rgba(0, 0, 0, 0.35);
-            --shadow-strong: 0 8px 24px rgba(0, 0, 0, 0.45);
+            --shadow-soft: 0 4px 14px rgba(20, 6, 60, 0.45);
+            --shadow-strong: 0 8px 26px rgba(20, 6, 60, 0.55);
+            --glow-purple: 0 0 18px rgba(136, 85, 253, 0.35);
         }
 
         body {
             font-family: 'Poppins', Arial, sans-serif;
-            background: radial-gradient(circle at 50% 0%, #0a0648 0%, #030b21 55%, #02091b 100%);
+            background: radial-gradient(circle at 50% 0%, #3a1f8a 0%, #1c0d47 55%, #120826 100%);
             color: var(--text-color);
             margin: 0;
             padding: 4px;
@@ -77,7 +78,7 @@
             padding: 13px 8px;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
             width: 100%;
             text-align: center;
@@ -97,15 +98,15 @@
         .btn-orange { background: linear-gradient(145deg, #de7701, var(--orange-color)); color: #1a1200; }
 
         .main-card {
-            background: linear-gradient(160deg, #061a54, var(--card-bg));
-            border-radius: 16px;
+            background: linear-gradient(160deg, #3a2088, var(--card-bg));
+            border-radius: 18px;
             padding: 15px;
             width: 100%;
             box-sizing: border-box;
             margin-bottom: 15px;
-            border: 1px solid #092a6d;
+            border: 1px solid #4a2c9e;
             text-align: center;
-            box-shadow: var(--shadow-soft);
+            box-shadow: var(--shadow-soft), var(--glow-purple);
         }
 
         .selection-top-stats {
@@ -113,27 +114,27 @@
             grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 6px;
             width: 100%;
-            background: linear-gradient(160deg, #061a54, var(--card-bg));
+            background: linear-gradient(160deg, #3a2088, var(--card-bg));
             padding: 8px;
-            border-radius: 12px;
+            border-radius: 16px;
             box-sizing: border-box;
             margin-bottom: 12px;
-            border: 1px solid #092a6d;
-            box-shadow: var(--shadow-soft);
+            border: 1px solid #4a2c9e;
+            box-shadow: var(--shadow-soft), var(--glow-purple);
         }
 
         .stat-box {
-            background: linear-gradient(160deg, #07205c, #061a4a);
-            border: 1px solid #0a3180;
-            border-radius: 10px;
+            background: linear-gradient(160deg, #5a3fc0, #3f2a8f);
+            border: 1px solid #6a4bd6;
+            border-radius: 12px;
             padding: 6px 4px;
             text-align: center;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
         .stat-box span {
             font-size: 11px;
-            color: #5a99f2;
+            color: #c9b6ff;
             display: block;
             margin-bottom: 2px;
         }
@@ -146,23 +147,23 @@
         .number-grid {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            gap: 0;
+            gap: 4px;
             width: 100%;
             height: 540px;
             overflow-y: auto;
-            background: linear-gradient(160deg, #061a54, var(--card-bg));
+            background: linear-gradient(160deg, #1c1040, #170c34);
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 18px;
             box-sizing: border-box;
             margin-bottom: 10px;
-            border: 1px solid #092a6d;
+            border: 1px solid #322268;
             box-shadow: var(--shadow-soft);
         }
 
         .num-cell {
             aspect-ratio: 1;
-            background: linear-gradient(160deg, #202f54, #192543);
-            border-radius: 0;
+            background: linear-gradient(160deg, #6653a8, #4f3f8a);
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -170,7 +171,7 @@
             font-weight: 600;
             cursor: pointer;
             user-select: none;
-            box-shadow: none;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
             transition: transform 0.1s ease, background 0.15s ease;
         }
 
@@ -205,11 +206,11 @@
         }
 
         .spectator-card {
-            background: linear-gradient(160deg, #061a54, var(--card-bg));
-            border: 2px solid #0a3a7e;
-            border-radius: 10px;
+            background: linear-gradient(160deg, #3a2088, var(--card-bg));
+            border: 2px solid #4a2c9e;
+            border-radius: 12px;
             padding: 4px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+            box-shadow: var(--shadow-soft);
         }
 
         .spectator-card.owned-by-other {
@@ -229,9 +230,9 @@
         }
 
         .spectator-card .spectator-cell {
-            background: linear-gradient(160deg, #092b71, #072158);
+            background: linear-gradient(160deg, #6653a8, #4f3f8a);
             color: #f6fafe;
-            border-radius: 4px;
+            border-radius: 5px;
             min-height: 25px;
             display: flex;
             align-items: center;
@@ -301,7 +302,7 @@
         }
 
         .bingo-table td.marked {
-            background: var(--danger-color) !important;
+            background: var(--success-color) !important;
             color: white;
         }
 
@@ -365,7 +366,7 @@
         }
 
         .bingo-cell.marked {
-            background: var(--danger-color) !important;
+            background: var(--success-color) !important;
             color: white;
         }
 
@@ -385,18 +386,19 @@
         }
 
         .called-circle {
-            width: 30px;
-            height: 30px;
+            width: 46px;
+            height: 46px;
             background: #ffffff;
             border: 3px solid #f6b300;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 15px;
             font-weight: 800;
-            margin: 3px auto;
-            box-shadow: 0 0 12px rgba(246, 179, 0, 0.45);
+            color: #4f2ba8;
+            margin: 4px auto;
+            box-shadow: 0 0 22px rgba(246, 179, 0, 0.6), 0 0 6px rgba(246, 179, 0, 0.9);
             position: relative;
         }
 
@@ -641,7 +643,7 @@
         </div>
         
         <div id="selectedCardsPreviewContainer" style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
-            <div style="font-size: 13px; color: #1265dd; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>
+            <div style="font-size: 13px; color: #ffffff; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>
         </div>
 
         <div class="number-grid" id="numberGrid"></div>
@@ -650,25 +652,25 @@
     <!-- 3. LIVE GAME ROOM SCREEN -->
     <div id="gameScreen" class="screen" style="max-width: 420px;">
         <!-- Top Info Header -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: var(--card-bg); padding: 5px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #072352; text-align: center; box-sizing: border-box;">
-            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #5a99f2;">Game ID</div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: 100%; background: linear-gradient(160deg, #3a2088, var(--card-bg)); padding: 5px; border-radius: 14px; margin-bottom: 6px; border: 1px solid #4a2c9e; text-align: center; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
+            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
+                <div style="font-size: 12px; color: #c9b6ff;">Game ID</div>
                 <div id="gameIdDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">BBX54</div>
             </div>
-            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #5a99f2;">Players</div>
+            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
+                <div style="font-size: 12px; color: #c9b6ff;">Players</div>
                 <div style="font-size: 14px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
             </div>
-            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #5a99f2;">Bet</div>
+            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
+                <div style="font-size: 12px; color: #c9b6ff;">Bet</div>
                 <div style="font-size: 14px; font-weight: bold; color: white;">10</div>
             </div>
-            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #5a99f2;">Derash 🪙</div>
+            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
+                <div style="font-size: 12px; color: #c9b6ff;">Derash 🪙</div>
                 <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: var(--success-color);">16</div>
             </div>
-            <div style="background: #061a4a; border-radius: 5px; padding: 3px;">
-                <div style="font-size: 12px; color: #5a99f2;">Called</div>
+            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
+                <div style="font-size: 12px; color: #c9b6ff;">Called</div>
                 <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">0</div>
             </div>
         </div>
@@ -676,13 +678,13 @@
         <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
             <!-- Left Side: 5-Column BINGO Board -->
             <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
-                <div id="masterBoardCard" style="background: var(--card-bg); border-radius: 10px; padding: 4px; border: 1px solid #072352; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                <div id="masterBoardCard" style="background: linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius: 14px; padding: 4px; border: 1px solid #4a2c9e; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: var(--shadow-soft), var(--glow-purple);">
                     <div id="masterBoardHeader" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; text-align: center; margin-bottom: 3px;">
-                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">B</div>
-                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">I</div>
-                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">N</div>
-                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">G</div>
-                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 3px;">O</div>
+                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">B</div>
+                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">I</div>
+                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">N</div>
+                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">G</div>
+                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">O</div>
                     </div>
                     <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
                 </div>
@@ -690,12 +692,12 @@
 
             <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
             <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 3px 6px; border-radius: 8px; border: 1px solid #072352; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(160deg, #3a2088, var(--card-bg)); padding: 3px 6px; border-radius: 14px; border: 1px solid #4a2c9e; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
                     <div style="display: flex; gap: 3px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
                     <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 13px; cursor: pointer;">🔊</button>
                 </div>
 
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 4px; text-align: center; border: 1px solid #072352; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box;">
+                <div style="background: linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius: 14px; padding: 4px; text-align: center; border: 1px solid #4a2c9e; width: calc(100% - 28px); margin: 0 auto; box-sizing: border-box; box-shadow: var(--shadow-soft), var(--glow-purple);">
                     <div class="called-circle" id="currentCalledNum">-</div>
                     <div id="gameStatusText" style="font-size: 10px; color: var(--orange-color); font-weight: bold; margin-top: 1px;">Game in progress...</div>
                 </div>
@@ -1788,7 +1790,7 @@
 
                             let nextCost = (selectedCards.length + 1) * selectedStake;
 
-                            let canFundCard = (playWalletBalance >= nextCost) || (playWalletBalance === 0 && mainWalletBalance >= nextCost);
+                            let canFundCard = (playWalletBalance >= nextCost) || (mainWalletBalance >= nextCost);
                             if (!canFundCard) {
                                 showToast(`Insufficient wallet balance.`, 3000);
                                 return;
@@ -1835,7 +1837,7 @@
             if (!container) return;
             
             if (selectedCards.length === 0) {
-                container.innerHTML = `<div style="grid-column: 1 / -1; font-size: 13px; color: #1265dd; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>`;
+                container.innerHTML = `<div style="grid-column: 1 / -1; font-size: 13px; color: #ffffff; text-align: center; width: 100%; padding: 4px;">ካርቴላ ለመምረጥ ከላይ ያሉትን ቁጥሮች ይጫኑ (ከፍተኛ 2)</div>`;
                 return;
             }
 
@@ -1972,7 +1974,7 @@
             switchScreen('gameScreen');
             let container = document.getElementById('userCardsContainer');
             if (container) {
-                container.innerHTML = '<div style="text-align:center; color:#5a99f2; font-size:13px; padding:16px;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
+                container.innerHTML = '<div style="background:linear-gradient(160deg, #3a2088, var(--card-bg)); border:1px solid #4a2c9e; border-radius:14px; box-shadow: var(--shadow-soft), var(--glow-purple); text-align:center; color:#c9b6ff; font-size:13px; padding:18px 14px; line-height:1.6;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
             }
             joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
         }
@@ -2007,14 +2009,14 @@
 
             // Wallet priority (single source of truth):
             // 1) Play Wallet alone must cover the FULL stake -> deduct from Play only.
-            // 2) Otherwise, ONLY if Play Wallet is exactly 0 and Main Wallet alone
-            //    covers the FULL stake -> deduct from Main only.
-            // 3) Any other case (including "both have some but neither alone is
-            //    enough") -> NOT allowed to combine; show Deposit instead.
+            // 2) Otherwise, if Main Wallet alone covers the FULL stake -> deduct
+            //    from Main only (regardless of any leftover Play balance).
+            // 3) Any other case (neither wallet alone is enough) -> NOT allowed
+            //    to combine; show Deposit instead.
             let source = null; // 'play' or 'main'
             if (playWalletBalance >= totalDeduction) {
                 source = 'play';
-            } else if (playWalletBalance === 0 && mainWalletBalance >= totalDeduction) {
+            } else if (mainWalletBalance >= totalDeduction) {
                 source = 'main';
             }
 
@@ -2065,7 +2067,7 @@
                     let deposited = Number(current.deposited || 0);
                     let actualSource = null;
                     if (play >= totalDeduction) actualSource = 'play';
-                    else if (play === 0 && main >= totalDeduction) actualSource = 'main';
+                    else if (main >= totalDeduction) actualSource = 'main';
                     if (!actualSource) return;
 
                     if (actualSource === 'play') {
@@ -2624,9 +2626,9 @@
 
             if (!entries.length) {
                 container.innerHTML = `
-                    <div style="background:var(--card-bg); border-radius:10px; padding:18px 10px; text-align:center; border:1px solid #0a3a7e;">
-                        <div style="font-size:17px; font-weight:800; color:#fff; margin-bottom:8px;">👀 Watching Only</div>
-                        <div style="font-size:12px; color:#b3d3f9; line-height:1.6;">ካርድ ያዙ ተጫዋቾች እስኪገቡ<br>ድረስ እዚህ ይቆዩ።</div>
+                    <div style="background:linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius:14px; padding:22px 12px; text-align:center; border:1px solid #4a2c9e; box-shadow: var(--shadow-soft), var(--glow-purple);">
+                        <div style="font-size:19px; font-weight:800; color:#fff; margin-bottom:10px;">👀 Watching Only</div>
+                        <div style="font-size:13px; color:#c9b6ff; line-height:1.7;">ካርድ ያዙ ተጫዋቾች እስኪገቡ<br>ድረስ እዚህ ይቆዩ።</div>
                     </div>`;
                 return;
             }
