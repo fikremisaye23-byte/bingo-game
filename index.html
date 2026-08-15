@@ -284,10 +284,10 @@
         .bingo-card-container {
             background: linear-gradient(165deg, #241257, var(--card-bg));
             border-radius: var(--radius-md);
-            padding: 8px;
+            padding: 6px;
             width: 100%;
             box-sizing: border-box;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             border: 1px solid var(--border-accent);
             box-shadow: var(--shadow-soft);
         }
@@ -403,19 +403,19 @@
         }
 
         .called-circle {
-            width: 50px;
-            height: 50px;
+            width: 46px;
+            height: 46px;
             background: radial-gradient(circle at 32% 28%, #ffffff, #f3eeff 60%, #e2d6ff 100%);
             border: 3px solid var(--orange-color);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14.5px;
+            font-size: 14px;
             font-weight: 800;
             color: #4f2ba8;
-            margin: 4px auto;
-            box-shadow: 0 0 22px rgba(255, 176, 32, 0.55), 0 0 6px rgba(255, 176, 32, 0.85);
+            margin: 3px auto;
+            box-shadow: 0 0 20px rgba(255, 176, 32, 0.55), 0 0 6px rgba(255, 176, 32, 0.85);
             position: relative;
         }
 
@@ -550,6 +550,17 @@
             box-sizing: border-box;
         }
 
+        /* While the live game screen is showing, the nav bar and the body's
+           reserved space for it are hidden so the board/cartela/buttons use
+           the full screen with no leftover empty strip at the bottom. */
+        body:has(#gameScreen.active) {
+            padding-bottom: 8px;
+        }
+
+        body:has(#gameScreen.active) .nav-bar {
+            display: none;
+        }
+
         .nav-item {
             background: none;
             border: none;
@@ -596,12 +607,12 @@
         .top-stats-bar {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
+            gap: 4px;
             width: 100%;
             background: linear-gradient(165deg, #3a2088, var(--card-bg));
-            padding: 6px;
-            border-radius: var(--radius-lg);
-            margin-bottom: 7px;
+            padding: 5px;
+            border-radius: var(--radius-md);
+            margin-bottom: 5px;
             border: 1px solid var(--border-soft);
             text-align: center;
             box-sizing: border-box;
@@ -611,25 +622,27 @@
         .top-stat {
             background: linear-gradient(165deg, #5d43c4, #3f2a8f);
             border-radius: var(--radius-sm);
-            padding: 4px 2px;
+            padding: 3px 2px;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
 
         .top-stat .lbl {
-            font-size: 10px;
+            font-size: 9px;
             color: var(--text-dim);
+            line-height: 1.2;
         }
 
         .top-stat .val {
-            font-size: 13.5px;
+            font-size: 12.5px;
             font-weight: bold;
             color: white;
+            line-height: 1.25;
         }
 
         .board-panel {
             background: linear-gradient(165deg, #3a2088, var(--card-bg));
-            border-radius: var(--radius-lg);
-            padding: 4px;
+            border-radius: var(--radius-md);
+            padding: 3px;
             border: 1px solid var(--border-soft);
             box-sizing: border-box;
             display: flex;
@@ -644,15 +657,15 @@
             grid-template-columns: repeat(5, 1fr);
             gap: 2px;
             text-align: center;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .board-header div {
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            padding: 4px 0;
-            border-radius: 7px;
+            padding: 3px 0;
+            border-radius: 6px;
         }
 
         .side-panel {
@@ -660,23 +673,21 @@
             justify-content: space-between;
             align-items: center;
             background: linear-gradient(165deg, #3a2088, var(--card-bg));
-            padding: 4px 7px;
-            border-radius: var(--radius-lg);
+            padding: 3px 6px;
+            border-radius: var(--radius-md);
             border: 1px solid var(--border-soft);
-            width: calc(100% - 28px);
-            margin: 0 auto;
+            width: 100%;
             box-sizing: border-box;
             box-shadow: var(--shadow-soft), var(--glow-purple);
         }
 
         .caller-panel {
             background: linear-gradient(165deg, #3a2088, var(--card-bg));
-            border-radius: var(--radius-lg);
-            padding: 6px;
+            border-radius: var(--radius-md);
+            padding: 4px;
             text-align: center;
             border: 1px solid var(--border-soft);
-            width: calc(100% - 28px);
-            margin: 0 auto;
+            width: 100%;
             box-sizing: border-box;
             box-shadow: var(--shadow-soft), var(--glow-purple);
         }
@@ -787,9 +798,9 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 6px; box-sizing: border-box; min-height: 0;">
+        <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 5px; box-sizing: border-box; min-height: 0;">
             <!-- Left Side: 5-Column BINGO Board -->
-            <div style="width: 40%; display: flex; flex-direction: column; min-height: 0;">
+            <div style="width: 38%; display: flex; flex-direction: column; min-height: 0;">
                 <div id="masterBoardCard" class="board-panel">
                     <div id="masterBoardHeader" class="board-header">
                         <div style="background: var(--col-b);">B</div>
@@ -803,7 +814,7 @@
             </div>
 
             <!-- Right Side: Called Number & User Cartelas (Strictly fitted to avoid bottom cutoff) -->
-            <div id="rightColumnWrapper" style="width: 60%; display: flex; flex-direction: column; gap: 4px;">
+            <div id="rightColumnWrapper" style="width: 62%; display: flex; flex-direction: column; gap: 4px;">
                 <div class="side-panel">
                     <div style="display: flex; gap: 4px; flex-wrap: wrap; max-height: 42px; overflow-y: auto; overflow-x: hidden; align-content: flex-start;" id="recentCalledContainer"></div>
                     <button onclick="toggleAudio()" id="audioToggleBtn" style="background: none; border: none; color: white; font-size: 15px; cursor: pointer;">🔊</button>
@@ -819,9 +830,8 @@
             </div>
         </div>
 
-
         <!-- Bottom Action Buttons -->
-        <div style="display: flex; gap: 7px; width: 100%; margin-top: 3px;">
+        <div style="display: flex; gap: 7px; width: 100%; margin-top: 2px;">
             <button class="btn btn-danger" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="goBackToSelection()">Leave</button>
             <button class="btn btn-orange" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="openSelection()">🔄 Refresh</button>
             <button id="gameAutomaticBtn" class="btn btn-green" style="padding: 10px; font-size: 12.5px; flex: 1;" onclick="alert('Automatic mode is active!')">Automatic</button>
