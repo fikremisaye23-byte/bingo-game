@@ -200,12 +200,12 @@
         }
 
         .num-cell.taken {
-            background: linear-gradient(145deg, #ff4d4d, #f60c0c) !important;
+            background: linear-gradient(145deg, #ff2b2b, #ff0000) !important;
             color: #ffffff !important;
             cursor: not-allowed;
             opacity: 1;
-            border: 2px solid #ffb4b4;
-            box-shadow: 0 0 14px rgba(251, 56, 56, 0.75), inset 0 0 8px rgba(255,255,255,0.12);
+            border: 2px solid #ffdada;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.9), inset 0 0 8px rgba(255,255,255,0.18);
             text-shadow: 0 1px 2px rgba(0,0,0,0.35);
         }
 
@@ -272,6 +272,7 @@
             text-align: center;
             padding: 3px 0;
             border-radius: 5px;
+            text-shadow: 0 0 8px rgba(255,255,255,0.6);
         }
 
         .spectator-card .spectator-header.b { background: #3480fd; }
@@ -352,12 +353,13 @@
 
         .bingo-header-cell {
             background: linear-gradient(160deg, #5b9bff, var(--accent-color));
-            color: white;
+            color: #ffffff;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
             padding: 5px 0;
             border-radius: 16px;
             text-align: center;
+            text-shadow: 0 0 8px rgba(255,255,255,0.6);
         }
 
         .bingo-header-cell:nth-child(1) { background: linear-gradient(160deg, #5b9bff, #3480fd); } /* B */
@@ -670,21 +672,21 @@
                 <div style="font-size: 12px; color: #c9b6ff;">Game ID</div>
                 <div id="gameIdDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">BBX54</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Players</div>
-                <div style="font-size: 14px; font-weight: bold; color: white;" id="activePlayersCountDisplay">2</div>
+            <div style="background: linear-gradient(160deg, #ffe066, #ffb300); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);">
+                <div style="font-size: 12px; color: #5c4400;">Players</div>
+                <div style="font-size: 14px; font-weight: bold; color: #2b1c00;" id="activePlayersCountDisplay">2</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Bet</div>
-                <div style="font-size: 14px; font-weight: bold; color: white;">10</div>
+            <div style="background: linear-gradient(160deg, #ffe066, #ffb300); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);">
+                <div style="font-size: 12px; color: #5c4400;">Bet</div>
+                <div style="font-size: 14px; font-weight: bold; color: #2b1c00;">10</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Derash 🪙</div>
-                <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: var(--success-color);">16</div>
+            <div style="background: linear-gradient(160deg, #ffe066, #ffb300); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);">
+                <div style="font-size: 12px; color: #5c4400;">Derash 🪙</div>
+                <div id="gamePrizeDisplay" style="font-size: 14px; font-weight: bold; color: #0a5c3e;">16</div>
             </div>
-            <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
-                <div style="font-size: 12px; color: #c9b6ff;">Called</div>
-                <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: var(--orange-color);">0</div>
+            <div style="background: linear-gradient(160deg, #ffe066, #ffb300); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);">
+                <div style="font-size: 12px; color: #5c4400;">Called</div>
+                <div id="calledCountDisplay" style="font-size: 14px; font-weight: bold; color: #7a2b00;">0</div>
             </div>
         </div>
 
@@ -693,11 +695,11 @@
             <div style="width: 43%; display: flex; flex-direction: column; min-height: 0;">
                 <div id="masterBoardCard" style="background: linear-gradient(160deg, #3a2088, var(--card-bg)); border-radius: 14px; padding: 4px; border: 1px solid #4a2c9e; box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: var(--shadow-soft), var(--glow-purple);">
                     <div id="masterBoardHeader" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; text-align: center; margin-bottom: 3px;">
-                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">B</div>
-                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">I</div>
-                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">N</div>
-                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">G</div>
-                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: bold; padding: 3px 0; border-radius: 6px;">O</div>
+                        <div style="background: #3480fd; color: white; font-size: 12px; font-weight: 800; padding: 3px 0; border-radius: 6px; text-shadow: 0 0 8px rgba(255,255,255,0.6);">B</div>
+                        <div style="background: #8855fd; color: white; font-size: 12px; font-weight: 800; padding: 3px 0; border-radius: 6px; text-shadow: 0 0 8px rgba(255,255,255,0.6);">I</div>
+                        <div style="background: #a84ffd; color: white; font-size: 12px; font-weight: 800; padding: 3px 0; border-radius: 6px; text-shadow: 0 0 8px rgba(255,255,255,0.6);">N</div>
+                        <div style="background: #04c585; color: white; font-size: 12px; font-weight: 800; padding: 3px 0; border-radius: 6px; text-shadow: 0 0 8px rgba(255,255,255,0.6);">G</div>
+                        <div style="background: #fe7211; color: white; font-size: 12px; font-weight: 800; padding: 3px 0; border-radius: 6px; text-shadow: 0 0 8px rgba(255,255,255,0.6);">O</div>
                     </div>
                     <div id="gameBoardGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(15, 1fr); gap: 2px; flex: 1; min-height: 0;"></div>
                 </div>
@@ -1021,11 +1023,40 @@
             if (!db) { if (onReady) onReady(getServerNow() + CARD_SELECTION_SECONDS * 1000); return; }
             loadFirebaseServerTimeOffset().then(function() {
             let myRoundValue = null;
-            db.ref('room/roundEnded').once('value').then(function(endedSnap) {
-                let isEnded = endedSnap.val() === true;
+            // A round is only "stale" (safe to wipe and restart) when calling
+            // has actually gone quiet -- NOT simply because a lot of total
+            // time has passed. A busy room with many cards can legitimately
+            // run past a couple minutes, so raw round age was wiping active
+            // games out from under players still playing. We look at real
+            // signals instead: has a call landed recently, or if calling
+            // hasn't started yet, are we still within the card-selection
+            // window (plus a small startup grace)?
+            let CALL_STALE_MS = 20000; // no fresh call in 20s (normal cadence is 1 every 3s) => caller is gone
+            let SELECTION_GRACE_MS = (CARD_SELECTION_SECONDS * 1000) + 20000; // selection window + grace before any call is expected
+            Promise.all([
+                db.ref('room/roundEnded').once('value'),
+                db.ref('room/roundId').once('value'),
+                db.ref('room/lastCallAt').once('value'),
+                db.ref('room/calledNumbers').once('value')
+            ]).then(function(results) {
+                let isEnded = results[0].val() === true;
+                let existingRoundId = results[1].val();
+                let lastCallAt = results[2].val();
+                let calledCount = (results[3].val() || []).length;
+                let now = getServerNow();
+
+                let isStale = false;
+                if (existingRoundId) {
+                    if (calledCount > 0) {
+                        isStale = (now - (lastCallAt || existingRoundId)) > CALL_STALE_MS;
+                    } else {
+                        isStale = (now - existingRoundId) > SELECTION_GRACE_MS;
+                    }
+                }
+
                 return db.ref('room/roundId').transaction(function(current) {
-                    if (!current || isEnded || (getServerNow() - current) > 90000) {
-                        myRoundValue = getServerNow();
+                    if (!current || isEnded || isStale) {
+                        myRoundValue = now;
                         return myRoundValue;
                     }
                     return current;
@@ -1041,6 +1072,7 @@
                     db.ref('room/caller').remove();
                     db.ref('room/prizePool').remove();
                     db.ref('room/roundFinalizing').remove();
+                    db.ref('room/lastCallAt').remove();
                     // Set ONE shared card-selection deadline for this round, same
                     // moment on every player's device -- so a 45s countdown started
                     // by whoever's device happens to create the round reads
@@ -1241,6 +1273,10 @@
                 }
                 if (list.includes(next)) return list;
                 return list.concat([next]);
+            }).then(function(result) {
+                if (result && result.committed) {
+                    db.ref('room/lastCallAt').set(firebase.database.ServerValue.TIMESTAMP);
+                }
             }).catch(function(err) {
                 console.log('attemptCallNextNumber failed:', err);
             });
@@ -1788,7 +1824,6 @@
                 cell.onclick = (function(cellNum, cellElement) {
                     return function() {
                         if (cellElement.classList.contains('taken')) {
-                            showToast('ይህ ካርድ ቀድሞ በሌላ ተጫዋች ተይዟል!');
                             return;
                         }
                         if (cellElement.classList.contains('pending')) {
@@ -1987,6 +2022,7 @@
             // watch the shared board and calls but has no card, so they cannot
             // mark cells or win. They can select a card again next round.
             switchScreen('gameScreen');
+            initializeGameBoard();
             let container = document.getElementById('userCardsContainer');
             if (container) {
                 container.innerHTML = '<div style="background:linear-gradient(160deg, #3a2088, var(--card-bg)); border:1px solid #4a2c9e; border-radius:14px; box-shadow: var(--shadow-soft), var(--glow-purple); text-align:center; color:#c9b6ff; font-size:13px; padding:18px 14px; line-height:1.6;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
@@ -2544,7 +2580,7 @@
                     let num = matrixCols[c][r];
                     let cell = document.createElement('div');
                     cell.id = `board_cell_${num}`;
-                    cell.style.cssText = "background: #280da5; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
+                    cell.style.cssText = "background: #6b0e30; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #ffffff; min-height: 18px;";
                     cell.innerText = num;
                     boardGrid.appendChild(cell);
                 }
@@ -2795,7 +2831,7 @@
                         <div class="bingo-header-cell" style="background-color:#8855fd;">I</div>
                         <div class="bingo-header-cell" style="background-color:#a84ffd;">N</div>
                         <div class="bingo-header-cell" style="background-color:#04c585;">G</div>
-                        <div class="bingo-header-cell" style="background-color:#fe7211;">O</div>`;
+                        <div class="bingo-header-cell" style="background-color:#fe7211;">O</div>`; // .bingo-header-cell now includes the brighter text-shadow/weight styling
 
             let calledSetForPopup = {};
             calledNumbersList.forEach(function(n) { calledSetForPopup[n] = true; });
@@ -2862,7 +2898,7 @@
             }
             let boardCell = document.getElementById(`board_cell_${num}`);
             if (boardCell) {
-                boardCell.style.background = "var(--success-color)";
+                boardCell.style.background = "#00e676";
                 boardCell.style.color = "white";
             }
             lastCalledBoardCellNum = num;
