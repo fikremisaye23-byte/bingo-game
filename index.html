@@ -777,8 +777,18 @@
 
         <div class="main-card" style="text-align:left;">
             <div style="font-weight:bold; color:var(--orange-color); margin-bottom:8px;">⏳ Pending Withdrawals</div>
-            <div style="font-size:11px; color:#1265dd; margin-bottom:8px;">Deposits are approved from the bot chat only — not shown here.</div>
-            <div id="adminWithdrawalsList" style="font-size:13px; color:#5a99f2;">Loading...</div>
+            <div style="font-size:11px; color:#1265dd;">Withdrawals are approved from the bot chat only — not shown here.</div>
+        </div>
+
+        <div class="main-card" style="text-align:left;">
+            <div style="font-weight:bold; color:var(--orange-color); margin-bottom:8px;">📊 Daily Deposit Report</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <input type="date" id="depositReportDate" onchange="loadDepositReport(this.value)" style="flex:1; box-sizing:border-box; padding:8px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:13px;">
+                <button class="btn btn-blue" style="width:auto; padding:8px 12px; font-size:13px;" onclick="loadDepositReport(document.getElementById('depositReportDate').value)">🔄 Refresh</button>
+            </div>
+            <div style="font-size:11px; color:#1265dd; margin-bottom:8px;">Date matches the bot's own daily report (server day, UTC) so the two totals agree.</div>
+            <div id="depositReportSummary" style="background:#071d55; border:1px solid #0a2f79; border-radius:8px; padding:8px; margin-bottom:10px; font-size:13px; color:#5a99f2;">Loading...</div>
+            <div id="depositReportList" style="font-size:13px; color:#5a99f2; max-height:340px; overflow-y:auto;">Loading...</div>
         </div>
     </div>
     <div class="nav-bar">
@@ -1707,6 +1717,7 @@
             if (adminUnlocked) {
                 switchScreen('adminScreen');
                 subscribeAdminRequests();
+                loadDepositReport(todayUTCString());
                 return;
             }
 
@@ -1715,6 +1726,7 @@
                 adminUnlocked = true;
                 switchScreen('adminScreen');
                 subscribeAdminRequests();
+                loadDepositReport(todayUTCString());
                 return;
             }
 
@@ -1728,6 +1740,7 @@
                     adminUnlocked = true;
                     switchScreen('adminScreen');
                     subscribeAdminRequests();
+                    loadDepositReport(todayUTCString());
                 } else {
                     alert("❌ You are not authorized to access the admin panel.");
                 }
@@ -1738,63 +1751,90 @@
         }
 
         function subscribeAdminRequests() {
-            if (!db || adminListenersAttached) return;
-            adminListenersAttached = true;
+            // Withdrawals and deposits are both intentionally not listed or
+            // actioned here anymore — approval for both lives only in the
+            // bot chat (main.py, 'transactions/pendingDeposits' and
+            // 'transactions/withdrawals'). Having a second approve/reject
+            // path here caused a wallet-crediting bug (a rejected withdrawal
+            // could be refunded twice — once by the bot, once by this
+            // panel), so this in-app path was removed on purpose. Use the
+            // bot chat to approve or reject deposits and withdrawals.
+        }
 
-            // Deposits are intentionally not listed here — approval lives only
-            // in the bot chat (main.py, 'transactions/pendingDeposits').
+        // Deposit and withdrawal approval/rejection intentionally live ONLY
+        // in the Telegram bot (main.py) now -- having a second approve/reject
+        // path here caused a wallet-crediting bug, so it was removed on
+        // purpose. Use the bot chat to approve or reject deposits and
+        // withdrawals.
 
-            db.ref('transactions/withdrawals').on('value', function(snapshot) {
+        // --- Daily Deposit Report (read-only) ---
+        // Mirrors main.py's _sum_today()/_list_deposits_today(): every record
+        // under 'transactions/deposits' is one admin-approved deposit (pushed
+        // once, at approval time -- see bot's deposit approval handler), with
+        // a 'timestamp' written by the server as datetime.now().isoformat().
+        // Render's server clock is UTC, so we match "day" in UTC too, to keep
+        // this panel's totals identical to the bot's own /dailyreport output.
+        function todayUTCString() {
+            return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+        }
+
+        function loadDepositReport(dayStr) {
+            if (!db) return;
+            dayStr = dayStr || todayUTCString();
+
+            let dateInput = document.getElementById('depositReportDate');
+            if (dateInput && dateInput.value !== dayStr) dateInput.value = dayStr;
+
+            let summaryEl = document.getElementById('depositReportSummary');
+            let listEl = document.getElementById('depositReportList');
+            if (summaryEl) summaryEl.innerHTML = 'Loading...';
+            if (listEl) listEl.innerHTML = 'Loading...';
+
+            db.ref('transactions/deposits').once('value').then(function(snapshot) {
                 let all = snapshot.val() || {};
-                let listEl = document.getElementById('adminWithdrawalsList');
+                let todays = Object.keys(all)
+                    .map(function(key) { return { key: key, rec: all[key] }; })
+                    .filter(function(item) {
+                        let ts = (item.rec && item.rec.timestamp) || '';
+                        return ts.indexOf(dayStr) === 0;
+                    })
+                    .sort(function(a, b) {
+                        return (b.rec.timestamp || '').localeCompare(a.rec.timestamp || '');
+                    });
+
+                let total = 0;
+                todays.forEach(function(item) { total += Number(item.rec.amount) || 0; });
+
+                if (summaryEl) {
+                    summaryEl.innerHTML = `💰 Total: <b>${total.toFixed(2)} ብር</b> &nbsp;|&nbsp; 📋 Transactions: <b>${todays.length}</b>`;
+                }
+
                 if (!listEl) return;
-                let pendingKeys = Object.keys(all).filter(k => all[k].status === 'pending');
-                if (pendingKeys.length === 0) {
-                    listEl.innerHTML = 'No pending withdrawals.';
+                if (todays.length === 0) {
+                    listEl.innerHTML = 'No deposits for this date.';
                     return;
                 }
-                listEl.innerHTML = pendingKeys.map(function(key) {
-                    let r = all[key];
+
+                listEl.innerHTML = todays.map(function(item) {
+                    let r = item.rec;
+                    let timePart = (r.timestamp || '').replace('T', ' ').slice(0, 19);
                     return `
                     <div style="background:#071d55; border:1px solid #0a2f79; border-radius:8px; padding:8px; margin-bottom:8px;">
-                        <div><b>${r.name}</b> — ${r.amount} coins</div>
-                        <div style="font-size:11px; color:#1265dd;">Telegram: ${r.telegramName || '-'} · Send to: ${r.phone || '-'}</div>
-                        <div style="display:flex; gap:6px; margin-top:6px;">
-                            <button class="btn btn-green" style="padding:6px;" onclick="adminApproveWithdrawal('${key}')">Approve (Sent)</button>
-                            <button class="btn btn-danger" style="padding:6px;" onclick="adminRejectWithdrawal('${key}')">Reject</button>
-                        </div>
+                        <div><b>${r.name || 'Player'}</b> — ${Number(r.amount || 0).toFixed(2)} ብር</div>
+                        <div style="font-size:11px; color:#1265dd;">Phone: ${r.phone || '-'} · Ref: ${r.txnId || '-'}</div>
+                        <div style="font-size:11px; color:#1265dd;">ID: ${r.by || '-'} · ${timePart} UTC</div>
                     </div>`;
                 }).join('');
+            }).catch(function(err) {
+                console.log('Deposit report load failed', err);
+                if (summaryEl) summaryEl.innerHTML = 'Failed to load report.';
+                if (listEl) listEl.innerHTML = '';
             });
         }
 
-        // Deposit approval/rejection intentionally lives ONLY in the Telegram bot
-        // (main.py) now -- having a second approve/reject path here caused a
-        // wallet-crediting bug, so it was removed on purpose. Use the bot chat
-        // to approve or reject deposits.
-
-        function adminApproveWithdrawal(key) {
-            if (!db) return;
-            db.ref('transactions/withdrawals/' + key + '/status').set('approved');
-        }
-
-        function adminRejectWithdrawal(key) {
-            if (!db) return;
-            db.ref('transactions/withdrawals/' + key).once('value').then(function(snap) {
-                let record = snap.val();
-                if (!record || record.status !== 'pending') return; // already handled
-                let userId = record.by;
-                let amount = Number(record.amount) || 0;
-
-                db.ref('transactions/withdrawals/' + key + '/status').set('rejected');
-
-                // Refund the amount back to the user's main wallet, since it
-                // was deducted immediately when they submitted the request.
-                db.ref('users/' + userId + '/wallet/main').transaction(function(current) {
-                    return (current || 0) + amount;
-                });
-            });
-        }
+        // adminApproveWithdrawal / adminRejectWithdrawal removed on purpose:
+        // withdrawal approval now lives only in the bot chat, same as
+        // deposits (see subscribeAdminRequests() above for why).
 
         function showInsuffientBalanceModal(message) {
             let modalBox = document.getElementById('customModal');
@@ -2274,23 +2314,29 @@
             modalBox.style.display = 'flex';
         }
 
+        // Withdraw is chat-only now, same reasoning as deposit above: the
+        // in-app self-service form used to write directly to
+        // 'transactions/withdrawals/{key}', but the bot (main.py) only ever
+        // notifies the admin (with Approve/Reject buttons) for withdrawal
+        // requests created through ITS OWN /withdraw chat flow -- it has no
+        // listener for records written here directly. A request submitted
+        // from this in-app form was invisible to the admin's Telegram
+        // notifications, and after the in-app admin panel's own
+        // approve/reject was removed (see subscribeAdminRequests() above),
+        // there was no way to action such a request at all -- it would sit
+        // "pending" forever with the stake already deducted. The in-app
+        // withdraw form has been removed; withdrawals must go through the
+        // bot chat, where main.py's flow already notifies the admin and
+        // refunds correctly end-to-end.
         function handleWithdraw() {
             if (mainWalletBalance <= 0) {
                 showToast("💸 Your Main Wallet is empty — win a game first!");
                 return;
             }
-            if (mainWalletBalance < 50) {
-                showToast("💸 ዝቅተኛ የማውጫ መጠን 50 ኮይን ነው። (Minimum withdrawal is 50 coins)");
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+                window.Telegram.WebApp.openTelegramLink('https://t.me/Temerachibingo_bot?start=withdraw');
                 return;
             }
-            if (!db) {
-                showToast("⚠️ Cannot connect to server for withdrawal request.");
-                return;
-            }
-            renderWithdrawStep();
-        }
-
-        function renderWithdrawStep() {
             let modalBox = document.getElementById('customModal');
             let modalBody = document.getElementById('modalBodyText');
             modalBody.innerHTML = `
@@ -2298,132 +2344,11 @@
                     <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">💸 Withdraw via Telebirr</div>
                     <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #1265dd;">✕</div>
                 </div>
-                <div style="font-size: 13px; color: #5a99f2; margin-bottom: 10px; text-align: left;">Main Wallet balance: <b style="color: var(--success-color);">${Math.floor(mainWalletBalance)} coins</b></div>
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">ወጪ ማድረግ የፈለጉት መጠን</div>
-                <input type="number" id="withdrawAmount" min="50" max="${Math.floor(mainWalletBalance)}" step="1" placeholder="e.g. 100" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">ስም (Full Name)</div>
-                <input type="text" id="withdrawName" value="${userName}" placeholder="e.g. Abebe Kebede" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
-                <div style="text-align:left; margin-bottom:6px; font-size:13px; color:#5a99f2;">Your Telebirr Number</div>
-                <input type="text" id="withdrawPhone" placeholder="e.g. 0911223344" style="width:100%; box-sizing:border-box; padding:10px; border-radius:8px; border:1px solid #0a2f79; background:#071d55; color:white; font-size:14px; margin-bottom:10px;">
-                <button type="button" onclick="copyWithdrawRequestText()" style="width:100%; background:#071d55; border:1px solid #0a2f79; color:#b3d3f9; border-radius:8px; padding:8px; font-size:12px; margin-bottom:10px; cursor:pointer;">📋 Copy Request Text (send to admin)</button>
-                <div id="withdrawErrorMsg" style="color:var(--danger-color); font-size:12px; margin-bottom:8px; display:none;"></div>
-                <button class="btn btn-orange" onclick="submitWithdrawRequest()">Submit Request ✅</button>
+                <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px; text-align: left;">ገንዘብ ማውጣት የሚደረገው በቦቱ chat በኩል ብቻ ነው። እባክዎ ወደ ቦቱ ገብተው /withdraw የሚለውን ይላኩ ወይም ከዚህ በታች ያለውን ይጫኑ።</div>
+                <a href="https://t.me/Temerachibingo_bot?start=withdraw" target="_blank" class="btn btn-orange" style="display:block; text-decoration:none; text-align:center;">Open Bot Chat 🤖</a>
+                <button class="btn" style="margin-top:6px;" onclick="closeCustomModal()">Close</button>
             `;
             modalBox.style.display = 'flex';
-        }
-
-        function copyWithdrawRequestText() {
-            let amount = (document.getElementById('withdrawAmount').value || '').trim() || '[amount]';
-            let name = (document.getElementById('withdrawName').value || '').trim() || userName;
-            let phone = (document.getElementById('withdrawPhone').value || '').trim() || '[your Telebirr number]';
-            let text = `💸 Withdraw Request\nAmount: ${amount} coins\nName: ${name}\nTelegram: ${userName} (#${userShortId})\nSend to Telebirr: ${phone}`;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function() {
-                    showToast('📋 Copied! Send this to the admin.');
-                }).catch(function() {
-                    showToast('⚠️ Could not copy automatically — select and copy manually.');
-                });
-            } else {
-                showToast('⚠️ Clipboard not available on this browser.');
-            }
-        }
-
-        function submitWithdrawRequest() {
-            let amountRaw = (document.getElementById('withdrawAmount').value || '').trim();
-            let name = (document.getElementById('withdrawName').value || '').trim();
-            let phone = (document.getElementById('withdrawPhone').value || '').trim();
-            let errorEl = document.getElementById('withdrawErrorMsg');
-            errorEl.style.display = 'none';
-
-            let amount = parseInt(amountRaw, 10);
-
-            if (!amount || isNaN(amount) || amount <= 0) {
-                errorEl.innerText = 'እባክህ ትክክለኛ መጠን አስገባ።';
-                errorEl.style.display = 'block';
-                return;
-            }
-            if (amount < 50) {
-                errorEl.innerText = 'ዝቅተኛ የማውጫ መጠን 50 ኮይን ነው።';
-                errorEl.style.display = 'block';
-                return;
-            }
-            if (amount > mainWalletBalance) {
-                errorEl.innerText = `⚠️ በቂ ገንዘብ የለህም። ያለህ ${Math.floor(mainWalletBalance)} ኮይን ብቻ ነው።`;
-                errorEl.style.display = 'block';
-                return;
-            }
-            if (!name) {
-                errorEl.innerText = 'እባክህ ስምህን አስገባ።';
-                errorEl.style.display = 'block';
-                return;
-            }
-            if (!phone) {
-                errorEl.innerText = 'እባክህ የቴሌብር ቁጥርህን አስገባ።';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            let pushRef = db.ref('transactions/withdrawals').push();
-            pushRef.set({
-                by: telegramUserId,
-                name: name,
-                telegramName: userName,
-                amount: amount,
-                phone: phone,
-                status: 'pending',
-                timestamp: Date.now()
-            }).then(function() {
-                applyWalletDelta(-amount, 0, 0, function(ok) {
-                    if (!ok) {
-                        showToast('⚠️ Could not reserve withdrawal funds.', 4000);
-                        return;
-                    }
-                    addHistoryRecord('withdraw', 'Withdraw Requested (pending)', -amount);
-                    renderWithdrawPendingStep(pushRef.key, amount);
-                });
-            }).catch(function(err) {
-                console.log('Withdraw request failed', err);
-                errorEl.innerText = '⚠️ ስህተት ተከስቷል፣ እንደገና ሞክር።';
-                errorEl.style.display = 'block';
-            });
-        }
-
-        function renderWithdrawPendingStep(pushId, amount) {
-            let modalBody = document.getElementById('modalBodyText');
-            modalBody.innerHTML = `
-                <div style="padding: 10px 0 6px 0;">
-                    <div class="deposit-spinner"></div>
-                    <div style="font-size: 15px; font-weight: bold; margin-top: 8px;">⏳ Waiting for admin to send your payment...</div>
-                    <div style="font-size: 12px; color: #1265dd; margin-top: 4px;">${amount} coins requested</div>
-                </div>
-            `;
-
-            db.ref('transactions/withdrawals/' + pushId).on('value', function(snapshot) {
-                let record = snapshot.val();
-                if (!record) return;
-                if (record.status === 'approved') {
-                    db.ref('transactions/withdrawals/' + pushId).off('value');
-                    let modalBodyEl = document.getElementById('modalBodyText');
-                    modalBodyEl.innerHTML = `
-                        <div style="font-size: 42px; margin-bottom: 4px;">✅</div>
-                        <div style="font-size: 18px; font-weight: bold; color: var(--success-color); margin-bottom: 6px;">Payment Sent!</div>
-                        <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px;">${amount} coins sent to ${record.phone} via Telebirr.</div>
-                        <button class="btn btn-green" onclick="closeCustomModal()">Done</button>
-                    `;
-                } else if (record.status === 'rejected') {
-                    db.ref('transactions/withdrawals/' + pushId).off('value');
-                    applyWalletDelta(amount, 0, 0, function(ok) {
-                        if (ok) addHistoryRecord('withdraw', 'Withdraw Rejected (refunded)', amount);
-                    });
-                    let modalBodyEl = document.getElementById('modalBodyText');
-                    modalBodyEl.innerHTML = `
-                        <div style="font-size: 42px; margin-bottom: 4px;">❌</div>
-                        <div style="font-size: 18px; font-weight: bold; color: var(--danger-color); margin-bottom: 6px;">Withdrawal Rejected</div>
-                        <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px;">Your ${amount} coins have been refunded to your Main Wallet.</div>
-                        <button class="btn" onclick="closeCustomModal()">Close</button>
-                    `;
-                }
-            });
         }
 
         // ---- Audio system: unlock on first tap, beep + speech, so it works even in in-app WebViews ----
