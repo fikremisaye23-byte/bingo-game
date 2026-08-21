@@ -674,7 +674,7 @@
             </div>
             <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
                 <div style="font-size: 13px; color: #fff600; font-weight: bold;">Players</div>
-                <div style="font-size: 15px; font-weight: bold; color: #fff600;" id="activePlayersCountDisplay">2</div>
+                <div style="font-size: 15px; font-weight: bold; color: #fff600;" id="activePlayersCountDisplay">0</div>
             </div>
             <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
                 <div style="font-size: 13px; color: #fff600; font-weight: bold;">Bet</div>
@@ -873,6 +873,31 @@
 
         watchFirebaseServerTimeOffset();
 
+        // --- Force a fresh sync whenever the Mini App comes back into view ---
+        // Telegram Mini Apps get backgrounded (user switches to another chat/app)
+        // without fully closing, and the underlying Firebase websocket can sit
+        // idle/stale while backgrounded. Without this, wallet balances and the
+        // dashboard stats (Active Players, Players count, etc.) could keep
+        // showing old numbers for a while after reopening, until some unrelated
+        // write happened to nudge the connection. Forcing goOnline() + a manual
+        // once() re-read on visibility makes the numbers correct immediately.
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState !== 'visible' || !db) return;
+            try { firebase.database().goOnline(); } catch (e) {}
+            db.ref('users/' + telegramUserId + '/wallet').once('value').then(function(snap) {
+                let w = snap.val();
+                if (!w) return;
+                mainWalletBalance = typeof w.main === 'number' ? w.main : mainWalletBalance;
+                playWalletBalance = typeof w.play === 'number' ? w.play : playWalletBalance;
+                depositedBalance = typeof w.deposited === 'number' ? w.deposited : depositedBalance;
+                updateWalletDisplay();
+            }).catch(function() {});
+            db.ref('room/takenCards').once('value').then(function(snap) {
+                takenCardsData = snap.val() || {};
+                renderTakenCardsUI();
+            }).catch(function() {});
+        });
+
         // --- Wallet balances now live in Firebase (users/<id>/wallet) so they survive refresh ---
         // Uses a live listener (not once()) so a change made elsewhere -- e.g. an admin
         // approving a deposit from the Telegram bot -- shows up immediately here too,
@@ -1011,8 +1036,14 @@
             }
             let activePlayersCountDisplay = document.getElementById('activePlayersCountDisplay');
             if (activePlayersCountDisplay) {
-                let uniquePlayers = new Set(Object.values(takenCardsData).map(v => v.by));
-                if (uniquePlayers.size > 0) activePlayersCountDisplay.innerText = uniquePlayers.size;
+                // "Players" here means total taken cards (e.g. 10 cards taken
+                // -> shows 10), not unique people -- one person taking 2
+                // cards counts as 2 toward this number, by design. Always
+                // write the real count (including 0) instead of only
+                // updating when > 0, so the panel never keeps showing a
+                // stale/placeholder number after the round actually has
+                // fewer (or zero) taken cards.
+                activePlayersCountDisplay.innerText = Object.keys(takenCardsData).length;
             }
         }
 
@@ -1880,7 +1911,7 @@
 
                             let nextCost = (selectedCards.length + 1) * selectedStake;
 
-                            let canFundCard = (playWalletBalance >= nextCost) || (mainWalletBalance >= nextCost);
+                            let canFundCard = (playWalletBalance + mainWalletBalance) >= nextCost;
                             if (!canFundCard) {
                                 showToast(`Insufficient wallet balance.`, 3000);
                                 return;
@@ -2067,7 +2098,18 @@
             if (container) {
                 container.innerHTML = '<div style="background:linear-gradient(160deg, #3a2088, var(--card-bg)); border:1px solid #4a2c9e; border-radius:14px; box-shadow: var(--shadow-soft), var(--glow-purple); text-align:center; color:#c9b6ff; font-size:13px; padding:18px 14px; line-height:1.6;">👀 You missed card selection this round — watching only. You can pick a card again next round.</div>';
             }
+            // Show the real current "Players" count immediately from whatever
+            // taken-cards data we already have locally, instead of leaving the
+            // panel on a stale/placeholder number until the next Firebase tick.
+            renderTakenCardsUI();
             joinOrResetRound(function() {}); // ensure we're subscribed to the shared board/calls
+            // Spectators need the same live subscriptions a real player gets --
+            // otherwise they never receive called numbers or the winner
+            // announcement. startBingoGame() is safe to call here: it only
+            // subscribes to the shared calledNumbers/roundEnded/prizePool refs
+            // and starts the local calling-tick loop, which is a no-op unless
+            // this client actually wins the caller election (isRoundCaller).
+            startBingoGame();
         }
 
         function pickRandomAvailableCard() {
@@ -2098,20 +2140,12 @@
 
             let totalDeduction = selectedCards.length * selectedStake;
 
-            // Wallet priority (single source of truth):
-            // 1) Play Wallet alone must cover the FULL stake -> deduct from Play only.
-            // 2) Otherwise, if Main Wallet alone covers the FULL stake -> deduct
-            //    from Main only (regardless of any leftover Play balance).
-            // 3) Any other case (neither wallet alone is enough) -> NOT allowed
-            //    to combine; show Deposit instead.
-            let source = null; // 'play' or 'main'
-            if (playWalletBalance >= totalDeduction) {
-                source = 'play';
-            } else if (mainWalletBalance >= totalDeduction) {
-                source = 'main';
-            }
+            // Wallet priority: Play Wallet is used first, and Main Wallet
+            // covers whatever Play can't -- the two combine to cover the
+            // total stake (per explicit decision: combining IS allowed).
+            let canAffordCombined = (playWalletBalance + mainWalletBalance) >= totalDeduction;
 
-            if (!source) {
+            if (!canAffordCombined) {
                 showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 gameEntryLocked = false;
                 return;
@@ -2135,11 +2169,10 @@
             // game screen without touching the wallet again.
             function proceedWithDeduction() {
                 if (!db) {
-                    if (source === 'play') {
-                        playWalletBalance -= totalDeduction;
-                    } else {
-                        mainWalletBalance -= totalDeduction;
-                    }
+                    let fromPlayLocal = Math.min(playWalletBalance, totalDeduction);
+                    let fromMainLocal = totalDeduction - fromPlayLocal;
+                    playWalletBalance -= fromPlayLocal;
+                    mainWalletBalance -= fromMainLocal;
                     updateWalletDisplay();
                     addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
                     finishGameEntry();
@@ -2156,25 +2189,29 @@
                     let play = Number(current.play || 0);
                     let main = Number(current.main || 0);
                     let deposited = Number(current.deposited || 0);
-                    let actualSource = null;
-                    if (play >= totalDeduction) actualSource = 'play';
-                    else if (main >= totalDeduction) actualSource = 'main';
-                    if (!actualSource) return;
+                    if ((play + main) < totalDeduction) return; // abort -- not enough combined
 
-                    if (actualSource === 'play') {
-                        let beforePlay = play;
-                        play -= totalDeduction;
-                        let realFraction = beforePlay > 0 ? Math.min(1, deposited / beforePlay) : 0;
-                        let realFromPlay = totalDeduction * realFraction;
-                        deposited = Math.max(0, deposited - realFromPlay);
-                    } else {
-                        main -= totalDeduction;
-                    }
+                    // Play Wallet is drawn down first; Main Wallet covers the
+                    // remainder. Main Wallet money (game winnings) is always
+                    // fully "real" for withdrawal purposes, so only the
+                    // Play-Wallet portion needs the existing deposited-fraction
+                    // bookkeeping.
+                    let beforePlay = play;
+                    let fromPlay = Math.min(play, totalDeduction);
+                    let fromMain = totalDeduction - fromPlay;
+                    play -= fromPlay;
+                    main -= fromMain;
+                    let realFraction = beforePlay > 0 ? Math.min(1, deposited / beforePlay) : 0;
+                    let realFromPlay = fromPlay * realFraction;
+                    deposited = Math.max(0, deposited - realFromPlay);
 
                     current.play = play;
                     current.main = main;
                     current.deposited = deposited;
                     if (currentRoundId) current.lastStakeDeductionRound = currentRoundId;
+                    // Stash how much of this deduction was "real" money so we
+                    // can set currentRoundDepositedFraction after commit.
+                    current._lastRealDeductionAmount = realFromPlay + fromMain;
                     return current;
                 }).then(function(result) {
                     if (!result || !result.committed) {
@@ -2196,7 +2233,10 @@
                     mainWalletBalance = Number(w.main || 0);
                     playWalletBalance = Number(w.play || 0);
                     depositedBalance = Number(w.deposited || 0);
-                    currentRoundDepositedFraction = source === 'main' ? 1 : currentRoundDepositedFraction;
+                    let realDeductionAmount = Number(w._lastRealDeductionAmount || 0);
+                    currentRoundDepositedFraction = totalDeduction > 0 ? Math.min(1, realDeductionAmount / totalDeduction) : 0;
+                    // Clean up the transient field so it doesn't linger in Firebase.
+                    if (db && telegramUserId) db.ref('users/' + telegramUserId + '/wallet/_lastRealDeductionAmount').remove();
                     walletLoaded = true;
                     updateWalletDisplay();
                     addHistoryRecord('game', `Game Entry (${selectedCards.length} Cards)`, -totalDeduction);
@@ -2233,7 +2273,14 @@
 
             let activePlayersCountDisplay = document.getElementById('activePlayersCountDisplay');
             if (activePlayersCountDisplay) {
-                activePlayersCountDisplay.innerText = selectedCards.length;
+                // "Players" here means total taken cards this round (e.g. 10
+                // cards taken -> shows 10), matching renderTakenCardsUI()'s
+                // definition on the selection screen -- was previously set
+                // to just selectedCards.length (the current user's own
+                // picked-card count), which showed "1 Player" even when
+                // several other people had taken cards this round.
+                let takenCount = Object.keys(takenCardsData).length;
+                activePlayersCountDisplay.innerText = takenCount || selectedCards.length;
             }
 
             switchScreen('gameScreen');
@@ -2433,45 +2480,80 @@
 
         let amharicLetterNames = { B: 'ቢ', I: 'አይ', N: 'ኤን', G: 'ጂ', O: 'ኦ' };
 
-        function speakNumber(callText) {
+        // ---- Pre-recorded caller voice (preferred) ----
+        // Put your own recorded/TTS-generated Amharic mp3 files here, next to index.html:
+        //   audio/letters/B.mp3, I.mp3, N.mp3, G.mp3, O.mp3   (5 files)
+        //   audio/numbers/1.mp3 ... audio/numbers/75.mp3      (75 files)
+        // If a file is missing/fails to load, it automatically falls back to
+        // the built-in speechSynthesis voice below, so nothing breaks in the
+        // meantime -- just drop files in as you record/generate them.
+        const AUDIO_BASE = 'audio/';
+
+        function playAudioFile(src) {
+            return new Promise(function(resolve, reject) {
+                try {
+                    let a = new Audio(src);
+                    a.onended = resolve;
+                    a.onerror = reject;
+                    a.play().catch(reject);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        function speakWithBrowserVoice(callText) {
+            // English TTS voice -- reliably present on virtually every phone/OS,
+            // unlike Amharic voices which are rarely installed. callText is
+            // already in "B-6" form, so we just read the letter + number aloud
+            // in English (e.g. "B, six") rather than needing an am-ET voice.
+            if (!('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                if (cachedVoices.length === 0) {
+                    cachedVoices = window.speechSynthesis.getVoices();
+                }
+                let parts = callText.split('-');
+                let letterPart = parts[0] || '';
+                let numPart = parts[1] || '';
+                let spokenText = numPart ? (letterPart + ', ' + numPart) : callText.replace('-', ' ');
+                let utterance = new SpeechSynthesisUtterance(spokenText);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                if (cachedVoices.length > 0) {
+                    let enVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+                    if (enVoice) utterance.voice = enVoice;
+                }
+                setTimeout(function() {
+                    window.speechSynthesis.speak(utterance);
+                }, 120);
+            } catch (e) {
+                console.log("Speech synthesis error", e);
+            }
+        }
+
+        async function speakNumber(callText) {
             if (!soundEnabled) return;
 
             // Always play a beep first - this works even where speech synthesis is blocked (e.g. Telegram WebView)
             playBeep();
 
-            if ('speechSynthesis' in window) {
+            let parts = callText.split('-');
+            let letterPart = parts[0] || '';
+            let numPart = parseInt(parts[1], 10);
+
+            if (!isNaN(numPart)) {
                 try {
-                    window.speechSynthesis.cancel();
-                    // Re-check the voice list right before speaking too -- on some
-                    // WebViews it's still empty at unlock time but ready a bit later.
-                    if (cachedVoices.length === 0) {
-                        cachedVoices = window.speechSynthesis.getVoices();
-                    }
-                    let parts = callText.split('-');
-                    let letterPart = parts[0] || '';
-                    let numPart = parseInt(parts[1], 10);
-                    let spokenText = !isNaN(numPart)
-                        ? ((amharicLetterNames[letterPart] || letterPart) + ' ' + numberToWordsAmharic(numPart))
-                        : callText.replace('-', ' ');
-                    let utterance = new SpeechSynthesisUtterance(spokenText);
-                    utterance.lang = 'am-ET';
-                    utterance.rate = 0.9;
-                    if (cachedVoices.length > 0) {
-                        let amVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('am'));
-                        if (amVoice) utterance.voice = amVoice;
-                        // If no Amharic voice is installed on this device, we still
-                        // send the Amharic text with lang='am-ET' and let the
-                        // system's default voice attempt it, rather than silently
-                        // falling back to an English voice/reading.
-                    }
-                    // Small delay so it doesn't collide with the cancel() on some browsers
-                    setTimeout(function() {
-                        window.speechSynthesis.speak(utterance);
-                    }, 120);
-                } catch(e) {
-                    console.log("Speech synthesis error", e);
+                    await playAudioFile(AUDIO_BASE + 'letters/' + letterPart + '.mp3');
+                    await playAudioFile(AUDIO_BASE + 'numbers/' + numPart + '.mp3');
+                    return; // pre-recorded files played successfully, skip TTS fallback
+                } catch (e) {
+                    // Files not uploaded yet, or failed to load -- fall back to speechSynthesis
+                    console.log('Caller audio file missing/failed, falling back to speech synthesis:', e);
                 }
             }
+
+            speakWithBrowserVoice(callText);
         }
 
         function toggleAudio() {
@@ -2717,9 +2799,38 @@
             }, 3000);
         }
 
+        function speakBingoWin() {
+            if (!soundEnabled) return;
+            playBeep();
+            // Prefer a pre-recorded file if you drop one in (audio/bingo.mp3),
+            // otherwise fall back to the English TTS voice automatically.
+            playAudioFile(AUDIO_BASE + 'bingo.mp3').catch(function() {
+                try {
+                    window.speechSynthesis.cancel();
+                    if (cachedVoices.length === 0) {
+                        cachedVoices = window.speechSynthesis.getVoices();
+                    }
+                    let utterance = new SpeechSynthesisUtterance('Bingo!');
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.9;
+                    if (cachedVoices.length > 0) {
+                        let enVoice = cachedVoices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+                        if (enVoice) utterance.voice = enVoice;
+                    }
+                    setTimeout(function() {
+                        window.speechSynthesis.speak(utterance);
+                    }, 120);
+                } catch (e) {
+                    console.log("Bingo speech error", e);
+                }
+            });
+        }
+
         function showWinnerPopup(winners) {
             let modalBox = document.getElementById('customModal');
             let modalBody = document.getElementById('modalBodyText');
+
+            speakBingoWin();
 
             // winners: [{ cardNum, by, name }] — all real, from Firebase (or local fallback)
             let mainWinner = winners[0] || { cardNum: null, by: telegramUserId, name: userName };
