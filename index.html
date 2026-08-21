@@ -1465,7 +1465,7 @@
         }
 
         function finalizeRoundWinners(winners) {
-            if (!db || !isRoundCaller || !winners || !winners.length) return;
+            if (!db || !winners || !winners.length) return;
             // Lock finalization first, then write the complete winner list, then publish roundEnded.
             db.ref('room/roundFinalizing').transaction(function(current) {
                 if (current === true) return;
@@ -1524,7 +1524,14 @@
             speakNumber(displayCall);
             markBoardAndCards(num);
 
-            if (isRoundCaller && !roomRoundEndedCached) {
+            // Winner checking used to be gated on isRoundCaller (only the
+            // elected caller checked). Now that number-calling is server-side
+            // and no client is ever "the caller", every client checks --
+            // finalizeRoundWinners() below is protected by the
+            // room/roundFinalizing transaction lock, so it's safe for
+            // multiple clients to detect a win at the same moment; only one
+            // actually commits the result.
+            if (!roomRoundEndedCached) {
                 let winners = checkGlobalWinConditions();
                 if (winners.length > 0) finalizeRoundWinners(winners);
             }
@@ -2107,8 +2114,7 @@
             // otherwise they never receive called numbers or the winner
             // announcement. startBingoGame() is safe to call here: it only
             // subscribes to the shared calledNumbers/roundEnded/prizePool refs
-            // and starts the local calling-tick loop, which is a no-op unless
-            // this client actually wins the caller election (isRoundCaller).
+            // (number-calling itself now happens server-side, see main.py).
             startBingoGame();
         }
 
@@ -2378,6 +2384,26 @@
         function handleWithdraw() {
             if (mainWalletBalance <= 0) {
                 showToast("💸 Your Main Wallet is empty — win a game first!");
+                return;
+            }
+            // Bonus-only players (never made a real Telebirr deposit) cannot
+            // withdraw winnings won purely off the free registration bonus --
+            // they must deposit first. depositedBalance only increases from
+            // real deposits (see applyWalletDelta calls elsewhere), never
+            // from the registration bonus itself.
+            if (depositedBalance <= 0) {
+                let modalBox = document.getElementById('customModal');
+                let modalBody = document.getElementById('modalBodyText');
+                modalBody.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+                        <div style="font-size: 17px; font-weight: bold; color: var(--orange-color);">💸 Withdraw</div>
+                        <div onclick="closeCustomModal()" style="cursor:pointer; font-size: 18px; color: #1265dd;">✕</div>
+                    </div>
+                    <div style="font-size: 14px; color: #b3d3f9; margin-bottom: 14px; text-align: left;">Withdraw ለማድረግ መጀመሪያ ቢያንስ አንድ ጊዜ ዲፖዚት ማድረግ አለብዎት።</div>
+                    <button class="btn btn-green" onclick="handleDeposit(); closeCustomModal();">💰 Deposit Now</button>
+                    <button class="btn" style="margin-top:6px;" onclick="closeCustomModal()">Close</button>
+                `;
+                modalBox.style.display = 'flex';
                 return;
             }
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
@@ -2776,7 +2802,10 @@
             let statusText = document.getElementById('gameStatusText');
 
             if (statusText) {
-                statusText.innerText = 'Waiting for Caller...';
+                // The caller is now always the server (main.py), so it's
+                // always active as soon as the game starts -- no election
+                // step to wait on anymore.
+                statusText.innerText = '🎱 Caller is active';
                 statusText.style.color = 'var(--orange-color)';
             }
 
@@ -2784,19 +2813,26 @@
                 subscribeCalledNumbers();
                 subscribeRoundEnd();
                 subscribePrizePool();
-                acquireRoundCaller();
+                // acquireRoundCaller() disabled: number-calling and prize-pool
+                // publishing now happen server-side (main.py), so no client
+                // needs to be elected caller anymore. Left in place, unused,
+                // in case this ever needs to be rolled back.
+                // acquireRoundCaller();
             }
 
             lastCallTime = Date.now();
             clearInterval(gameInterval);
-            gameInterval = setInterval(function() {
-                if (!db || roomRoundEndedCached || !isRoundCaller) return;
-                if (calledNumbersList.length >= 75) {
-                    clearInterval(gameInterval);
-                    return;
-                }
-                attemptCallNextNumber();
-            }, 3000);
+            // The client-side calling loop is disabled for the same reason --
+            // isRoundCaller is never true now, so this would be a no-op, but
+            // it's commented out entirely to avoid a redundant interval running.
+            // gameInterval = setInterval(function() {
+            //     if (!db || roomRoundEndedCached || !isRoundCaller) return;
+            //     if (calledNumbersList.length >= 75) {
+            //         clearInterval(gameInterval);
+            //         return;
+            //     }
+            //     attemptCallNextNumber();
+            // }, 3000);
         }
 
         function speakBingoWin() {
