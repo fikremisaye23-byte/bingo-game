@@ -856,9 +856,34 @@
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
-            firebase.auth().signInAnonymously().catch(function(e) {
-                console.log("Anonymous sign-in failed", e);
-            });
+            // Anonymous sign-in used to be used here, which only proved
+            // "some client connected" -- combined with open Firebase rules,
+            // this meant identity was based entirely on the unverifiable
+            // telegramUserId read above (Telegram.WebApp.initDataUnsafe),
+            // editable in devtools before this script even runs. Instead,
+            // send Telegram's *signed* initData to the bot, which verifies
+            // it (same HMAC check Telegram documents) and mints a Firebase
+            // custom token for that exact user id -- only a genuine
+            // Telegram-signed payload for this bot can produce one.
+            if (tg && tg.initData) {
+                fetch('https://edil-bingo-bot.onrender.com/webapp-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData })
+                })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data && data.token) {
+                            return firebase.auth().signInWithCustomToken(data.token);
+                        }
+                        console.log('Mini App auth failed', data && data.error);
+                    })
+                    .catch(function(e) {
+                        console.log('Mini App auth request failed', e);
+                    });
+            } else {
+                console.log('No Telegram initData available -- skipping sign-in');
+            }
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
                     initStatsTracking();
