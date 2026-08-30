@@ -1217,66 +1217,62 @@
 
         var MAX_CARDS_PER_PLAYER = 2;
 
-        // The 2-card cap used to be enforced only by the client's in-memory
-        // selectedCards.length check. A page reload wipes that array back to
-        // 0, and reclaimOwnCardsFromFirebase() (which re-adopts already-held
-        // cards) runs async -- a rapid tap right after reopening the
-        // selection screen could land before it resolves and slip past the
-        // cap. This reserves a counted "slot" in Firebase FIRST, atomically,
-        // before the card itself is claimed, so the cap holds true no matter
-        // how many tabs/devices/rapid taps hit it at once. The slot is
-        // rolled back if the card claim itself then fails (someone else
-        // already holds that exact cell).
+        // Two Firebase transactions -- one on this player's own card-count
+        // ("am I still under the cap?"), one on this exact cell ("is it
+        // free?") -- fired in PARALLEL rather than one after another. Each
+        // only contends with a narrow slice of activity (your own other
+        // claims, or someone else wanting this exact one of 600 cells), so
+        // even with ~100 players claiming cards at once, most transactions
+        // never collide with each other and this scales fine. Running them
+        // in parallel keeps the total wait close to one round-trip instead
+        // of two. (A single transaction on the whole takenCards node would
+        // avoid the two-request overhead entirely, but then EVERY player's
+        // claim would contend with EVERY other player's claim on the same
+        // node -- fine at ~20 players, but a real bottleneck at ~100.)
         function claimCardInFirebase(cellNum, onSuccess, onTaken) {
             if (!db) { onSuccess(generateBingoMatrix(cellNum)); return; }
             let newMatrix = generateBingoMatrix(cellNum);
             let countRef = roomRef('userCardCount/' + telegramUserId);
+            let cardRef = roomRef('takenCards/' + cellNum);
 
-            countRef.transaction(function(current) {
+            let countPromise = countRef.transaction(function(current) {
                 let count = current || 0;
                 if (count >= MAX_CARDS_PER_PLAYER) return; // abort - already at cap
                 return count + 1;
-            }).then(function(countResult) {
-                if (!countResult.committed) {
-                    onTaken(); // already holds the max allowed cards
+            });
+            let cardPromise = cardRef.transaction(function(current) {
+                if (current === null) {
+                    return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
+                }
+                return; // abort - already taken
+            });
+
+            Promise.all([countPromise, cardPromise]).then(function(results) {
+                let countResult = results[0], cardResult = results[1];
+                let countOk = countResult.committed;
+                let cardVal = cardResult.committed ? cardResult.snapshot.val() : null;
+                let cardOk = !!(cardVal && cardVal.by === telegramUserId);
+
+                if (countOk && cardOk) {
+                    onSuccess(cardVal.matrix);
                     return;
                 }
-
-                roomRef('takenCards/' + cellNum).transaction(function(current) {
-                    if (current === null) {
-                        return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
-                    }
-                    return; // abort - already taken
-                }).then(function(result) {
-                    if (result.committed) {
-                        // Only while the card is still just "reserved" during the
-                        // selection screen -- so it lets go automatically if this
-                        // player's connection drops before the round even starts,
-                        // instead of sitting "taken" and unusable until the whole
-                        // room resets. Cancelled once the round actually begins
-                        // (see initializeUserCards) so a brief reconnect blip
-                        // mid-game can never strip an already-locked-in card.
-                        roomRef('takenCards/' + cellNum).onDisconnect().remove();
-                        onSuccess(result.snapshot.val().matrix);
-                    } else {
-                        // Someone else holds this exact cell -- give the slot back.
-                        countRef.transaction(function(c) { return Math.max(0, (c || 0) - 1); });
-                        onTaken();
-                    }
-                }).catch(function(err) {
-                    console.log("Firebase claim failed", err);
-                    countRef.transaction(function(c) { return Math.max(0, (c || 0) - 1); });
-                    onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
+                // One side succeeded and the other didn't -- undo the one
+                // that did, so a rejected claim never leaves a half-taken
+                // card or a permanently inflated count behind.
+                if (countOk) countRef.transaction(function(c) { return Math.max(0, (c || 0) - 1); });
+                if (cardOk) cardRef.transaction(function(current) {
+                    return (current && current.by === telegramUserId) ? null : current;
                 });
-            }).catch(function(err) {
-                console.log("Card-count reservation failed", err);
                 onTaken();
+            }).catch(function(err) {
+                console.log("Firebase claim failed", err);
+                onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
             });
         }
 
         function releaseCardInFirebase(cellNum) {
             if (!db) return;
-            roomRef('takenCards/' + cellNum).onDisconnect().cancel();
             roomRef('takenCards/' + cellNum).remove();
             roomRef('userCardCount/' + telegramUserId).transaction(function(c) { return Math.max(0, (c || 0) - 1); });
         }
@@ -2347,6 +2343,17 @@
                         releaseSelectedCardsAndSpectate();
                         return;
                     }
+                    if (db) {
+                        selectedCards.forEach(function(cardNum) {
+                            let markPaid = function(isRetry) {
+                                roomRef('takenCards/' + cardNum + '/paid').set(true).catch(function(err) {
+                                    console.log('paid-flag write failed for card ' + cardNum, err);
+                                    if (!isRetry) setTimeout(function() { markPaid(true); }, 800);
+                                });
+                            };
+                            markPaid(false);
+                        });
+                    }
                     if (alreadyPaidThisRound) {
                         let existing = result.snapshot.val() || {};
                         mainWalletBalance = Number(existing.main || 0);
@@ -2893,12 +2900,6 @@
             }
 
             selectedCards.forEach((cardNum, idx) => {
-                // Cards are locked in for real now -- a later disconnect
-                // (phone lock, brief signal loss) during play must never
-                // remove this player's card, so drop the selection-phase
-                // auto-release registered in claimCardInFirebase().
-                if (db) roomRef('takenCards/' + cardNum).onDisconnect().cancel();
-
                 let sharedEntry = takenCardsData[cardNum];
                 let matrix = (sharedEntry && sharedEntry.matrix) ? sharedEntry.matrix : generateBingoMatrix(cardNum);
                 userBingoMatrices.push({ id: cardNum, matrix: matrix });
