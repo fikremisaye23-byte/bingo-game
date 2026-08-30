@@ -1050,8 +1050,6 @@
         let takenCardsData = {};
         let takenCardsListenerAttached = false;
         let calledNumbersListenerAttached = false;
-        let isRoundCaller = false;
-        let callerLockListenerAttached = false;
         let payoutAppliedForRound = false;
         let roundEndListenerAttached = false;
         let prizePoolListenerAttached = false;
@@ -1075,7 +1073,6 @@
             oldRoom.child('caller').off();
             takenCardsListenerAttached = false;
             calledNumbersListenerAttached = false;
-            callerLockListenerAttached = false;
             roundEndListenerAttached = false;
             prizePoolListenerAttached = false;
             takenCardsData = {};
@@ -1186,6 +1183,7 @@
                     roomRef('prizePool').remove();
                     roomRef('roundFinalizing').remove();
                     roomRef('lastCallAt').remove();
+                    roomRef('userCardCount').remove();
                     // Set ONE shared card-selection deadline for this round, same
                     // moment on every player's device -- so a 45s countdown started
                     // by whoever's device happens to create the round reads
@@ -1217,31 +1215,62 @@
             });
         }
 
+        var MAX_CARDS_PER_PLAYER = 2;
+
+        // The 2-card cap used to be enforced only by the client's in-memory
+        // selectedCards.length check. A page reload wipes that array back to
+        // 0, and reclaimOwnCardsFromFirebase() (which re-adopts already-held
+        // cards) runs async -- a rapid tap right after reopening the
+        // selection screen could land before it resolves and slip past the
+        // cap. This reserves a counted "slot" in Firebase FIRST, atomically,
+        // before the card itself is claimed, so the cap holds true no matter
+        // how many tabs/devices/rapid taps hit it at once. The slot is
+        // rolled back if the card claim itself then fails (someone else
+        // already holds that exact cell).
         function claimCardInFirebase(cellNum, onSuccess, onTaken) {
             if (!db) { onSuccess(generateBingoMatrix(cellNum)); return; }
             let newMatrix = generateBingoMatrix(cellNum);
-            roomRef('takenCards/' + cellNum).transaction(function(current) {
-                if (current === null) {
-                    return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
+            let countRef = roomRef('userCardCount/' + telegramUserId);
+
+            countRef.transaction(function(current) {
+                let count = current || 0;
+                if (count >= MAX_CARDS_PER_PLAYER) return; // abort - already at cap
+                return count + 1;
+            }).then(function(countResult) {
+                if (!countResult.committed) {
+                    onTaken(); // already holds the max allowed cards
+                    return;
                 }
-                return; // abort - already taken
-            }).then(function(result) {
-                if (result.committed) {
-                    // Only while the card is still just "reserved" during the
-                    // selection screen -- so it lets go automatically if this
-                    // player's connection drops before the round even starts,
-                    // instead of sitting "taken" and unusable until the whole
-                    // room resets. Cancelled once the round actually begins
-                    // (see initializeUserCards) so a brief reconnect blip
-                    // mid-game can never strip an already-locked-in card.
-                    roomRef('takenCards/' + cellNum).onDisconnect().remove();
-                    onSuccess(result.snapshot.val().matrix);
-                } else {
-                    onTaken();
-                }
+
+                roomRef('takenCards/' + cellNum).transaction(function(current) {
+                    if (current === null) {
+                        return { by: telegramUserId, name: userName, stake: Number(selectedStake || 0), matrix: newMatrix };
+                    }
+                    return; // abort - already taken
+                }).then(function(result) {
+                    if (result.committed) {
+                        // Only while the card is still just "reserved" during the
+                        // selection screen -- so it lets go automatically if this
+                        // player's connection drops before the round even starts,
+                        // instead of sitting "taken" and unusable until the whole
+                        // room resets. Cancelled once the round actually begins
+                        // (see initializeUserCards) so a brief reconnect blip
+                        // mid-game can never strip an already-locked-in card.
+                        roomRef('takenCards/' + cellNum).onDisconnect().remove();
+                        onSuccess(result.snapshot.val().matrix);
+                    } else {
+                        // Someone else holds this exact cell -- give the slot back.
+                        countRef.transaction(function(c) { return Math.max(0, (c || 0) - 1); });
+                        onTaken();
+                    }
+                }).catch(function(err) {
+                    console.log("Firebase claim failed", err);
+                    countRef.transaction(function(c) { return Math.max(0, (c || 0) - 1); });
+                    onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
+                });
             }).catch(function(err) {
-                console.log("Firebase claim failed", err);
-                onTaken(); // fail closed: never let a card be claimed locally when Firebase did not confirm the lock
+                console.log("Card-count reservation failed", err);
+                onTaken();
             });
         }
 
@@ -1249,6 +1278,7 @@
             if (!db) return;
             roomRef('takenCards/' + cellNum).onDisconnect().cancel();
             roomRef('takenCards/' + cellNum).remove();
+            roomRef('userCardCount/' + telegramUserId).transaction(function(c) { return Math.max(0, (c || 0) - 1); });
         }
         // --- end Firebase card locking ---
 
@@ -1348,62 +1378,6 @@
                         showWinnerPopup(winnersArr);
                     });
                 }
-            });
-        }
-
-        function acquireRoundCaller() {
-            if (!db || callerLockListenerAttached) return;
-            callerLockListenerAttached = true;
-            roomRef('caller').transaction(function(current) {
-                if (!current || !current.uid) {
-                    return { uid: telegramUserId, name: userName, ts: firebase.database.ServerValue.TIMESTAMP };
-                }
-                return current;
-            }).then(function(result) {
-                let caller = result && result.snapshot ? result.snapshot.val() : null;
-                isRoundCaller = !!(caller && caller.uid === telegramUserId);
-                let callerLabel = document.getElementById('gameStatusText');
-                if (callerLabel) callerLabel.innerText = isRoundCaller ? '🎱 Caller is active' : 'Watching Caller...';
-                if (!isRoundCaller) return;
-
-                // Only the elected caller establishes the shared prize pool.
-                // Prize pool = 80% of all cards actually taken in this round (20% commission retained).
-                return roomRef('takenCards').once('value').then(function(snap) {
-                    let taken = snap.val() || {};
-                    let poolBase = 0;
-                    Object.keys(taken).forEach(function(cardNum) {
-                        poolBase += Number((taken[cardNum] || {}).stake || 0);
-                    });
-                    let pool = poolBase * 0.8;
-                    return roomRef('prizePool').transaction(function(current) {
-                        if (Number(current || 0) > 0) return current;
-                        return pool;
-                    });
-                });
-            }).catch(function(err) {
-                console.error('Caller lock/prize pool failed:', err);
-            });
-        }
-
-        function attemptCallNextNumber() {
-            if (!db || roomRoundEndedCached || !isRoundCaller) return;
-            roomRef('calledNumbers').transaction(function(current) {
-                let list = current || [];
-                if (list.length >= 75) return list;
-                let next = Math.floor(Math.random() * 75) + 1;
-                let attempts = 0;
-                while (list.includes(next) && attempts < 200) {
-                    next = Math.floor(Math.random() * 75) + 1;
-                    attempts++;
-                }
-                if (list.includes(next)) return list;
-                return list.concat([next]);
-            }).then(function(result) {
-                if (result && result.committed) {
-                    roomRef('lastCallAt').set(firebase.database.ServerValue.TIMESTAMP);
-                }
-            }).catch(function(err) {
-                console.log('attemptCallNextNumber failed:', err);
             });
         }
 
@@ -1995,8 +1969,8 @@
                         let index = selectedCards.indexOf(cellNum);
 
                         if (index === -1) {
-                            if (selectedCards.length >= 2) {
-                                alert('You cannot select more than 2 cards!');
+                            if (selectedCards.length >= MAX_CARDS_PER_PLAYER) {
+                                alert('You cannot select more than ' + MAX_CARDS_PER_PLAYER + ' cards!');
                                 return;
                             }
 
@@ -2147,14 +2121,26 @@
             updateSelectedCardsPreview();
             updateWalletDisplay();
             switchScreen('selectScreen');
-            // Start a provisional local countdown immediately so the timer never
-            // looks frozen while we wait on Firebase -- it gets replaced with the
-            // exact shared deadline the moment joinOrResetRound resolves (usually
-            // within the same second, so the visible number rarely even jumps).
-            startSelectionCountdown(getServerNow() + CARD_SELECTION_SECONDS * 1000);
+            // Don't show a local 45s guess while we wait on Firebase -- for a
+            // round already in progress that guess is wrong (it's not 45s
+            // left), and briefly showing 45 before it corrects itself looked
+            // like the timer was "resetting" on every refresh. Show a neutral
+            // loading state instead; the real countdown starts once we have
+            // the actual shared deadline (usually well under a second).
+            clearInterval(selectionInterval);
+            let timerEl = document.getElementById('selectionTimer');
+            if (timerEl) timerEl.innerText = '…';
+            if (!db) {
+                startSelectionCountdown(getServerNow() + CARD_SELECTION_SECONDS * 1000);
+                return;
+            }
             joinOrResetRound(function(sharedEndTime) {
-                startSelectionCountdown(sharedEndTime);
+                // Re-adopt any cards this user already holds BEFORE the
+                // countdown starts running and before the grid is fully
+                // interactive-looking, so there's no window where the UI
+                // shows fewer cards than are actually reserved.
                 reclaimOwnCardsFromFirebase();
+                startSelectionCountdown(sharedEndTime);
             });
         }
 
@@ -2246,6 +2232,21 @@
             return candidate;
         }
 
+        // If a player's stake can't actually be deducted (balance changed,
+        // or the check-then-set race left them short), their reserved
+        // card(s) used to stay claimed in Firebase forever -- still counted
+        // in the prize pool and blocking that number for other players, even
+        // though this player never actually paid. Release the reservation
+        // and drop them into spectator mode for the round instead.
+        function releaseSelectedCardsAndSpectate() {
+            if (selectedCards.length && db) {
+                selectedCards.forEach(function(cardNum) { releaseCardInFirebase(cardNum); });
+            }
+            selectedCards = [];
+            isSpectatorThisRound = true;
+            enterSpectatorMode();
+        }
+
         function processGameEntry() {
             // Guard against this running twice for the same selection (e.g. a
             // double-tap on the enter/play button) -- without this, the card
@@ -2272,6 +2273,7 @@
             if (!canAffordCombined) {
                 showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                 gameEntryLocked = false;
+                releaseSelectedCardsAndSpectate();
                 return;
             }
 
@@ -2342,6 +2344,7 @@
                     if (!result || !result.committed) {
                         showInsuffientBalanceModal(`❌ Not enough coins! You need ${totalDeduction} coins for the selected ${selectedCards.length} card(s).`);
                         gameEntryLocked = false;
+                        releaseSelectedCardsAndSpectate();
                         return;
                     }
                     if (alreadyPaidThisRound) {
@@ -2941,26 +2944,13 @@
                 subscribeCalledNumbers();
                 subscribeRoundEnd();
                 subscribePrizePool();
-                // acquireRoundCaller() disabled: number-calling and prize-pool
-                // publishing now happen server-side (main.py), so no client
-                // needs to be elected caller anymore. Left in place, unused,
-                // in case this ever needs to be rolled back.
-                // acquireRoundCaller();
+                // Number-calling and prize-pool publishing happen server-side
+                // (main.py) -- no client-side caller election or calling loop
+                // needed here anymore.
             }
 
             lastCallTime = Date.now();
             clearInterval(gameInterval);
-            // The client-side calling loop is disabled for the same reason --
-            // isRoundCaller is never true now, so this would be a no-op, but
-            // it's commented out entirely to avoid a redundant interval running.
-            // gameInterval = setInterval(function() {
-            //     if (!db || roomRoundEndedCached || !isRoundCaller) return;
-            //     if (calledNumbersList.length >= 75) {
-            //         clearInterval(gameInterval);
-            //         return;
-            //     }
-            //     attemptCallNextNumber();
-            // }, 3000);
         }
 
         function speakBingoWin() {
