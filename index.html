@@ -678,7 +678,7 @@
             </div>
             <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
                 <div style="font-size: 13px; color: #ffffff; font-weight: bold;">Bet</div>
-                <div style="font-size: 15px; font-weight: bold; color: #ffffff;">10</div>
+                <div id="betDisplay" style="font-size: 15px; font-weight: bold; color: #ffffff;">10</div>
             </div>
             <div style="background: linear-gradient(160deg, #5a3fc0, #3f2a8f); border-radius: 10px; padding: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);">
                 <div style="font-size: 13px; color: var(--orange-color); font-weight: bold;">Derash 🪙</div>
@@ -1054,8 +1054,45 @@
         let callerLockListenerAttached = false;
         let payoutAppliedForRound = false;
         let roundEndListenerAttached = false;
+        let prizePoolListenerAttached = false;
         let winnerPopupShown = false;
         let roomRoundEndedCached = false;
+        // Which stake's room ("room_10" / "room_20") the listeners above are
+        // currently attached to -- Play 10 and Play 20 are fully separate
+        // games (separate players, separate round, separate caller, separate
+        // card selection), so switching stakes must tear down the old
+        // room's listeners and attach fresh ones for the new room instead of
+        // leaving the old room's data still flowing into this screen.
+        let subscribedStake = null;
+
+        function teardownRoomListenersForStakeSwitch(newStake) {
+            if (!db || subscribedStake === null || subscribedStake === newStake) return;
+            let oldRoom = db.ref('room_' + subscribedStake);
+            oldRoom.child('takenCards').off();
+            oldRoom.child('calledNumbers').off();
+            oldRoom.child('prizePool').off();
+            oldRoom.child('roundEnded').off();
+            oldRoom.child('caller').off();
+            takenCardsListenerAttached = false;
+            calledNumbersListenerAttached = false;
+            callerLockListenerAttached = false;
+            roundEndListenerAttached = false;
+            prizePoolListenerAttached = false;
+            takenCardsData = {};
+            calledNumbersList = [];
+            currentGamePrize = 0;
+            winnerPopupShown = false;
+            roomRoundEndedCached = false;
+            subscribedStake = null;
+
+            let prizeEl = document.getElementById('gamePrizeDisplay');
+            if (prizeEl) prizeEl.innerText = '0';
+            let calledEl = document.getElementById('calledCountDisplay');
+            if (calledEl) calledEl.innerText = '0';
+            let playersEl = document.getElementById('activePlayersCountDisplay');
+            if (playersEl) playersEl.innerText = '0';
+            renderTakenCardsUI();
+        }
 
         function renderTakenCardsUI() {
             for (let i = 1; i <= 600; i++) {
@@ -1232,6 +1269,8 @@
 
         function subscribePrizePool() {
             if (!db) return;
+            if (prizePoolListenerAttached) return;
+            prizePoolListenerAttached = true;
             roomRef('prizePool').on('value', function(snapshot) {
                 let value = Number(snapshot.val() || 0);
                 if (value > 0) {
@@ -2086,7 +2125,9 @@
         }
 
         function chooseStake(stake) {
+            teardownRoomListenersForStakeSwitch(stake);
             selectedStake = stake;
+            subscribedStake = stake;
             openSelection();
         }
 
@@ -2113,6 +2154,38 @@
             startSelectionCountdown(getServerNow() + CARD_SELECTION_SECONDS * 1000);
             joinOrResetRound(function(sharedEndTime) {
                 startSelectionCountdown(sharedEndTime);
+                reclaimOwnCardsFromFirebase();
+            });
+        }
+
+        // A page reload (or reopening the Mini App) wipes this tab's
+        // in-memory selectedCards back to empty, but any cards this same
+        // Telegram user already reserved in Firebase for this round are
+        // still theirs. Without this, the app would show those cells as
+        // ordinary/unselected and let the player pick 2 MORE on top of
+        // them -- silently exceeding the 2-card cap. This re-adopts
+        // whatever the user already holds so both the cap and the UI
+        // reflect the true state.
+        function reclaimOwnCardsFromFirebase() {
+            if (!db) return;
+            roomRef('takenCards').once('value').then(function(snap) {
+                let data = snap.val() || {};
+                Object.keys(data).forEach(function(key) {
+                    let cellNum = Number(key);
+                    let info = data[key];
+                    if (info && info.by === telegramUserId && selectedCards.indexOf(cellNum) === -1) {
+                        selectedCards.push(cellNum);
+                        takenCardsData[cellNum] = info;
+                        let cellEl = document.getElementById('grid_cell_' + cellNum);
+                        if (cellEl) {
+                            cellEl.classList.add('selected');
+                            cellEl.classList.remove('taken');
+                        }
+                    }
+                });
+                if (selectedCards.length) updateSelectedCardsPreview();
+            }).catch(function(err) {
+                console.log('reclaimOwnCardsFromFirebase failed', err);
             });
         }
 
@@ -2322,6 +2395,9 @@
             let randomGameId = 'BBX' + Math.random().toString(36).substring(2, 6).toUpperCase();
             let gameIdEl = document.getElementById('gameIdDisplay');
             if (gameIdEl) gameIdEl.innerText = randomGameId;
+
+            let betDisplayEl = document.getElementById('betDisplay');
+            if (betDisplayEl) betDisplayEl.innerText = selectedStake;
 
             let activePlayersCountDisplay = document.getElementById('activePlayersCountDisplay');
             if (activePlayersCountDisplay) {
