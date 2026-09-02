@@ -1175,15 +1175,14 @@
                 currentRoundId = result.snapshot.val();
                 let deadlinePromise;
                 if (result.committed && myRoundValue && result.snapshot.val() === myRoundValue) {
-                    roomRef('takenCards').remove();
-                    roomRef('calledNumbers').remove();
-                    roomRef('winnerCards').remove();
-                    roomRef('roundEnded').remove();
-                    roomRef('caller').remove();
-                    roomRef('prizePool').remove();
-                    roomRef('roundFinalizing').remove();
-                    roomRef('lastCallAt').remove();
-                    roomRef('userCardCount').remove();
+                    // Clearing the previous round's leftovers used to happen
+                    // right here, client-side. It now happens server-side,
+                    // in the bot's _run_one_round (main.py), the moment it
+                    // notices this new roundId -- calledNumbers/winnerCards/
+                    // roundEnded/prizePool/lastCallAt/roundFinalizing/
+                    // takenCards/userCardCount/caller are all bot-owned now
+                    // (see the Firebase rules shipped alongside this file,
+                    // which deny this client write access to them anyway).
                     // Set ONE shared card-selection deadline for this round, same
                     // moment on every player's device -- so a 45s countdown started
                     // by whoever's device happens to create the round reads
@@ -1328,49 +1327,27 @@
 
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
-                            let prizePool = Number(currentGamePrize || 0);
-                            // Split by whole cents so N winners' shares always sum to
-                            // EXACTLY the prize pool (no money lost or invented to
-                            // floating-point rounding). Any leftover cents from the
-                            // division go to the first entries in a fixed, deterministic
-                            // order (sorted by card number) that every winner's client
-                            // computes identically -- so who gets the extra cent is
-                            // consistent no matter whose device runs this code.
-                            let sortedWinners = winnersArr.slice().sort(function(a, b) { return a.cardNum - b.cardNum; });
-                            let numWinners = sortedWinners.length;
-                            let prizePoolCents = Math.round(prizePool * 100);
-                            let baseCents = numWinners > 0 ? Math.floor(prizePoolCents / numWinners) : 0;
-                            let remainderCents = numWinners > 0 ? prizePoolCents - (baseCents * numWinners) : 0;
-                            let myPrizeCents = 0;
-                            sortedWinners.forEach(function(w, idx) {
-                                if (w.by === telegramUserId) {
-                                    myPrizeCents += baseCents + (idx < remainderCents ? 1 : 0);
-                                }
-                            });
-                            let myPrize = myPrizeCents / 100;
+                            // The bot's own server-side round caller now
+                            // independently re-checks every card against the
+                            // numbers actually called and credits wallet.main
+                            // itself (see _finalize_round_and_payout in
+                            // main.py) -- BEFORE it ever flips roundEnded to
+                            // true, which is what this very listener is
+                            // reacting to. A browser can no longer pay itself
+                            // here; this just reads back the amount the bot
+                            // already credited, purely to show it in the
+                            // popup/history. The live wallet listener
+                            // elsewhere already picks up the new balance on
+                            // its own.
                             let payoutKey = selectedStake + '_' + currentRoundId;
-                            // Idempotent payout: the same user can never be credited twice
-                            // for the same round. Credited straight to wallet.main, the
-                            // same field the wallet display and withdrawals actually read.
-                            db.ref('users/' + telegramUserId + '/wallet').transaction(function(current) {
-                                current = current || { main: 0, play: 0, deposited: 0 };
-                                current.bingoPayouts = current.bingoPayouts || {};
-                                if (current.bingoPayouts[payoutKey]) return;
-                                current.main = Number(current.main || 0) + myPrize;
-                                current.bingoPayouts[payoutKey] = { amount: myPrize, winners: numWinners, ts: firebase.database.ServerValue.TIMESTAMP };
-                                return current;
-                            }).then(function(result) {
-                                if (result && result.committed) {
-                                    let updatedWallet = result.snapshot.val() || {};
-                                    mainWalletBalance = Number(updatedWallet.main || 0);
-                                    playWalletBalance = Number(updatedWallet.play || 0);
-                                    depositedBalance = Number(updatedWallet.deposited || 0);
-                                    walletLoaded = true;
-                                    updateWalletDisplay();
+                            db.ref('users/' + telegramUserId + '/wallet/bingoPayouts/' + payoutKey).once('value').then(function(snap) {
+                                let payout = snap.val();
+                                let myPrize = payout ? Number(payout.amount || 0) : 0;
+                                if (myPrize > 0) {
                                     addHistoryRecord('win', 'Bingo Game Winnings', myPrize);
                                 }
                             }).catch(function(err) {
-                                console.error('Prize payout failed:', err);
+                                console.error('Reading bingo payout failed:', err);
                             });
                         }
 
@@ -1523,26 +1500,15 @@
         }
 
         function finalizeRoundWinners(winners) {
-            if (!db || !winners || !winners.length) return;
-            // Lock finalization first, then write the complete winner list, then publish roundEnded.
-            roomRef('roundFinalizing').transaction(function(current) {
-                if (current === true) return;
-                return true;
-            }).then(function(lockResult) {
-                if (!lockResult || !lockResult.committed) return;
-                let updates = {};
-                winners.forEach(function(w) {
-                    updates[w.cardNum] = { by: w.by, name: w.name, pattern: w.pattern || [] };
-                });
-                return roomRef('winnerCards').set(updates);
-            }).then(function() {
-                return roomRef('roundEnded').transaction(function(current) {
-                    if (current === true) return;
-                    return true;
-                });
-            }).catch(function(err) {
-                console.log('finalizeRoundWinners failed:', err);
-            });
+            // Disabled: round finalization (winnerCards + roundEnded) and
+            // payout are now exclusively server-side, in the bot's own
+            // round-caller loop (see _finalize_round_and_payout in
+            // main.py). This function is no longer called from anywhere in
+            // this file (see the old call site in the tick handler above)
+            // and is kept only as a harmless no-op -- intentionally not
+            // writing to Firebase at all -- in case anything still
+            // references it.
+            return;
         }
 
         function handleNumberCalled(num) {
@@ -1582,17 +1548,18 @@
             speakNumber(displayCall);
             markBoardAndCards(num);
 
-            // Winner checking used to be gated on isRoundCaller (only the
-            // elected caller checked). Now that number-calling is server-side
-            // and no client is ever "the caller", every client checks --
-            // finalizeRoundWinners() below is protected by the
-            // room/roundFinalizing transaction lock, so it's safe for
-            // multiple clients to detect a win at the same moment; only one
-            // actually commits the result.
-            if (!roomRoundEndedCached) {
-                let winners = checkGlobalWinConditions();
-                if (winners.length > 0) finalizeRoundWinners(winners);
-            }
+            // Winner detection AND round finalization now happen entirely
+            // server-side, in the bot's own round-caller loop (it already
+            // holds every card's real matrix and the real calledNumbers, so
+            // it can check this itself -- see _check_all_cards_for_win in
+            // main.py). This used to also run here, client-side, then write
+            // the result straight into room/winnerCards + room/roundEnded --
+            // which meant any single player's browser could, correctly or
+            // fraudulently, end the round for everyone at will (e.g. via
+            // devtools) before anyone had actually won, or fake a winner
+            // that was never paid. Nothing below writes to Firebase anymore;
+            // this client only ever reads roundEnded/winnerCards now (see
+            // subscribeRoundEnd()).
         }
         // --- end shared calling / win detection ---
 
@@ -2076,26 +2043,53 @@
                 return;
             }
 
-            isRegistered = true;
-            localStorage.setItem(storageKey, "true");
-            if (db) {
-                db.ref('users/' + telegramUserId + '/registered').set(true).catch(function(err) {
-                    console.log('Registration save failed', err);
+            if (!tg || !tg.initData) {
+                alert("⚠️ Could not verify your Telegram session. Please reopen the app and try again.");
+                return;
+            }
+
+            // The bonus itself is now granted server-side (see
+            // /claim-registration-bonus in main.py) -- this used to credit
+            // wallet.play directly from here, guarded only by the
+            // client-side isRegistered/localStorage checks above, which
+            // anyone could clear or simply skip by calling the underlying
+            // Firebase write themselves for a free, repeatable balance
+            // top-up. The bot verifies Telegram's signed initData and
+            // reserves the one-time grant atomically before crediting
+            // anything.
+            fetch('https://edil-bingo-bot.onrender.com/claim-registration-bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: tg.initData })
+            })
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (!data || !data.granted) {
+                        if (data && data.reason === 'already registered') {
+                            isRegistered = true;
+                            localStorage.setItem(storageKey, "true");
+                        } else {
+                            alert("⚠️ Could not claim the bonus right now. Please try again.");
+                        }
+                        return;
+                    }
+
+                    isRegistered = true;
+                    localStorage.setItem(storageKey, "true");
+                    addHistoryRecord('bonus', 'Registration Bonus', data.amount);
+
+                    let statusEl = document.getElementById('userStatusDisplay');
+                    if (statusEl) {
+                        statusEl.innerText = "Registered 📝";
+                        statusEl.style.color = "var(--success-color)";
+                    }
+
+                    alert("🎉 Welcome! " + data.amount + " free fun coins have been added to your balance.");
+                })
+                .catch(function(err) {
+                    console.log('Registration bonus request failed', err);
+                    alert("⚠️ Could not claim the bonus right now. Please check your connection and try again.");
                 });
-            }
-            
-            applyWalletDelta(0, 10, 0, function(ok) {
-                if (!ok) return;
-                addHistoryRecord('bonus', 'Registration Bonus', 10);
-            });
-
-            let statusEl = document.getElementById('userStatusDisplay');
-            if (statusEl) {
-                statusEl.innerText = "Registered 📝";
-                statusEl.style.color = "var(--success-color)";
-            }
-
-            alert("🎉 Welcome! 10 free fun coins have been added to your balance.");
         }
 
         function chooseStake(stake) {
@@ -2373,6 +2367,14 @@
                     console.error('Stake deduction failed:', err);
                     showToast('⚠️ Wallet update failed. Please try again.', 4000);
                     gameEntryLocked = false;
+                    // A network-level failure here (as opposed to the
+                    // "not enough coins" abort handled above) used to leave
+                    // this player's already-claimed card(s) sitting
+                    // "taken" in Firebase with no stake ever deducted --
+                    // unusable by anyone else until the whole room reset.
+                    // Release them the same way an insufficient-balance
+                    // failure already does.
+                    releaseSelectedCardsAndSpectate();
                 });
             }
 
@@ -2983,6 +2985,37 @@
         function showWinnerPopup(winners) {
             let modalBox = document.getElementById('customModal');
             let modalBody = document.getElementById('modalBodyText');
+
+            // All 75 numbers were called and nobody won -- there's no real
+            // winner to build a card/name for, so show a plain "round
+            // ended" message instead of falling back to the current
+            // viewer, which used to make every unlucky viewer look like
+            // the winner with a garbage card.
+            if (!winners || winners.length === 0) {
+                modalBody.innerHTML = `
+                    <div style="font-size: 34px; margin-bottom: 2px;">🙁</div>
+                    <div style="font-size: 20px; font-weight: bold; color: var(--orange-color); margin-bottom: 4px;">No Bingo this round</div>
+                    <div style="font-size: 13px; color: #b3d3f9; margin-bottom: 10px;">All numbers were called with no winner.</div>
+                    <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(252, 160, 3, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(252, 160, 3, 0.2);">
+                        🟠 Auto-starting next game in 5s
+                    </div>
+                `;
+                modalBox.style.display = 'flex';
+                let noWinCount = 5;
+                let noWinTimerInterval = setInterval(function() {
+                    noWinCount--;
+                    let timerEl = document.getElementById('popupTimer');
+                    if (timerEl) {
+                        timerEl.innerText = `🟠 Auto-starting next game in ${noWinCount}s`;
+                    }
+                    if (noWinCount <= 0) {
+                        clearInterval(noWinTimerInterval);
+                        modalBox.style.display = 'none';
+                        openSelection();
+                    }
+                }, 1000);
+                return;
+            }
 
             speakBingoWin();
 
