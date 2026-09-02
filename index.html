@@ -610,8 +610,9 @@
         </div>
 
         <div class="main-card" style="display: flex; flex-direction: column; gap: 10px;">
-            <button class="btn btn-green" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(10)">▷ Play 10</button>
-            <button class="btn" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(20)">▷ Play 20</button>
+            <button id="playStakeBtn10" class="btn btn-green" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(10)" disabled>▷ Play 10</button>
+            <button id="playStakeBtn20" class="btn" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(20)" disabled>▷ Play 20</button>
+            <div id="authConnectingNotice" style="text-align:center; font-size:12px; color:#c9b6ff; padding-top:4px;">⏳ Connecting…</div>
         </div>
 
         <div class="selection-top-stats" style="grid-template-columns: 1fr;">
@@ -842,6 +843,19 @@
         let selectionInterval = null;
         let selectedStake = 10;
 
+        // --- Auth-readiness gate ---
+        // Firebase writes (wallet deduction, card locking) all require
+        // auth.uid to be set, but signInWithCustomToken() depends on a
+        // network round-trip to the bot's own backend (which can be slow
+        // right after a cold start, e.g. Render's free-tier spin-down).
+        // Without this gate, a player could tap "Play 10"/"Play 20" and
+        // pick a card before that sign-in finishes, and their wallet
+        // deduction would then fail with permission-denied the moment the
+        // round starts -- silently bumping them to spectator mode with a
+        // "Wallet update failed" toast. Block entry into the stake screens
+        // until auth is confirmed instead.
+        let authReady = false;
+
         // --- Firebase (shared card locking across players) ---
         const firebaseConfig = {
             apiKey: "AIzaSyB26jKNQA-ydGWf8Boq5572AgaQcVHN8N8",
@@ -865,7 +879,11 @@
             // it (same HMAC check Telegram documents) and mints a Firebase
             // custom token for that exact user id -- only a genuine
             // Telegram-signed payload for this bot can produce one.
-            if (tg && tg.initData) {
+            function attemptMiniAppSignIn() {
+                if (!(tg && tg.initData)) {
+                    console.log('No Telegram initData available -- skipping sign-in');
+                    return;
+                }
                 fetch('https://edil-bingo-bot.onrender.com/webapp-auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -881,11 +899,38 @@
                     .catch(function(e) {
                         console.log('Mini App auth request failed', e);
                     });
-            } else {
-                console.log('No Telegram initData available -- skipping sign-in');
             }
+            attemptMiniAppSignIn();
+
+            // The bot's own backend (which mints the sign-in token) can be
+            // slow to wake up from a cold start, sometimes 50s+. Rather than
+            // leaving players staring at "Connecting..." with no way out,
+            // give it a stretch of time, then show a retry option.
+            function checkAuthTimeout() {
+                if (authReady) return;
+                let notice = document.getElementById('authConnectingNotice');
+                if (notice) {
+                    notice.innerHTML = '⚠️ Taking longer than usual to connect. <span style="text-decoration:underline; cursor:pointer;" onclick="retryMiniAppSignIn()">Tap to retry</span>';
+                }
+            }
+            setTimeout(checkAuthTimeout, 15000);
+
+            window.retryMiniAppSignIn = function() {
+                let notice = document.getElementById('authConnectingNotice');
+                if (notice) notice.innerHTML = '⏳ Connecting…';
+                attemptMiniAppSignIn();
+                setTimeout(checkAuthTimeout, 15000);
+            };
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
+                    authReady = true;
+                    let btn10 = document.getElementById('playStakeBtn10');
+                    let btn20 = document.getElementById('playStakeBtn20');
+                    if (btn10) btn10.disabled = false;
+                    if (btn20) btn20.disabled = false;
+                    let notice = document.getElementById('authConnectingNotice');
+                    if (notice) notice.style.display = 'none';
+
                     initStatsTracking();
                     loadUserWalletFromFirebase();
                     loadUserRegistrationFromFirebase();
@@ -2093,6 +2138,13 @@
         }
 
         function chooseStake(stake) {
+            // Belt-and-suspenders: the buttons are disabled until authReady,
+            // but guard here too in case this ever gets called some other
+            // way (e.g. a stale re-render leaves a button enabled).
+            if (!authReady) {
+                showToast('⏳ Still connecting, please wait a moment…', 2500);
+                return;
+            }
             teardownRoomListenersForStakeSwitch(stake);
             selectedStake = stake;
             subscribedStake = stake;
@@ -2287,7 +2339,7 @@
             // transaction actually deducts anything -- every subsequent one
             // for the same round is a no-op that just continues into the
             // game screen without touching the wallet again.
-            function proceedWithDeduction() {
+            function proceedWithDeduction(isRetry) {
                 if (!db) {
                     let fromPlayLocal = Math.min(playWalletBalance, totalDeduction);
                     let fromMainLocal = totalDeduction - fromPlayLocal;
@@ -2365,6 +2417,15 @@
                     finishGameEntry();
                 }).catch(function(err) {
                     console.error('Stake deduction failed:', err);
+                    if (!isRetry) {
+                        // Most failures here are a brief blip (a slow
+                        // reconnect, a just-finished sign-in) rather than a
+                        // real permission problem -- give it one quiet
+                        // second chance before bumping the player to
+                        // spectator mode.
+                        setTimeout(function() { proceedWithDeduction(true); }, 1200);
+                        return;
+                    }
                     showToast('⚠️ Wallet update failed. Please try again.', 4000);
                     gameEntryLocked = false;
                     // A network-level failure here (as opposed to the
@@ -2378,7 +2439,7 @@
                 });
             }
 
-            proceedWithDeduction();
+            proceedWithDeduction(false);
         }
 
         function finishGameEntry() {
