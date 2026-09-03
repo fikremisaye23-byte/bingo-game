@@ -610,9 +610,8 @@
         </div>
 
         <div class="main-card" style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="playStakeBtn10" class="btn btn-green" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(10)" disabled>▷ Play 10</button>
-            <button id="playStakeBtn20" class="btn" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(20)" disabled>▷ Play 20</button>
-            <div id="authConnectingNotice" style="text-align:center; font-size:12px; color:#c9b6ff; padding-top:4px;">⏳ Connecting…</div>
+            <button class="btn btn-green" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(10)">▷ Play 10</button>
+            <button class="btn" style="font-size: 17px; padding: 15px 8px;" onclick="chooseStake(20)">▷ Play 20</button>
         </div>
 
         <div class="selection-top-stats" style="grid-template-columns: 1fr;">
@@ -843,19 +842,6 @@
         let selectionInterval = null;
         let selectedStake = 10;
 
-        // --- Auth-readiness gate ---
-        // Firebase writes (wallet deduction, card locking) all require
-        // auth.uid to be set, but signInWithCustomToken() depends on a
-        // network round-trip to the bot's own backend (which can be slow
-        // right after a cold start, e.g. Render's free-tier spin-down).
-        // Without this gate, a player could tap "Play 10"/"Play 20" and
-        // pick a card before that sign-in finishes, and their wallet
-        // deduction would then fail with permission-denied the moment the
-        // round starts -- silently bumping them to spectator mode with a
-        // "Wallet update failed" toast. Block entry into the stake screens
-        // until auth is confirmed instead.
-        let authReady = false;
-
         // --- Firebase (shared card locking across players) ---
         const firebaseConfig = {
             apiKey: "AIzaSyB26jKNQA-ydGWf8Boq5572AgaQcVHN8N8",
@@ -879,11 +865,7 @@
             // it (same HMAC check Telegram documents) and mints a Firebase
             // custom token for that exact user id -- only a genuine
             // Telegram-signed payload for this bot can produce one.
-            function attemptMiniAppSignIn() {
-                if (!(tg && tg.initData)) {
-                    console.log('No Telegram initData available -- skipping sign-in');
-                    return;
-                }
+            if (tg && tg.initData) {
                 fetch('https://edil-bingo-bot.onrender.com/webapp-auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -899,58 +881,11 @@
                     .catch(function(e) {
                         console.log('Mini App auth request failed', e);
                     });
+            } else {
+                console.log('No Telegram initData available -- skipping sign-in');
             }
-            attemptMiniAppSignIn();
-
-            // The bot's own backend (which mints the sign-in token) can be
-            // slow to wake up from a cold start, sometimes 50s+. Rather than
-            // leaving players staring at "Connecting..." with no way out,
-            // give it a stretch of time, then show a retry option.
-            function checkAuthTimeout() {
-                if (authReady) return;
-                let notice = document.getElementById('authConnectingNotice');
-                if (notice) {
-                    notice.innerHTML = '⚠️ Taking longer than usual to connect. <span style="text-decoration:underline; cursor:pointer;" onclick="retryMiniAppSignIn()">Tap to retry</span>';
-                }
-            }
-            setTimeout(checkAuthTimeout, 15000);
-
-            window.retryMiniAppSignIn = function() {
-                let notice = document.getElementById('authConnectingNotice');
-                if (notice) notice.innerHTML = '⏳ Connecting…';
-                attemptMiniAppSignIn();
-                setTimeout(checkAuthTimeout, 15000);
-            };
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
-                    // Some third-party Telegram clients (not the official
-                    // app) don't populate tg.initDataUnsafe.user even though
-                    // the raw tg.initData string they send is fine -- which
-                    // is all attemptMiniAppSignIn()/the bot's /webapp-auth
-                    // endpoint actually needs to verify identity and mint a
-                    // token. That leaves telegramUserId stuck at the
-                    // "guest_user" fallback while auth.uid is the real,
-                    // verified Telegram id -- a permanent mismatch. Every
-                    // write keyed on telegramUserId (wallet, takenCards'
-                    // "by" field, userCardCount) then fails rules'
-                    // auth.uid === $uid check every single time, no matter
-                    // how many times it's retried, since it isn't a
-                    // transient problem. auth.uid is the verified value --
-                    // prefer it whenever it disagrees with what the client
-                    // parsed locally.
-                    if (user.uid && user.uid !== telegramUserId) {
-                        console.log('telegramUserId mismatch with auth.uid -- correcting from', telegramUserId, 'to', user.uid);
-                        telegramUserId = user.uid;
-                    }
-
-                    authReady = true;
-                    let btn10 = document.getElementById('playStakeBtn10');
-                    let btn20 = document.getElementById('playStakeBtn20');
-                    if (btn10) btn10.disabled = false;
-                    if (btn20) btn20.disabled = false;
-                    let notice = document.getElementById('authConnectingNotice');
-                    if (notice) notice.style.display = 'none';
-
                     initStatsTracking();
                     loadUserWalletFromFirebase();
                     loadUserRegistrationFromFirebase();
@@ -1293,33 +1228,6 @@
         // already holds that exact cell).
         function claimCardInFirebase(cellNum, onSuccess, onTaken) {
             if (!db) { onSuccess(generateBingoMatrix(cellNum)); return; }
-            // Guard against the round-start race: main.py's _run_one_round
-            // wipes the previous round's takenCards/userCardCount the
-            // moment it notices this new roundId, asynchronously and
-            // independently of this client. That wipe usually lands within
-            // ~300ms, but a fast tap right as the round begins can still
-            // land a claim just before it -- which the wipe then silently
-            // erases a moment later, so the player ends up as a spectator
-            // with no error at all. roundReady is set by the bot (in the
-            // very same Firebase update as the wipe) once it's done, so
-            // waiting for it here closes that gap. If it's not there yet,
-            // wait briefly and proceed anyway rather than block forever --
-            // e.g. an older bot deploy that doesn't set this field, or a
-            // genuinely slow bot, shouldn't leave players stuck.
-            roomRef('roundReady').once('value').then(function(snap) {
-                if (snap.val() === currentRoundId) {
-                    _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
-                } else {
-                    setTimeout(function() {
-                        _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
-                    }, 500);
-                }
-            }).catch(function() {
-                _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
-            });
-        }
-
-        function _claimCardInFirebaseNow(cellNum, onSuccess, onTaken) {
             let newMatrix = generateBingoMatrix(cellNum);
             let countRef = roomRef('userCardCount/' + telegramUserId);
 
@@ -2185,13 +2093,6 @@
         }
 
         function chooseStake(stake) {
-            // Belt-and-suspenders: the buttons are disabled until authReady,
-            // but guard here too in case this ever gets called some other
-            // way (e.g. a stale re-render leaves a button enabled).
-            if (!authReady) {
-                showToast('⏳ Still connecting, please wait a moment…', 2500);
-                return;
-            }
             teardownRoomListenersForStakeSwitch(stake);
             selectedStake = stake;
             subscribedStake = stake;
@@ -2331,6 +2232,29 @@
         // in the prize pool and blocking that number for other players, even
         // though this player never actually paid. Release the reservation
         // and drop them into spectator mode for the round instead.
+        // Flags a claimed card as actually paid-for, once its stake has
+        // really been deducted from the wallet (see proceedWithDeduction
+        // below). main.py's server-side round caller only counts a card
+        // toward the prize pool, or lets it win, once this flag is set --
+        // so a card that's still just "reserved" (deduction not yet
+        // confirmed) can never inflate the pool or win for free. Retries a
+        // few times on failure since a lost write here would leave a
+        // player who legitimately paid unable to win.
+        function markCardsPaid(cardNums, attempt) {
+            if (!db || !cardNums || !cardNums.length) return;
+            attempt = attempt || 0;
+            let updates = {};
+            cardNums.forEach(function(cardNum) {
+                updates['takenCards/' + cardNum + '/paid'] = true;
+            });
+            roomRef().update(updates).catch(function(err) {
+                console.error('Marking cards paid failed:', err);
+                if (attempt < 3) {
+                    setTimeout(function() { markCardsPaid(cardNums, attempt + 1); }, 800);
+                }
+            });
+        }
+
         function releaseSelectedCardsAndSpectate() {
             if (selectedCards.length && db) {
                 selectedCards.forEach(function(cardNum) { releaseCardInFirebase(cardNum); });
@@ -2386,7 +2310,7 @@
             // transaction actually deducts anything -- every subsequent one
             // for the same round is a no-op that just continues into the
             // game screen without touching the wallet again.
-            function proceedWithDeduction(isRetry) {
+            function proceedWithDeduction() {
                 if (!db) {
                     let fromPlayLocal = Math.min(playWalletBalance, totalDeduction);
                     let fromMainLocal = totalDeduction - fromPlayLocal;
@@ -2440,6 +2364,7 @@
                         releaseSelectedCardsAndSpectate();
                         return;
                     }
+                    markCardsPaid(selectedCards.slice());
                     if (alreadyPaidThisRound) {
                         let existing = result.snapshot.val() || {};
                         mainWalletBalance = Number(existing.main || 0);
@@ -2464,25 +2389,7 @@
                     finishGameEntry();
                 }).catch(function(err) {
                     console.error('Stake deduction failed:', err);
-                    if (!isRetry) {
-                        // Most failures here are a brief blip (a slow
-                        // reconnect, a just-finished sign-in) rather than a
-                        // real permission problem -- give it one quiet
-                        // second chance before bumping the player to
-                        // spectator mode.
-                        setTimeout(function() { proceedWithDeduction(true); }, 1200);
-                        return;
-                    }
-                    // TEMPORARY DIAGNOSTIC: show the actual Firebase error
-                    // code/message in the toast itself. Two rounds of
-                    // reasonable guesses (auth timing, then the round-start
-                    // wipe race) haven't stopped this from recurring, and
-                    // without seeing the real error text we're just guessing
-                    // again. Remove this once the real cause is confirmed
-                    // and fixed -- showing raw error text to players
-                    // long-term isn't good UX.
-                    let errDetail = (err && (err.code || err.message)) ? (err.code || err.message) : String(err);
-                    showToast('⚠️ Wallet update failed [' + errDetail + ']. Please try again.', 6000);
+                    showToast('⚠️ Wallet update failed. Please try again.', 4000);
                     gameEntryLocked = false;
                     // A network-level failure here (as opposed to the
                     // "not enough coins" abort handled above) used to leave
@@ -2495,7 +2402,7 @@
                 });
             }
 
-            proceedWithDeduction(false);
+            proceedWithDeduction();
         }
 
         function finishGameEntry() {
