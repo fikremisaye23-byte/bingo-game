@@ -1249,14 +1249,17 @@
                     return; // abort - already taken
                 }).then(function(result) {
                     if (result.committed) {
-                        // Only while the card is still just "reserved" during the
-                        // selection screen -- so it lets go automatically if this
-                        // player's connection drops before the round even starts,
-                        // instead of sitting "taken" and unusable until the whole
-                        // room resets. Cancelled once the round actually begins
-                        // (see initializeUserCards) so a brief reconnect blip
-                        // mid-game can never strip an already-locked-in card.
-                        roomRef('takenCards/' + cellNum).onDisconnect().remove();
+                        // NOTE: this used to also register
+                        // roomRef('takenCards/'+cellNum).onDisconnect().remove()
+                        // here, meant to auto-release the card if the player left
+                        // before the round started. But Firebase can't tell a
+                        // page refresh apart from actually leaving -- both close
+                        // the connection the same way -- so it was releasing
+                        // people's cards on every refresh, not just real
+                        // abandonment. Removed: a genuinely abandoned reservation
+                        // still gets cleared out by joinOrResetRound()'s existing
+                        // staleness check, which wipes takenCards for the whole
+                        // room once a round goes stale -- just not instantly.
                         onSuccess(result.snapshot.val().matrix);
                     } else {
                         // Someone else holds this exact cell -- give the slot back.
@@ -1325,6 +1328,20 @@
                         let winnersArr = Object.keys(winnersObj).map(function(cardNumStr) {
                             return { cardNum: parseInt(cardNumStr), by: winnersObj[cardNumStr].by, name: winnersObj[cardNumStr].name };
                         });
+
+                        // All 75 numbers were called and nobody's card ever matched a
+                        // winning pattern -- the server sets roundEnded with no
+                        // winnerCards for exactly this case. There's no card, no prize,
+                        // and nobody to name, so this is a distinct flow rather than
+                        // showWinnerPopup() with an empty winners list (which would
+                        // otherwise render a fake "you won" card). Same handling for
+                        // both the 10-birr and 20-birr rooms, since selectedStake is
+                        // the only thing that changes which room this listener is on.
+                        if (winnersArr.length === 0) {
+                            recordGameCompletion(0);
+                            showNoWinnerPopup();
+                            return;
+                        }
 
                         let myWins = winnersArr.filter(function(w) { return w.by === telegramUserId; });
                         if (myWins.length > 0 && db && currentRoundId) {
@@ -2893,12 +2910,6 @@
             }
 
             selectedCards.forEach((cardNum, idx) => {
-                // Cards are locked in for real now -- a later disconnect
-                // (phone lock, brief signal loss) during play must never
-                // remove this player's card, so drop the selection-phase
-                // auto-release registered in claimCardInFirebase().
-                if (db) roomRef('takenCards/' + cardNum).onDisconnect().cancel();
-
                 let sharedEntry = takenCardsData[cardNum];
                 let matrix = (sharedEntry && sharedEntry.matrix) ? sharedEntry.matrix : generateBingoMatrix(cardNum);
                 userBingoMatrices.push({ id: cardNum, matrix: matrix });
@@ -2978,6 +2989,36 @@
                     console.log("Bingo speech error", e);
                 }
             });
+        }
+
+        function showNoWinnerPopup() {
+            let modalBox = document.getElementById('customModal');
+            let modalBody = document.getElementById('modalBodyText');
+
+            modalBody.innerHTML = `
+                <div style="font-size: 34px; margin-bottom: 2px;">🙈</div>
+                <div style="font-size: 20px; font-weight: bold; color: var(--orange-color); margin-bottom: 4px;">አሸናፊ አልተገኘም</div>
+                <div style="font-size: 13px; color: #b3d3f9; margin-bottom: 10px;">75ዱም ቁጥሮች ተጠርተዋል፣ ማንም ካርድ አላሸነፈም።</div>
+                <div id="popupTimer" style="font-size: 13px; color: var(--orange-color); background: rgba(252, 160, 3, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(252, 160, 3, 0.2);">
+                    🟠 Auto-starting next game in 5s
+                </div>
+            `;
+
+            modalBox.style.display = 'flex';
+
+            let count = 5;
+            let timerInterval = setInterval(function() {
+                count--;
+                let timerEl = document.getElementById('popupTimer');
+                if (timerEl) {
+                    timerEl.innerText = `🟠 Auto-starting next game in ${count}s`;
+                }
+                if (count <= 0) {
+                    clearInterval(timerInterval);
+                    modalBox.style.display = 'none';
+                    openSelection();
+                }
+            }, 1000);
         }
 
         function showWinnerPopup(winners) {
