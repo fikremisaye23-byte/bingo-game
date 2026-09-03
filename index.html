@@ -1273,6 +1273,33 @@
         // already holds that exact cell).
         function claimCardInFirebase(cellNum, onSuccess, onTaken) {
             if (!db) { onSuccess(generateBingoMatrix(cellNum)); return; }
+            // Guard against the round-start race: main.py's _run_one_round
+            // wipes the previous round's takenCards/userCardCount the
+            // moment it notices this new roundId, asynchronously and
+            // independently of this client. That wipe usually lands within
+            // ~300ms, but a fast tap right as the round begins can still
+            // land a claim just before it -- which the wipe then silently
+            // erases a moment later, so the player ends up as a spectator
+            // with no error at all. roundReady is set by the bot (in the
+            // very same Firebase update as the wipe) once it's done, so
+            // waiting for it here closes that gap. If it's not there yet,
+            // wait briefly and proceed anyway rather than block forever --
+            // e.g. an older bot deploy that doesn't set this field, or a
+            // genuinely slow bot, shouldn't leave players stuck.
+            roomRef('roundReady').once('value').then(function(snap) {
+                if (snap.val() === currentRoundId) {
+                    _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
+                } else {
+                    setTimeout(function() {
+                        _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
+                    }, 500);
+                }
+            }).catch(function() {
+                _claimCardInFirebaseNow(cellNum, onSuccess, onTaken);
+            });
+        }
+
+        function _claimCardInFirebaseNow(cellNum, onSuccess, onTaken) {
             let newMatrix = generateBingoMatrix(cellNum);
             let countRef = roomRef('userCardCount/' + telegramUserId);
 
