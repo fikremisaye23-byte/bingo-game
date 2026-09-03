@@ -923,6 +923,26 @@
             };
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
+                    // Some third-party Telegram clients (not the official
+                    // app) don't populate tg.initDataUnsafe.user even though
+                    // the raw tg.initData string they send is fine -- which
+                    // is all attemptMiniAppSignIn()/the bot's /webapp-auth
+                    // endpoint actually needs to verify identity and mint a
+                    // token. That leaves telegramUserId stuck at the
+                    // "guest_user" fallback while auth.uid is the real,
+                    // verified Telegram id -- a permanent mismatch. Every
+                    // write keyed on telegramUserId (wallet, takenCards'
+                    // "by" field, userCardCount) then fails rules'
+                    // auth.uid === $uid check every single time, no matter
+                    // how many times it's retried, since it isn't a
+                    // transient problem. auth.uid is the verified value --
+                    // prefer it whenever it disagrees with what the client
+                    // parsed locally.
+                    if (user.uid && user.uid !== telegramUserId) {
+                        console.log('telegramUserId mismatch with auth.uid -- correcting from', telegramUserId, 'to', user.uid);
+                        telegramUserId = user.uid;
+                    }
+
                     authReady = true;
                     let btn10 = document.getElementById('playStakeBtn10');
                     let btn20 = document.getElementById('playStakeBtn20');
@@ -2453,7 +2473,16 @@
                         setTimeout(function() { proceedWithDeduction(true); }, 1200);
                         return;
                     }
-                    showToast('⚠️ Wallet update failed. Please try again.', 4000);
+                    // TEMPORARY DIAGNOSTIC: show the actual Firebase error
+                    // code/message in the toast itself. Two rounds of
+                    // reasonable guesses (auth timing, then the round-start
+                    // wipe race) haven't stopped this from recurring, and
+                    // without seeing the real error text we're just guessing
+                    // again. Remove this once the real cause is confirmed
+                    // and fixed -- showing raw error text to players
+                    // long-term isn't good UX.
+                    let errDetail = (err && (err.code || err.message)) ? (err.code || err.message) : String(err);
+                    showToast('⚠️ Wallet update failed [' + errDetail + ']. Please try again.', 6000);
                     gameEntryLocked = false;
                     // A network-level failure here (as opposed to the
                     // "not enough coins" abort handled above) used to leave
