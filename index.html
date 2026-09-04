@@ -866,6 +866,20 @@
             // custom token for that exact user id -- only a genuine
             // Telegram-signed payload for this bot can produce one.
             if (tg && tg.initData) {
+                // Sign in anonymously right away, in parallel with the
+                // webapp-auth round trip below. Stats/presence (Active
+                // Players, Games Played, Winners Daily) only need
+                // "auth != null" per the Firebase rules, not a verified
+                // Telegram identity -- so they no longer have to sit blank
+                // waiting on a network round trip to the bot server (which
+                // can be slow, e.g. Render cold-starting) before they can
+                // start updating. Wallet reads still wait for the real
+                // custom-token session below, since those are scoped to
+                // this exact telegramUserId and must stay verified.
+                firebase.auth().signInAnonymously().catch(function(e) {
+                    console.log('Anonymous sign-in failed', e);
+                });
+
                 fetch('https://edil-bingo-bot.onrender.com/webapp-auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -886,10 +900,18 @@
             }
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
+                    // Runs on both the fast anonymous session and the later
+                    // verified custom-token session (initStatsTracking is
+                    // idempotent), so stats/presence start updating as soon
+                    // as possible.
                     initStatsTracking();
-                    loadUserWalletFromFirebase();
-                    loadUserRegistrationFromFirebase();
-                    watchPendingRequestsForAdmin();
+                    if (!user.isAnonymous) {
+                        // Only the verified, Telegram-signed session may
+                        // touch this user's own wallet/registration data.
+                        loadUserWalletFromFirebase();
+                        loadUserRegistrationFromFirebase();
+                        watchPendingRequestsForAdmin();
+                    }
                 }
             });
         } catch (e) {
