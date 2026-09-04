@@ -1286,6 +1286,17 @@
         // --- end Firebase card locking ---
 
         // --- Shared number-calling + real winner detection across all real players ---
+        let calledNumbersProcessing = false;
+        // Numbers this client hasn't announced/animated yet. Fed by the
+        // Firebase listener below and drained one at a time by
+        // processCalledNumbersQueue() with a short gap between each --
+        // this is what stops a "catch-up" (several numbers already called
+        // server-side before this listener attaches, e.g. right at round
+        // start while the screen is still transitioning) from firing
+        // handleNumberCalled()/speakNumber() for all of them in the same
+        // instant, which used to sound like several numbers called at once.
+        let calledNumbersQueue = [];
+
         function subscribeCalledNumbers() {
             if (!db) return;
             if (calledNumbersListenerAttached) return;
@@ -1295,9 +1306,29 @@
                 while (calledNumbersList.length < serverList.length) {
                     let nextNum = serverList[calledNumbersList.length];
                     calledNumbersList.push(nextNum);
-                    handleNumberCalled(nextNum);
+                    calledNumbersQueue.push(nextNum);
                 }
+                processCalledNumbersQueue();
             });
+        }
+
+        async function processCalledNumbersQueue() {
+            if (calledNumbersProcessing) return; // already draining the queue
+            calledNumbersProcessing = true;
+            try {
+                while (calledNumbersQueue.length > 0) {
+                    let nextNum = calledNumbersQueue.shift();
+                    handleNumberCalled(nextNum);
+                    if (calledNumbersQueue.length > 0) {
+                        // Only pace out numbers that arrived as a catch-up
+                        // burst -- the normal one-at-a-time-every-3s case
+                        // never has anything left to wait for here.
+                        await new Promise(function(resolve) { setTimeout(resolve, 1500); });
+                    }
+                }
+            } finally {
+                calledNumbersProcessing = false;
+            }
         }
 
         function subscribePrizePool() {
